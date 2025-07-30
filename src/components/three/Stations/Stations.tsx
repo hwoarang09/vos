@@ -1,7 +1,7 @@
 import React, { useRef, useEffect } from "react";
 import { InstancedMesh, Object3D, Vector3 } from "three";
-import { useCameraStore } from "../../store/cameraStore";
-import generateClusteredPositionsByBay from "./Stations/generateClusteredPositionsByBay";
+import { useCameraStore } from "@store/cameraStore";
+import generateClusteredPositionsByBay from "../Stations/generateClusteredPositionsByBay";
 
 const Stations: React.FC = () => {
   const meshRef = useRef<InstancedMesh>(null);

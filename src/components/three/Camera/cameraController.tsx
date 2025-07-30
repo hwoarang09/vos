@@ -1,6 +1,6 @@
 import React, { useEffect } from "react";
 import { useThree } from "@react-three/fiber";
-import { useCameraStore } from "../../store/cameraStore";
+import { useCameraStore } from "@store/cameraStore";
 
 const CameraController: React.FC = () => {
   const { camera, controls } = useThree(); // R3F 카메라와 OrbitControls 참조

@@ -2,10 +2,10 @@ import React from "react";
 import { Canvas } from "@react-three/fiber";
 import { OrbitControls } from "@react-three/drei";
 import { Perf } from "r3f-perf";
-import Box from "./Box";
+import Box from "./Stations/Box";
 import { useMqttStore } from "../../store/mqttStore";
-import Stations from "./Stations";
-import CameraController from "./cameraController";
+import Stations from "./Stations/Stations";
+import CameraController from "./Camera/cameraController";
 
 const ThreeScene: React.FC = () => {
   const { sendMessage } = useMqttStore();

@@ -7,7 +7,8 @@
     "baseUrl": ".", // 기준 경로를 프로젝트 루트로 설정
     "paths": {
       "@/*": ["src/*"],
-      "@config/*": ["src/config/*"]
+      "@config/*": ["src/config/*"],
+      "@store/*": ["src/store/*"]
     },
     "jsx": "react-jsx", // React 17+ JSX 변환 지원
     "allowSyntheticDefaultImports": true, // ES 모듈을 기본 가져오기처럼 사용 가능
