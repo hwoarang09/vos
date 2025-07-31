@@ -8,7 +8,8 @@
     "paths": {
       "@/*": ["src/*"],
       "@config/*": ["src/config/*"],
-      "@store/*": ["src/store/*"]
+      "@store/*": ["src/store/*"],
+      "@components/*": ["src/components/*"]
     },
     "jsx": "react-jsx", // React 17+ JSX 변환 지원
     "allowSyntheticDefaultImports": true, // ES 모듈을 기본 가져오기처럼 사용 가능
