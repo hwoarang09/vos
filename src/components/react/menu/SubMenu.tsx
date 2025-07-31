@@ -26,7 +26,7 @@ const subMenuConfig = {
     { id: "operation-menu-4", label: "Alerts", icon: "🔔" },
     { id: "operation-menu-5", label: "Logs", icon: "📝" },
   ],
-  Builder: [
+  EdgeBuilder: [
     { id: "edge-menu-1", label: "Straight", icon: "➖" },
     { id: "edge-menu-2", label: "Curved", icon: "↪️" },
     { id: "edge-menu-3", label: "Junction", icon: "🔀" },
@@ -47,13 +47,11 @@ const SubMenu: React.FC = () => {
   const [menuPosition, setMenuPosition] = useState({ x: 0, y: 0 });
   const menuRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
+  const updatePosition = () => {
     if (activeTopMenu) {
-      // 바텀메뉴 버튼들의 위치를 찾아서 서브메뉴 위치 계산
       const activeButton = document.querySelector(
         `[data-menu-id="${activeTopMenu}"]`
       ) as HTMLElement;
-
       if (activeButton) {
         const rect = activeButton.getBoundingClientRect();
         const centerX = rect.left + rect.width / 2;
@@ -61,10 +59,25 @@ const SubMenu: React.FC = () => {
 
         setMenuPosition({
           x: centerX,
-          y: topY - 8, // 바텀메뉴에 더 가깝게
+          y: topY - 8,
         });
       }
     }
+  };
+
+  useEffect(() => {
+    updatePosition();
+  }, [activeTopMenu]);
+
+  useEffect(() => {
+    const handleResize = () => {
+      updatePosition();
+    };
+
+    window.addEventListener("resize", handleResize);
+    return () => {
+      window.removeEventListener("resize", handleResize);
+    };
   }, [activeTopMenu]);
 
   if (!activeTopMenu) return null;

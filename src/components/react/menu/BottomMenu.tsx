@@ -12,7 +12,7 @@ const bottomMenuItems: BottomMenuItem[] = [
   { id: "Statistics", label: "Statistics", icon: "📊" },
   { id: "Vehicle", label: "Vehicle", icon: "🚗" },
   { id: "Operation", label: "Operation", icon: "🚦" },
-  { id: "Builder", label: "Builder", icon: "🛤️" },
+  { id: "EdgeBuilder", label: "EdgeBuilder", icon: "🛤️" },
 ];
 
 const BottomMenu: React.FC = () => {

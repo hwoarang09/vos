@@ -1,7 +1,11 @@
 // store/menuStore.ts
 import { create } from "zustand";
 
-export type TopMenuType = "Statistics" | "Vehicle" | "Operation" | "Builder";
+export type TopMenuType =
+  | "Statistics"
+  | "Vehicle"
+  | "Operation"
+  | "EdgeBuilder";
 
 export interface MenuState {
   // 현재 활성화된 메뉴들
