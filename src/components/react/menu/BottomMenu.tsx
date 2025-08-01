@@ -1,72 +1,16 @@
-// components/react/menu/BottomMenu.tsx
+// components/react/menu/BottomMenu.tsx (그룹화)
 import React from "react";
 import { useMenuStore, TopMenuType } from "@store/menuStore";
-import { TrainTrack, ChartPie, Car, ShipWheel } from "lucide-react";
+import { MenuContainer, MenuButton, MenuDivider } from "./shared";
+import { bottomMenuGroups } from "./data/BottomMenuConfig";
 
-type BottomMenuItem = {
-  id: TopMenuType;
-  label: string;
-  iconFn: (isActive: boolean) => JSX.Element;
+// 메뉴별 툴팁 정의
+const menuTooltips: Record<string, string> = {
+  Statistics: "통계 및 분석",
+  Vehicle: "차량 관리",
+  Operation: "운영 관리",
+  EdgeBuilder: "도로 편집기",
 };
-
-const bottomMenuItems: BottomMenuItem[] = [
-  {
-    id: "Statistics",
-    label: "Statistics",
-    iconFn: (isActive) => (
-      <ChartPie
-        size={28}
-        style={{
-          // fill: isActive ? "black" : "white",
-          stroke: isActive ? "black" : "white",
-          strokeWidth: 2,
-        }}
-      />
-    ),
-  },
-  {
-    id: "Vehicle",
-    label: "Vehicle",
-    iconFn: (isActive) => (
-      <Car
-        size={36}
-        style={{
-          fill: isActive ? "white" : "black",
-          stroke: isActive ? "black" : "white",
-          strokeWidth: 2,
-        }}
-      />
-    ),
-  },
-  {
-    id: "Operation",
-    label: "Operation",
-    iconFn: (isActive) => (
-      <ShipWheel
-        size={32}
-        style={{
-          fill: isActive ? "white" : "black",
-          stroke: isActive ? "black" : "white",
-          strokeWidth: 1.5,
-        }}
-      />
-    ),
-  },
-  {
-    id: "EdgeBuilder",
-    label: "EdgeBuilder",
-    iconFn: (isActive) => (
-      <TrainTrack
-        size={32}
-        style={{
-          fill: isActive ? "black" : "white",
-          stroke: isActive ? "black" : "white",
-          strokeWidth: 1.5,
-        }}
-      />
-    ),
-  },
-];
 
 const BottomMenu: React.FC = () => {
   const { activeTopMenu, setActiveTopMenu } = useMenuStore();
@@ -76,71 +20,36 @@ const BottomMenu: React.FC = () => {
   };
 
   return (
-    <div className="fixed bottom-2 left-0 right-0 z-50 flex justify-center">
-      <div
-        className="flex p-2 rounded-2xl shadow-xl border-4"
-        style={{
-          backgroundColor: "#353948", // 전체 박스 배경
-          borderColor: "#778397", // 전체 박스 테두리
-          opacity: 0.98,
-        }}
-      >
-        {bottomMenuItems.map((item, index) => {
-          const isActive = activeTopMenu === item.id;
-          const isFirst = index === 0;
-          const isLast = index === bottomMenuItems.length - 2;
+    <MenuContainer position="bottom">
+      {bottomMenuGroups.map((group, groupIndex) => (
+        <React.Fragment key={`group-${groupIndex}`}>
+          {/* 그룹 내 버튼들 */}
+          {group.map((item) => {
+            const isActive = activeTopMenu === item.id;
 
-          return (
-            <div key={item.id} className="flex items-center">
-              <button
-                data-menu-id={item.id}
+            return (
+              <MenuButton
+                key={item.id}
+                isActive={isActive}
                 onClick={() => handleMenuClick(item.id)}
-                className="w-16 h-16 flex flex-col items-center justify-center rounded-xl text-xs font-medium transition-all duration-100 hover:scale-102 mx-3"
-                style={{
-                  backgroundColor: isActive
-                    ? "rgba(94, 197, 255, 0.85)"
-                    : "#262C3F",
-                  // color: "white",
-                  border: "2px solid",
-                  borderColor: isActive
-                    ? "rgba(156,237,255, 1.0)"
-                    : "transparent",
-                  boxShadow: isActive
-                    ? "0 0 8px rgba(156,237,255, 0.4), 0 0 7px rgba(156,237,255, 0.4), inset 0 0 15px rgba(156,237,255, 0.8)"
-                    : "none",
-                }}
+                dataMenuId={item.id}
+                size="small" // 메인메뉴는 small로 (더 작게)
+                tooltip={menuTooltips[item.id]}
               >
-                <span className="text-2xl mb-1">{item.iconFn(isActive)}</span>
-              </button>
+                {item.iconFn(isActive)}
+              </MenuButton>
+            );
+          })}
 
-              {/* 첫 번째 버튼 뒤에만 구분선 */}
-              {isFirst && (
-                <div
-                  className="h-8 w-px"
-                  style={{
-                    background:
-                      "linear-gradient(to bottom, transparent, white, transparent)",
-                    opacity: 0.3,
-                  }}
-                />
-              )}
-
-              {/* 마지막 버튼 앞에만 구분선 */}
-              {isLast && (
-                <div
-                  className="h-8 w-px"
-                  style={{
-                    background:
-                      "linear-gradient(to bottom, transparent, white, transparent)",
-                    opacity: 0.3,
-                  }}
-                />
-              )}
+          {/* 그룹 사이에만 구분선 추가 (마지막 그룹 제외) */}
+          {groupIndex < bottomMenuGroups.length - 1 && (
+            <div className="w-2 flex items-center justify-center mx-1">
+              <MenuDivider />
             </div>
-          );
-        })}
-      </div>
-    </div>
+          )}
+        </React.Fragment>
+      ))}
+    </MenuContainer>
   );
 };
 
