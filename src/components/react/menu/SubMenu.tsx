@@ -59,7 +59,7 @@ const SubMenu: React.FC = () => {
 
         setMenuPosition({
           x: centerX,
-          y: topY - 8,
+          y: topY - 14,
         });
       }
     }
