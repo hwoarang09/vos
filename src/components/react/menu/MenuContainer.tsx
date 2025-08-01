@@ -6,6 +6,8 @@ import SubMenu from "./SubMenu";
 import { useMenuStore } from "../../../store/menuStore";
 import { useMqttStore } from "../../../store/mqttStore";
 import { mqttUrl } from "../../../config/mqttConfig";
+// App.tsx 또는 최상위 컴포넌트에 추가
+import { GlobalTooltip } from "./GlobalTooltip";
 
 const MenuContainer: React.FC = () => {
   const { activeTopMenu, rightPanelOpen } = useMenuStore();
@@ -53,6 +55,9 @@ const MenuContainer: React.FC = () => {
           <RightPanel />
         </div>
       )}
+
+      {/* Global Tooltip - 항상 렌더링 */}
+      <GlobalTooltip />
     </>
   );
 };

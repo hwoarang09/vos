@@ -40,7 +40,7 @@ export const MenuContainer: React.FC<MenuContainerProps> = ({
   return (
     <div className={positionClass} style={floatingStyle}>
       <div
-        className={`flex p-2 rounded-2xl shadow-xl border-4 ${className}`}
+        className={`flex py-0.5 px-0.5 rounded-2xl shadow-xl border-2 ${className}`}
         style={baseStyle}
       >
         {children}

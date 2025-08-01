@@ -1,5 +1,18 @@
-// components/react/menu/shared/MenuButton.tsx
+// components/react/menu/shared/MenuButton.tsx (완전히 새로운 버전)
 import React, { useState } from "react";
+import { useMenuStore } from "@store/menuStore";
+import {
+  MENU_BUTTON_ACTIVE_BACKGROUND,
+  MENU_BUTTON_INACTIVE_BACKGROUND,
+  MENU_BUTTON_ACTIVE_BORDER,
+  MENU_BUTTON_INACTIVE_BORDER,
+  MENU_BUTTON_HOVER_BORDER,
+  MENU_BUTTON_ACTIVE_SHADOW,
+  MENU_BUTTON_HOVER_SHADOW,
+  MENU_BUTTON_INACTIVE_SHADOW,
+  MENU_BUTTON_LARGE_SIZE,
+  MENU_BUTTON_SMALL_SIZE,
+} from "./types";
 
 interface MenuButtonProps {
   isActive: boolean;
@@ -8,10 +21,9 @@ interface MenuButtonProps {
   children: React.ReactNode;
   dataMenuId?: string;
   className?: string;
-  showLabel?: boolean;
-  // 툴팁과 하단 라벨
   tooltip?: string;
   bottomLabel?: string;
+  buttonLevel?: number; // 기본값 1
   // 커스터마이징 가능한 색상 props
   activeBackgroundColor?: string;
   inactiveBackgroundColor?: string;
@@ -30,59 +42,94 @@ export const MenuButton: React.FC<MenuButtonProps> = ({
   children,
   dataMenuId,
   className = "",
-  showLabel = true,
   tooltip,
   bottomLabel,
-  // 기본값들 (현재 스타일)
-  activeBackgroundColor = "rgba(94, 197, 255, 0.85)",
-  inactiveBackgroundColor = "#262C3F",
-  activeBorderColor = "rgba(156,237,255, 1.0)",
-  inactiveBorderColor = "transparent",
-  activeBoxShadow = "0 0 8px rgba(156,237,255, 0.4), 0 0 7px rgba(156,237,255, 0.4), inset 0 0 15px rgba(156,237,255, 0.8)",
-  inactiveBoxShadow = "none",
+  buttonLevel = 1,
+  // 기본값들 - 공통 상수 사용
+  activeBackgroundColor = MENU_BUTTON_ACTIVE_BACKGROUND,
+  inactiveBackgroundColor = MENU_BUTTON_INACTIVE_BACKGROUND,
+  activeBorderColor = MENU_BUTTON_ACTIVE_BORDER,
+  inactiveBorderColor = MENU_BUTTON_INACTIVE_BORDER,
+  activeBoxShadow = MENU_BUTTON_ACTIVE_SHADOW,
+  inactiveBoxShadow = MENU_BUTTON_INACTIVE_SHADOW,
   borderWidth = "2px",
   borderRadius = "rounded-xl",
 }) => {
-  const [showTooltip, setShowTooltip] = useState(false);
+  const { getCurrentTopLevel, showTooltip, hideTooltip } = useMenuStore();
+  const [isHovered, setIsHovered] = useState(false);
 
-  // 크기 반대로: large는 서브메뉴용(더 큼), small은 메인메뉴용(더 작음)
-  const sizeClass = size === "large" ? "w-16 h-16" : "w-10 h-8";
-  const marginClass = size === "small" ? "mx-1" : ""; // 메인메뉴만 margin
+  const sizeConfig =
+    size === "large" ? MENU_BUTTON_LARGE_SIZE : MENU_BUTTON_SMALL_SIZE;
+  const sizeClass = `${sizeConfig.width} ${sizeConfig.height}`;
+  const marginClass = size === "small" ? "mx-1" : "";
+
+  const handleMouseEnter = (e: React.MouseEvent) => {
+    setIsHovered(true);
+    const currentTopLevel = getCurrentTopLevel();
+    console.log("currentTopLevel: ", currentTopLevel);
+    console.log("buttonLevel: ", buttonLevel);
+    console.log("tooltip: ", tooltip);
+    // 현재 최상단 레벨과 버튼 레벨이 같고, 툴팁이 있을 때
+    if (buttonLevel === currentTopLevel && tooltip) {
+      const rect = e.currentTarget.getBoundingClientRect();
+      showTooltip(
+        dataMenuId || "",
+        tooltip,
+        {
+          x: rect.left + rect.width / 2,
+          y: rect.top,
+        },
+        buttonLevel
+      );
+    }
+  };
+
+  const handleMouseLeave = () => {
+    setIsHovered(false);
+    hideTooltip();
+  };
+
+  const handleClick = () => {
+    hideTooltip();
+    onClick();
+  };
 
   return (
-    <div className="relative flex flex-col items-center">
+    <div className="relative flex flex-col items-center justify-center">
       <button
         data-menu-id={dataMenuId}
-        onClick={onClick}
-        onMouseEnter={() => setShowTooltip(true)}
-        onMouseLeave={() => setShowTooltip(false)}
+        onClick={handleClick}
+        onMouseEnter={handleMouseEnter}
+        onMouseLeave={handleMouseLeave}
         className={`${sizeClass} ${marginClass} flex flex-col items-center justify-center ${borderRadius} text-xs font-medium transition-all duration-100 hover:scale-102 ${className}`}
         style={{
           backgroundColor: isActive
             ? activeBackgroundColor
             : inactiveBackgroundColor,
           border: `${borderWidth} solid`,
-          borderColor: isActive ? activeBorderColor : inactiveBorderColor,
-          boxShadow: isActive ? activeBoxShadow : inactiveBoxShadow,
+          borderColor: isActive
+            ? activeBorderColor
+            : isHovered
+            ? MENU_BUTTON_HOVER_BORDER
+            : inactiveBorderColor,
+          boxShadow: isActive
+            ? activeBoxShadow
+            : isHovered
+            ? MENU_BUTTON_HOVER_SHADOW
+            : inactiveBoxShadow,
         }}
       >
         {children}
+        {bottomLabel && (
+          <span
+            className={`text-xs font-mono ${
+              isActive ? "text-white" : "text-gray-400"
+            }`}
+          >
+            {bottomLabel}
+          </span>
+        )}
       </button>
-
-      {/* 하단 라벨 (서브메뉴 단축키용) */}
-      {bottomLabel && (
-        <span className="text-xs text-gray-400 mt-1 font-mono">
-          {bottomLabel}
-        </span>
-      )}
-
-      {/* 호버 툴팁 */}
-      {tooltip && showTooltip && (
-        <div className="absolute bottom-full mb-2 px-2 py-1 bg-black bg-opacity-80 text-white text-sm rounded whitespace-nowrap z-50">
-          {tooltip}
-          <div className="absolute top-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-black border-t-opacity-80"></div>
-        </div>
-      )}
     </div>
   );
 };

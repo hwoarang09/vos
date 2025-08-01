@@ -26,12 +26,20 @@ import {
   Building2,
   Cog,
 } from "lucide-react";
+import { ReactComponent as Curve180Icon } from "@/assets/icons/curve180.svg";
+import { ReactComponent as Curve90Icon } from "@/assets/icons/curve90.svg";
+import { ReactComponent as StrEdgeIcon } from "@/assets/icons/str_edge.svg";
+
 import {
   SubMenuItem,
   ACTIVE_STROKE_COLOR,
   INACTIVE_STROKE_COLOR,
   ACTIVE_FILL_COLOR,
   INACTIVE_FILL_COLOR,
+  ICON_SIZE_LARGE,
+  ICON_SIZE_MEDIUM,
+  ICON_SIZE_SMALL,
+  ICON_SIZE_EXTRA_SMALL,
 } from "../shared";
 
 export const subMenuConfig: Record<string, SubMenuItem[]> = {
@@ -41,7 +49,7 @@ export const subMenuConfig: Record<string, SubMenuItem[]> = {
       label: "Realtime",
       iconFn: (isActive: boolean) => (
         <TrendingUp
-          size={32}
+          size={ICON_SIZE_LARGE}
           style={{
             stroke: isActive ? ACTIVE_STROKE_COLOR : INACTIVE_STROKE_COLOR,
             strokeWidth: 2,
@@ -54,7 +62,7 @@ export const subMenuConfig: Record<string, SubMenuItem[]> = {
       label: "Daily",
       iconFn: (isActive: boolean) => (
         <Calendar
-          size={32}
+          size={36}
           style={{
             stroke: isActive ? ACTIVE_STROKE_COLOR : INACTIVE_STROKE_COLOR,
             strokeWidth: 2,
@@ -67,7 +75,7 @@ export const subMenuConfig: Record<string, SubMenuItem[]> = {
       label: "Weekly",
       iconFn: (isActive: boolean) => (
         <BarChart3
-          size={32}
+          size={36}
           style={{
             stroke: isActive ? ACTIVE_STROKE_COLOR : INACTIVE_STROKE_COLOR,
             strokeWidth: 2,
@@ -80,7 +88,7 @@ export const subMenuConfig: Record<string, SubMenuItem[]> = {
       label: "Monthly",
       iconFn: (isActive: boolean) => (
         <CalendarDays
-          size={32}
+          size={36}
           style={{
             stroke: isActive ? ACTIVE_STROKE_COLOR : INACTIVE_STROKE_COLOR,
             strokeWidth: 2,
@@ -93,7 +101,7 @@ export const subMenuConfig: Record<string, SubMenuItem[]> = {
       label: "Performance",
       iconFn: (isActive: boolean) => (
         <Zap
-          size={32}
+          size={36}
           style={{
             fill: isActive ? ACTIVE_FILL_COLOR : INACTIVE_FILL_COLOR,
             stroke: isActive ? ACTIVE_STROKE_COLOR : INACTIVE_STROKE_COLOR,
@@ -109,7 +117,7 @@ export const subMenuConfig: Record<string, SubMenuItem[]> = {
       label: "All",
       iconFn: (isActive: boolean) => (
         <Car
-          size={32}
+          size={36}
           style={{
             fill: isActive ? ACTIVE_FILL_COLOR : INACTIVE_FILL_COLOR,
             stroke: isActive ? ACTIVE_STROKE_COLOR : INACTIVE_STROKE_COLOR,
@@ -123,7 +131,7 @@ export const subMenuConfig: Record<string, SubMenuItem[]> = {
       label: "Active",
       iconFn: (isActive: boolean) => (
         <Circle
-          size={32}
+          size={36}
           style={{
             fill: isActive ? "#00ff00" : "#00aa00",
             stroke: isActive ? ACTIVE_STROKE_COLOR : INACTIVE_STROKE_COLOR,
@@ -137,7 +145,7 @@ export const subMenuConfig: Record<string, SubMenuItem[]> = {
       label: "Idle",
       iconFn: (isActive: boolean) => (
         <Clock
-          size={32}
+          size={36}
           style={{
             stroke: isActive ? ACTIVE_STROKE_COLOR : INACTIVE_STROKE_COLOR,
             strokeWidth: 2,
@@ -150,7 +158,7 @@ export const subMenuConfig: Record<string, SubMenuItem[]> = {
       label: "Maintenance",
       iconFn: (isActive: boolean) => (
         <Wrench
-          size={32}
+          size={36}
           style={{
             stroke: isActive ? ACTIVE_STROKE_COLOR : INACTIVE_STROKE_COLOR,
             strokeWidth: 2,
@@ -163,7 +171,7 @@ export const subMenuConfig: Record<string, SubMenuItem[]> = {
       label: "History",
       iconFn: (isActive: boolean) => (
         <FileText
-          size={32}
+          size={36}
           style={{
             stroke: isActive ? ACTIVE_STROKE_COLOR : INACTIVE_STROKE_COLOR,
             strokeWidth: 2,
@@ -178,7 +186,7 @@ export const subMenuConfig: Record<string, SubMenuItem[]> = {
       label: "Routes",
       iconFn: (isActive: boolean) => (
         <Map
-          size={32}
+          size={36}
           style={{
             stroke: isActive ? ACTIVE_STROKE_COLOR : INACTIVE_STROKE_COLOR,
             strokeWidth: 2,
@@ -191,7 +199,7 @@ export const subMenuConfig: Record<string, SubMenuItem[]> = {
       label: "Schedule",
       iconFn: (isActive: boolean) => (
         <Timer
-          size={32}
+          size={36}
           style={{
             stroke: isActive ? ACTIVE_STROKE_COLOR : INACTIVE_STROKE_COLOR,
             strokeWidth: 2,
@@ -204,7 +212,7 @@ export const subMenuConfig: Record<string, SubMenuItem[]> = {
       label: "Monitor",
       iconFn: (isActive: boolean) => (
         <Eye
-          size={32}
+          size={36}
           style={{
             stroke: isActive ? ACTIVE_STROKE_COLOR : INACTIVE_STROKE_COLOR,
             strokeWidth: 2,
@@ -217,7 +225,7 @@ export const subMenuConfig: Record<string, SubMenuItem[]> = {
       label: "Alerts",
       iconFn: (isActive: boolean) => (
         <Bell
-          size={32}
+          size={36}
           style={{
             stroke: isActive ? ACTIVE_STROKE_COLOR : INACTIVE_STROKE_COLOR,
             strokeWidth: 2,
@@ -230,7 +238,7 @@ export const subMenuConfig: Record<string, SubMenuItem[]> = {
       label: "Logs",
       iconFn: (isActive: boolean) => (
         <FileCheck
-          size={32}
+          size={36}
           style={{
             stroke: isActive ? ACTIVE_STROKE_COLOR : INACTIVE_STROKE_COLOR,
             strokeWidth: 2,
@@ -244,11 +252,13 @@ export const subMenuConfig: Record<string, SubMenuItem[]> = {
       id: "edge-menu-1",
       label: "Straight",
       iconFn: (isActive: boolean) => (
-        <Minus
-          size={32}
+        <StrEdgeIcon
+          width={36}
+          height={36}
           style={{
             stroke: isActive ? ACTIVE_STROKE_COLOR : INACTIVE_STROKE_COLOR,
-            strokeWidth: 3,
+            fill: isActive ? ACTIVE_STROKE_COLOR : INACTIVE_STROKE_COLOR,
+            strokeWidth: 2,
           }}
         />
       ),
@@ -257,10 +267,12 @@ export const subMenuConfig: Record<string, SubMenuItem[]> = {
       id: "edge-menu-2",
       label: "90° Curve",
       iconFn: (isActive: boolean) => (
-        <CornerDownRight
-          size={32}
+        <Curve90Icon
+          width={36}
+          height={36}
           style={{
             stroke: isActive ? ACTIVE_STROKE_COLOR : INACTIVE_STROKE_COLOR,
+            fill: isActive ? ACTIVE_STROKE_COLOR : INACTIVE_STROKE_COLOR,
             strokeWidth: 2,
           }}
         />
@@ -270,10 +282,12 @@ export const subMenuConfig: Record<string, SubMenuItem[]> = {
       id: "edge-menu-3",
       label: "180° Curve",
       iconFn: (isActive: boolean) => (
-        <RotateCcw
-          size={32}
+        <Curve180Icon
+          width={36}
+          height={36}
           style={{
             stroke: isActive ? ACTIVE_STROKE_COLOR : INACTIVE_STROKE_COLOR,
+            fill: isActive ? ACTIVE_STROKE_COLOR : INACTIVE_STROKE_COLOR,
             strokeWidth: 2,
           }}
         />
@@ -284,7 +298,7 @@ export const subMenuConfig: Record<string, SubMenuItem[]> = {
       label: "S Curve",
       iconFn: (isActive: boolean) => (
         <Waves
-          size={32}
+          size={36}
           style={{
             stroke: isActive ? ACTIVE_STROKE_COLOR : INACTIVE_STROKE_COLOR,
             strokeWidth: 2,
@@ -297,7 +311,7 @@ export const subMenuConfig: Record<string, SubMenuItem[]> = {
       label: "H Shape",
       iconFn: (isActive: boolean) => (
         <Hash
-          size={32}
+          size={36}
           style={{
             stroke: isActive ? ACTIVE_STROKE_COLOR : INACTIVE_STROKE_COLOR,
             strokeWidth: 2,
@@ -310,7 +324,7 @@ export const subMenuConfig: Record<string, SubMenuItem[]> = {
       label: "R Shape",
       iconFn: (isActive: boolean) => (
         <Move3D
-          size={32}
+          size={36}
           style={{
             stroke: isActive ? ACTIVE_STROKE_COLOR : INACTIVE_STROKE_COLOR,
             strokeWidth: 2,
@@ -323,7 +337,7 @@ export const subMenuConfig: Record<string, SubMenuItem[]> = {
       label: "Junction",
       iconFn: (isActive: boolean) => (
         <Shuffle
-          size={32}
+          size={36}
           style={{
             stroke: isActive ? ACTIVE_STROKE_COLOR : INACTIVE_STROKE_COLOR,
             strokeWidth: 2,
@@ -336,7 +350,7 @@ export const subMenuConfig: Record<string, SubMenuItem[]> = {
       label: "Bridge",
       iconFn: (isActive: boolean) => (
         <Building2
-          size={32}
+          size={36}
           style={{
             stroke: isActive ? ACTIVE_STROKE_COLOR : INACTIVE_STROKE_COLOR,
             strokeWidth: 2,
@@ -349,7 +363,7 @@ export const subMenuConfig: Record<string, SubMenuItem[]> = {
       label: "Custom",
       iconFn: (isActive: boolean) => (
         <Cog
-          size={32}
+          size={36}
           style={{
             stroke: isActive ? ACTIVE_STROKE_COLOR : INACTIVE_STROKE_COLOR,
             strokeWidth: 2,
