@@ -29,6 +29,7 @@ import {
 import { ReactComponent as Curve180Icon } from "@/assets/icons/curve180.svg";
 import { ReactComponent as Curve90Icon } from "@/assets/icons/curve90.svg";
 import { ReactComponent as StrEdgeIcon } from "@/assets/icons/str_edge.svg";
+import { ReactComponent as R_EdgeIcon } from "@/assets/icons/r_edge.svg";
 
 import {
   SubMenuItem,
@@ -323,7 +324,7 @@ export const subMenuConfig: Record<string, SubMenuItem[]> = {
       id: "edge-menu-6",
       label: "R Shape",
       iconFn: (isActive: boolean) => (
-        <Move3D
+        <R_EdgeIcon
           size={36}
           style={{
             stroke: isActive ? ACTIVE_STROKE_COLOR : INACTIVE_STROKE_COLOR,

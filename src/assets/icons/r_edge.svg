@@ -1,0 +1,16 @@
+<svg
+  xmlns="http://www.w3.org/2000/svg"
+  viewBox="0 0 120 120"
+  width="100"
+  height="100"
+  fill="none"
+  stroke="black"
+  stroke-width="10"
+  stroke-linecap="round"
+>
+  <!-- 수직 직선 -->
+  <path d="M40 10 V80" />
+
+  <!-- 오른쪽 아래로 90도 곡선 (시계방향) -->
+  <path d="M40 60 A20 20 0 0 1 60 80" />
+</svg>
