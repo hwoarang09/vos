@@ -10,7 +10,7 @@ import { mqttUrl } from "../../../config/mqttConfig";
 import { GlobalTooltip } from "./GlobalTooltip";
 
 const MenuContainer: React.FC = () => {
-  const { activeTopMenu, rightPanelOpen } = useMenuStore();
+  const { activeMainMenu, rightPanelOpen } = useMenuStore();
   const { initializeClient } = useMqttStore();
 
   // 기존 MQTT 초기화 로직 유지
@@ -38,7 +38,7 @@ const MenuContainer: React.FC = () => {
       <BottomMenu />
 
       {/* 서브 메뉴 - activeTopMenu가 있을 때만 표시 */}
-      {activeTopMenu && <SubMenu />}
+      {activeMainMenu && <SubMenu />}
 
       {/* 우측 패널 - 상단/하단 메뉴 높이 고려 */}
       {rightPanelOpen && (

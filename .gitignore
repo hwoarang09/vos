@@ -16,7 +16,7 @@ build/
 # Vite cache
 .cache/
 .vitepress/cache/
-vite.config.ts
+# vite.config.ts
 
 # Local env
 .env

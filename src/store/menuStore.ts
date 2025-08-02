@@ -1,17 +1,17 @@
-// store/menuStore.ts
+// store/menuStore.ts (최종 버전)
 import { create } from "zustand";
 
-export type TopMenuType =
+export type MainMenuType =
   | "Statistics"
   | "Vehicle"
   | "Operation"
   | "EdgeBuilder";
 
 export interface MenuState {
-  // 기존 상태들
-  activeTopMenu: TopMenuType | null;
-  activeBottomMenu: string | null;
-  activeSubSubMenu: string | null; // 3단계 메뉴
+  // 메뉴 계층 구조에 맞는 명확한 네이밍
+  activeMainMenu: MainMenuType | null;        // 화면 하단의 메인 메뉴
+  activeSubMenu: string | null;               // 메인 메뉴 클릭시 나타나는 서브 메뉴
+  activeThirdMenu: string | null;             // 3단계 메뉴 (필요시)
   rightPanelOpen: boolean;
 
   // 툴팁 관련 상태
@@ -20,11 +20,11 @@ export interface MenuState {
   tooltipPosition: { x: number; y: number } | null;
   tooltipLevel: number | null;
 
-  // 메소드들도 타입에 포함
+  // 메소드들
   getCurrentTopLevel: () => number;
-  setActiveTopMenu: (menu: TopMenuType | null) => void;
-  setActiveBottomMenu: (menu: string | null) => void;
-  setActiveSubSubMenu: (menu: string | null) => void;
+  setActiveMainMenu: (menu: MainMenuType | null) => void;
+  setActiveSubMenu: (menu: string | null) => void;
+  setActiveThirdMenu: (menu: string | null) => void;
   setRightPanelOpen: (open: boolean) => void;
   showTooltip: (
     menuId: string,
@@ -36,10 +36,10 @@ export interface MenuState {
 }
 
 export const useMenuStore = create<MenuState>((set, get) => ({
-  // 기존 상태들
-  activeTopMenu: null,
-  activeBottomMenu: null,
-  activeSubSubMenu: null,
+  // 상태 초기값
+  activeMainMenu: null,
+  activeSubMenu: null,
+  activeThirdMenu: null,
   rightPanelOpen: false,
 
   // 툴팁 상태
@@ -48,24 +48,23 @@ export const useMenuStore = create<MenuState>((set, get) => ({
   tooltipPosition: null,
   tooltipLevel: null,
 
-  // 현재 최상단 레벨 계산 메소드 (현재는 최대 2까지만)
+  // 현재 최상단 레벨 계산
   getCurrentTopLevel: () => {
-    const { activeTopMenu, activeBottomMenu, activeSubSubMenu } = get();
+    const { activeMainMenu, activeSubMenu, activeThirdMenu } = get();
 
-    // TODO: 나중에 3단계 메뉴 구현시 아래 주석 해제
-    // if (activeSubSubMenu) return 3; // 3단계 메뉴가 열리면 최상단은 3
-    if (activeBottomMenu) return 2; // 2단계 메뉴가 열려도 최상단은 2 유지
-    if (activeTopMenu) return 2; // 1단계 메뉴가 열리면 최상단은 2
-    return 1; // 아무것도 없으면 최상단은 1
+    if (activeThirdMenu) return 3;     // 3단계 메뉴가 활성화된 경우
+    if (activeSubMenu) return 2;       // 서브 메뉴가 활성화된 경우  
+    if (activeMainMenu) return 2;      // 메인 메뉴가 활성화된 경우 (서브메뉴 표시 준비)
+    return 1;                          // 기본 상태
   },
 
-  // 기존 메소드들
-  setActiveTopMenu: (menu: TopMenuType | null) => {
+  // 메인 메뉴 설정 (화면 하단의 메뉴)
+  setActiveMainMenu: (menu: MainMenuType | null) => {
     set({
-      activeTopMenu: menu,
-      // 상위 메뉴 닫으면 하위 메뉴들도 닫기
-      activeBottomMenu: menu ? get().activeBottomMenu : null,
-      activeSubSubMenu: menu ? get().activeSubSubMenu : null,
+      activeMainMenu: menu,
+      // 메인 메뉴 변경시 하위 메뉴들 초기화
+      activeSubMenu: null,
+      activeThirdMenu: null,
       // 툴팁 숨김
       hoveredMenuId: null,
       tooltipMessage: null,
@@ -74,11 +73,12 @@ export const useMenuStore = create<MenuState>((set, get) => ({
     });
   },
 
-  setActiveBottomMenu: (menu: string | null) => {
+  // 서브 메뉴 설정 (메인 메뉴 클릭시 나타나는 메뉴)
+  setActiveSubMenu: (menu: string | null) => {
     set({
-      activeBottomMenu: menu,
-      // 하위 메뉴 정리
-      activeSubSubMenu: menu ? get().activeSubSubMenu : null,
+      activeSubMenu: menu,
+      // 서브 메뉴 변경시 3단계 메뉴 초기화
+      activeThirdMenu: null,
       // 툴팁 숨김
       hoveredMenuId: null,
       tooltipMessage: null,
@@ -87,9 +87,10 @@ export const useMenuStore = create<MenuState>((set, get) => ({
     });
   },
 
-  setActiveSubSubMenu: (menu: string | null) => {
+  // 3단계 메뉴 설정
+  setActiveThirdMenu: (menu: string | null) => {
     set({
-      activeSubSubMenu: menu,
+      activeThirdMenu: menu,
       // 툴팁 숨김
       hoveredMenuId: null,
       tooltipMessage: null,

@@ -16,7 +16,7 @@ export const GlobalTooltip: React.FC = () => {
 
   // 서브메뉴(레벨 2)는 아래로, 메인메뉴(레벨 1)는 위로
   const isSubMenu = tooltipLevel >= 2;
-  const topOffset = isSubMenu ? 74 : -54; // 서브메뉴는 아래로, 메인메뉴는 위로
+  const topOffset = isSubMenu ? 54 : -54; // 서브메뉴는 아래로, 메인메뉴는 위로
 
   return (
     <div

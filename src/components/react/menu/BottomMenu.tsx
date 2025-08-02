@@ -1,25 +1,22 @@
-// components/react/menu/BottomMenu.tsx (수정된 버전)
+// components/react/menu/BottomMenu.tsx (최종 버전)
 import React from "react";
-import { useMenuStore, TopMenuType } from "@store/menuStore";
-import { TrainTrack, ChartPie, Car, ShipWheel } from "lucide-react";
+import { useMenuStore, MainMenuType } from "@store/menuStore";
 import {
   MenuContainer,
   MenuButton,
   MenuDivider,
   BottomMenuItem,
-  ACTIVE_STROKE_COLOR,
-  INACTIVE_STROKE_COLOR,
-  ACTIVE_FILL_COLOR,
-  INACTIVE_FILL_COLOR,
 } from "./shared";
 import { tooltipsByLevel } from "./data/tooltipConfig";
 import { bottomMenuGroups } from "./data/BottomMenuConfig";
 
 const BottomMenu: React.FC = () => {
-  const { activeTopMenu, setActiveTopMenu } = useMenuStore();
+  const { activeMainMenu, setActiveMainMenu } = useMenuStore();
 
-  const handleMenuClick = (menuId: TopMenuType) => {
-    setActiveTopMenu(activeTopMenu === menuId ? null : menuId);
+  const handleMenuClick = (menuId: MainMenuType) => {
+    // 같은 메뉴를 클릭하면 토글, 다른 메뉴를 클릭하면 해당 메뉴 활성화
+    console.log('menuId : ', menuId, activeMainMenu === menuId ? null : menuId, 'activeMainMenu : ',activeMainMenu)
+    setActiveMainMenu(activeMainMenu === menuId ? null : menuId);
   };
 
   return (
@@ -27,7 +24,7 @@ const BottomMenu: React.FC = () => {
       {bottomMenuGroups.map((group, groupIndex) => (
         <React.Fragment key={`group-${groupIndex}`}>
           {group.map((item) => {
-            const isActive = activeTopMenu === item.id;
+            const isActive = activeMainMenu === item.id;
 
             return (
               <MenuButton

@@ -1,4 +1,4 @@
-// components/react/menu/SubMenu.tsx (수정된 버전)
+// components/react/menu/SubMenu.tsx (최종 버전)
 import React from "react";
 import { useMenuStore } from "@store/menuStore";
 import { MenuButton } from "./shared";
@@ -7,37 +7,49 @@ import { tooltipsByLevel } from "./data/tooltipConfig";
 
 const SubMenu: React.FC = () => {
   const {
-    activeTopMenu,
-    activeBottomMenu,
-    setActiveBottomMenu,
-    setActiveSubSubMenu, // 3단계 메뉴용
+    activeMainMenu,        // 메인 메뉴 상태
+    activeSubMenu,         // 서브 메뉴 상태
+    setActiveSubMenu,      // 서브 메뉴 설정
+    setActiveThirdMenu,    // 3단계 메뉴 설정
     setRightPanelOpen,
   } = useMenuStore();
 
-  if (!activeTopMenu) return null;
+  // 메인 메뉴가 활성화되지 않았으면 서브메뉴 표시하지 않음
+  console.log('activeMainMenu ', activeMainMenu)
+  if (!activeMainMenu) return null;
+  
 
-  const menuItems = subMenuConfig[activeTopMenu] || [];
+  const menuItems = subMenuConfig[activeMainMenu] || [];
 
   const handleSubMenuClick = (menuId: string) => {
-    setActiveBottomMenu(menuId);
+    // 같은 메뉴를 클릭하면 토글, 다른 메뉴를 클릭하면 해당 메뉴 활성화
+    const newActiveSubMenu = activeSubMenu === menuId ? null : menuId;
+    setActiveSubMenu(newActiveSubMenu);
 
-    // 서브메뉴 클릭시 3단계 메뉴가 있는지 확인하고 처리
-    // 예: EdgeBuilder의 일부 메뉴만 3단계까지 있다고 가정
-    const hasSubSubMenu =
-      activeTopMenu === "EdgeBuilder" &&
-      ["edge-menu-1", "edge-menu-2"].includes(menuId);
+    // 서브메뉴가 선택된 경우에만 3단계 메뉴 처리
+    if (newActiveSubMenu) {
+      // 서브메뉴 클릭시 3단계 메뉴가 있는지 확인하고 처리
+      // 예: EdgeBuilder의 일부 메뉴만 3단계까지 있다고 가정
+      const hasThirdLevelMenu =
+        activeMainMenu === "EdgeBuilder" &&
+        ["edge-menu-1", "edge-menu-2"].includes(menuId);
 
-    if (hasSubSubMenu) {
-      // 3단계 메뉴가 있는 경우 - 여기서는 임시로 첫 번째 서브서브메뉴 자동 선택
-      setActiveSubSubMenu(`${menuId}-sub-1`);
+      if (hasThirdLevelMenu) {
+        // 3단계 메뉴가 있는 경우 - 임시로 첫 번째 3단계 메뉴 자동 선택
+        setActiveThirdMenu(`${menuId}-sub-1`);
+      } else {
+        // 3단계 메뉴가 없는 경우 - 바로 우측 패널 열기
+        setRightPanelOpen(true);
+      }
     } else {
-      // 3단계 메뉴가 없는 경우 - 바로 우측 패널 열기
-      setRightPanelOpen(true);
+      // 서브메뉴가 해제된 경우 - 3단계 메뉴와 우측 패널도 닫기
+      setActiveThirdMenu(null);
+      setRightPanelOpen(false);
     }
   };
 
   return (
-    <div className="fixed bottom-[64px] left-0 right-0 z-50 flex justify-center">
+    <div className="fixed bottom-[50px] left-0 right-0 z-50 flex justify-center">
       <div
         className="flex space-x-2 p-2 rounded-xl shadow-lg border-2"
         style={{
@@ -49,14 +61,14 @@ const SubMenu: React.FC = () => {
         {menuItems.map((item, index) => (
           <MenuButton
             key={item.id}
-            isActive={activeBottomMenu === item.id}
+            isActive={activeSubMenu === item.id}
             onClick={() => handleSubMenuClick(item.id)}
             size="large" // 서브메뉴는 크게
             buttonLevel={2} // 서브메뉴는 레벨 2
             bottomLabel={(index + 1).toString()}
             tooltip={tooltipsByLevel[2][item.id]} // 서브메뉴 툴팁
           >
-            {item.iconFn(activeBottomMenu === item.id)}
+            {item.iconFn(activeSubMenu === item.id)}
           </MenuButton>
         ))}
       </div>

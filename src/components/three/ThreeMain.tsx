@@ -20,7 +20,7 @@ const ThreeScene: React.FC = () => {
       <pointLight position={[10, 10, 10]} />
 
       {/* <Box color="orange" onClick={handleBoxClick} /> */}
-      <Stations />
+      {/* <Stations /> */}
       <Perf position="bottom-right" />
       {/* 카메라 상태 업데이트 */}
       <CameraController />
