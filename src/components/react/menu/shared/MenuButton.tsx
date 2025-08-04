@@ -101,7 +101,12 @@ export const MenuButton: React.FC<MenuButtonProps> = ({
         onClick={handleClick}
         onMouseEnter={handleMouseEnter}
         onMouseLeave={handleMouseLeave}
-        className={`${sizeClass} ${marginClass} flex flex-col items-center justify-center ${borderRadius} text-xs font-medium transition-all duration-100 hover:scale-102 ${className}`}
+        className={`
+        ${sizeClass} ${marginClass} flex flex-col items-center justify-center ${borderRadius} text-xs font-medium
+        transition-all duration-100
+        hover:animate-bump
+        ${className}
+      `}
         style={{
           backgroundColor: isActive
             ? activeBackgroundColor
@@ -121,11 +126,14 @@ export const MenuButton: React.FC<MenuButtonProps> = ({
       >
         {children}
         {bottomLabel && (
-          <span
-            className={`text-xs font-mono ${
-              isActive ? "text-white" : "text-gray-400"
-            }`}
-          >
+          // <span
+          //   className={`text-xs font-mono ${
+          //     isActive ? "text-gray-400" : "text-gray-400"
+          //   }`}
+          // >
+          <span className={`text-xs font-mono leading-none tracking-tight ${
+               isActive ? "text-gray-400" : "text-gray-400"
+             }`}> 
             {bottomLabel}
           </span>
         )}

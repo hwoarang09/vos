@@ -32,7 +32,8 @@ const SubMenu: React.FC = () => {
       // 예: EdgeBuilder의 일부 메뉴만 3단계까지 있다고 가정
       const hasThirdLevelMenu =
         activeMainMenu === "EdgeBuilder" &&
-        ["edge-menu-1", "edge-menu-2"].includes(menuId);
+        // ["edge-menu-1", "edge-menu-2"].includes(menuId);
+        ['잠시'].includes(menuId);
 
       if (hasThirdLevelMenu) {
         // 3단계 메뉴가 있는 경우 - 임시로 첫 번째 3단계 메뉴 자동 선택

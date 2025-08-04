@@ -254,8 +254,8 @@ export const subMenuConfig: Record<string, SubMenuItem[]> = {
       label: "Straight",
       iconFn: (isActive: boolean) => (
         <StrEdgeIcon
-          width={36}
-          height={36}
+          width={40}
+          height={40}
           style={{
             stroke: isActive ? ACTIVE_STROKE_COLOR : INACTIVE_STROKE_COLOR,
             fill: isActive ? ACTIVE_STROKE_COLOR : INACTIVE_STROKE_COLOR,
@@ -269,8 +269,8 @@ export const subMenuConfig: Record<string, SubMenuItem[]> = {
       label: "90° Curve",
       iconFn: (isActive: boolean) => (
         <Curve90Icon
-          width={36}
-          height={36}
+          width={40}
+          height={40}
           style={{
             stroke: isActive ? ACTIVE_STROKE_COLOR : INACTIVE_STROKE_COLOR,
             fill: isActive ? ACTIVE_STROKE_COLOR : INACTIVE_STROKE_COLOR,

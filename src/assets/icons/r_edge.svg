@@ -9,12 +9,11 @@
   shape-rendering="geometricPrecision"
 >
   <!-- 수직 직선 -->
-
  <path d="M30 20 V120" stroke="black" stroke-width="10" />
  <path d="M50 85 V120" stroke="black" stroke-width="10" />
  <path d="M50 20 V40" stroke="black" stroke-width="10" />
 
   <!-- 오른쪽 아래로 90도 곡선 (시계방향) -->
 <path d="M100 90 A50 50 0 0 1 50 40" stroke-width="10"/>
-<path d="M100 110 A70 70 0 0 1 30 40" stroke-width="10" />
+<path d="M100 110 A70 70 0 0 1 50 90" stroke-width="10" />
 </svg>
