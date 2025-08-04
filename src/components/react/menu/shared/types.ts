@@ -13,8 +13,8 @@ export type SubMenuItem = {
 };
 
 // 공통 색상 상수
-export const ACTIVE_STROKE_COLOR = "rgba(255,255,255,0.9)";
-export const INACTIVE_STROKE_COLOR = "rgba(255,255,255,0.8)";
+export const ACTIVE_STROKE_COLOR = "rgb(225,225,225)";
+export const INACTIVE_STROKE_COLOR = "rgb(200,200,200)";
 export const ACTIVE_FILL_COLOR = "rgba(255,255,255,0.9)";
 export const INACTIVE_FILL_COLOR = "rgba(255,255,255,0.8)";
 
