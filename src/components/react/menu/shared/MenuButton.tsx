@@ -89,14 +89,16 @@ export const MenuButton: React.FC<MenuButtonProps> = ({
     hideTooltip();
   };
 
-  const handleClick = () => {
+  const handleClick = (e: React.MouseEvent<HTMLButtonElement>) => {
     hideTooltip();
     onClick();
+    e.currentTarget.blur();
   };
 
   return (
     <div className="relative flex flex-col items-center justify-center">
       <button
+        type="button"
         data-menu-id={dataMenuId}
         onClick={handleClick}
         onMouseEnter={handleMouseEnter}
