@@ -3,26 +3,26 @@ import React from "react";
 import { useMenuStore } from "../../../store/menuStore";
 
 const RightPanel: React.FC = () => {
-  const { activeTopMenu, activeBottomMenu, setRightPanelOpen } = useMenuStore();
+  const { activeMainMenu, activeSubMenu, setRightPanelOpen } = useMenuStore();
 
   const handleClose = () => {
     setRightPanelOpen(false);
   };
 
   const renderContent = () => {
-    if (!activeTopMenu || !activeBottomMenu) {
+    if (!activeMainMenu || !activeSubMenu) {
       return <div className="text-gray-500">Select a menu to view details</div>;
     }
 
     // EdgeBuilder의 경우 부품 목록 표시
-    if (activeTopMenu === "EdgeBuilder") {
+    if (activeMainMenu === "EdgeBuilder") {
       return (
         <div className="space-y-4">
           <h3 className="text-lg font-semibold text-gray-800">
-            {getMenuLabel(activeBottomMenu)} Components
+            {getMenuLabel(activeSubMenu)} Components
           </h3>
 
-          {activeBottomMenu === "edge-menu-1" && (
+          {activeSubMenu === "edge-menu-1" && (
             <div className="space-y-3">
               <div className="border border-gray-300 rounded p-3 hover:bg-gray-50 cursor-pointer">
                 <div className="font-medium">Straight Rail 1m</div>
@@ -45,7 +45,7 @@ const RightPanel: React.FC = () => {
             </div>
           )}
 
-          {activeBottomMenu === "edge-menu-2" && (
+          {activeSubMenu === "edge-menu-2" && (
             <div className="space-y-3">
               <div className="border border-gray-300 rounded p-3 hover:bg-gray-50 cursor-pointer">
                 <div className="font-medium">Curved Rail 15°</div>
@@ -62,7 +62,7 @@ const RightPanel: React.FC = () => {
             </div>
           )}
 
-          {activeBottomMenu === "edge-menu-3" && (
+          {activeSubMenu === "edge-menu-3" && (
             <div className="space-y-3">
               <div className="border border-gray-300 rounded p-3 hover:bg-gray-50 cursor-pointer">
                 <div className="font-medium">Y-Junction</div>
@@ -81,13 +81,13 @@ const RightPanel: React.FC = () => {
 
           {/* 다른 EdgeBuilder 메뉴들 */}
           {!["edge-menu-1", "edge-menu-2", "edge-menu-3"].includes(
-            activeBottomMenu
+            activeSubMenu
           ) && (
             <div className="space-y-3">
               <div className="border border-gray-300 rounded p-3 hover:bg-gray-50 cursor-pointer">
                 <div className="font-medium">Component 1</div>
                 <div className="text-sm text-gray-500">
-                  Sample component for {getMenuLabel(activeBottomMenu)}
+                  Sample component for {getMenuLabel(activeSubMenu)}
                 </div>
               </div>
               <div className="border border-gray-300 rounded p-3 hover:bg-gray-50 cursor-pointer">
@@ -106,15 +106,15 @@ const RightPanel: React.FC = () => {
     return (
       <div className="space-y-4">
         <h3 className="text-lg font-semibold text-gray-800">
-          {getMenuLabel(activeBottomMenu)}
+          {getMenuLabel(activeSubMenu)}
         </h3>
         <div className="text-gray-600">
-          Current selection: {activeTopMenu} → {activeBottomMenu}
+          Current selection: {activeMainMenu} → {activeSubMenu}
         </div>
         <div className="space-y-2 text-sm text-gray-500">
           <p>
             This panel will show detailed content for{" "}
-            {getMenuLabel(activeBottomMenu)}.
+            {getMenuLabel(activeSubMenu)}.
           </p>
           <p>Charts, settings, and data will be displayed here.</p>
         </div>
