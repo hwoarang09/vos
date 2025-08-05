@@ -134,7 +134,7 @@ export const MenuButton: React.FC<MenuButtonProps> = ({
           //   }`}
           // >
           <span className={`text-xs font-mono leading-none tracking-tight ${
-               isActive ? "text-gray-400" : "text-gray-400"
+               isActive ? "text-gray-400" : "text-gray-200"
              }`}> 
             {bottomLabel}
           </span>
