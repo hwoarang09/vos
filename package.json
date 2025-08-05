@@ -1,7 +1,7 @@
 {
   "name": "vos_r3f",
   "private": true,
-  "version": "0.0.15",
+  "version": "0.0.16",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -16,6 +16,7 @@
     "@tailwindcss/vite": "^4.1.11",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
+    "firebase": "^12.0.0",
     "lucide-react": "^0.534.0",
     "mqtt": "^5.10.1",
     "r3f-perf": "^7.2.2",

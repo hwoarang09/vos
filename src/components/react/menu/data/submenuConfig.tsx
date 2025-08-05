@@ -325,7 +325,7 @@ export const subMenuConfig: Record<string, SubMenuItem[]> = {
       label: "R Shape",
       iconFn: (isActive: boolean) => (
         <R_EdgeIcon
-          size={36}
+          // size={36}
           style={{
             stroke: isActive ? ACTIVE_STROKE_COLOR : INACTIVE_STROKE_COLOR,
             strokeWidth: 2,

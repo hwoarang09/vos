@@ -1,5 +1,11 @@
 // components/react/menu/data/tooltipConfig.tsx (새로운 파일)
-export const tooltipsByLevel = {
+import { MainMenuType } from "@store/menuStore";
+
+export const tooltipsByLevel: {
+  1: Record<MainMenuType, string>;
+  2: Record<string, string>;
+  3: Record<string, string>;
+} = {
   1: {
     // 메인메뉴 레벨
     Statistics: "통계 및 분석",

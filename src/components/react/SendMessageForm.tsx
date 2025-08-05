@@ -1,6 +1,6 @@
 // components/SendMessageForm.tsx
 import React, { useState } from "react";
-import TopicDropdown from "./TopicDropdown";
+// import TopicDropdown from "./TopicDropdown";
 import MessageInput from "./MessageInput";
 import topicList from "../../config/topicList";
 import { useMqttStore } from "../../store/mqttStore";
@@ -34,7 +34,7 @@ const SendMessageForm = () => {
 
   return (
     <div className="bg-white/80 p-4 rounded shadow-md flex-grow">
-      <h2 className="text-lg font-semibold">Send Message</h2>
+      {/* <h2 className="text-lg font-semibold">Send Message</h2>
       <TopicDropdown
         topics={topicList}
         selectedTopic={selectedTopic}
@@ -52,7 +52,7 @@ const SendMessageForm = () => {
         className="mt-2 bg-blue-500 text-white px-4 py-2 rounded"
       >
         Send
-      </button>
+      </button> */}
     </div>
   );
 };

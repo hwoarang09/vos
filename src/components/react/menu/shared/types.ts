@@ -1,7 +1,7 @@
-import { TopMenuType } from "@store/menuStore";
+import { MainMenuType } from "@store/menuStore";
 
 export type BottomMenuItem = {
-  id: TopMenuType;
+  id: MainMenuType;
   label: string;
   iconFn: (isActive: boolean) => JSX.Element;
 };

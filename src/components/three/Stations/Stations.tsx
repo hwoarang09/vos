@@ -38,7 +38,7 @@ const Stations: React.FC = () => {
   return (
     <instancedMesh
       ref={meshRef}
-      args={[null, null, stationCount]} // geometry, material, instanceCount
+      args={[undefined, undefined, stationCount]} // geometry, material, instanceCount
       onPointerDown={handlePointerDown} // 클릭 이벤트
     >
       <boxGeometry args={[1, 1, 1]} /> {/* 사각형 기본 형태 */}
