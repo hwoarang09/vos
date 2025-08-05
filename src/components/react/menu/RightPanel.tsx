@@ -14,15 +14,15 @@ const RightPanel: React.FC = () => {
       return <div className="text-gray-500">Select a menu to view details</div>;
     }
 
-    // EdgeBuilder의 경우 부품 목록 표시
-    if (activeMainMenu === "EdgeBuilder") {
+    // MapBuilder의 경우 부품 목록 표시
+    if (activeMainMenu === "MapBuilder") {
       return (
         <div className="space-y-4">
           <h3 className="text-lg font-semibold text-gray-800">
             {getMenuLabel(activeSubMenu)} Components
           </h3>
 
-          {activeSubMenu === "edge-menu-1" && (
+          {activeSubMenu === "map-menu-1" && (
             <div className="space-y-3">
               <div className="border border-gray-300 rounded p-3 hover:bg-gray-50 cursor-pointer">
                 <div className="font-medium">Straight Rail 1m</div>
@@ -45,7 +45,7 @@ const RightPanel: React.FC = () => {
             </div>
           )}
 
-          {activeSubMenu === "edge-menu-2" && (
+          {activeSubMenu === "map-menu-2" && (
             <div className="space-y-3">
               <div className="border border-gray-300 rounded p-3 hover:bg-gray-50 cursor-pointer">
                 <div className="font-medium">Curved Rail 15°</div>
@@ -62,7 +62,7 @@ const RightPanel: React.FC = () => {
             </div>
           )}
 
-          {activeSubMenu === "edge-menu-3" && (
+          {activeSubMenu === "map-menu-3" && (
             <div className="space-y-3">
               <div className="border border-gray-300 rounded p-3 hover:bg-gray-50 cursor-pointer">
                 <div className="font-medium">Y-Junction</div>
@@ -79,8 +79,8 @@ const RightPanel: React.FC = () => {
             </div>
           )}
 
-          {/* 다른 EdgeBuilder 메뉴들 */}
-          {!["edge-menu-1", "edge-menu-2", "edge-menu-3"].includes(
+          {/* 다른 MapBuilder 메뉴들 */}
+          {!["map-menu-1", "map-menu-2", "map-menu-3"].includes(
             activeSubMenu
           ) && (
             <div className="space-y-3">
@@ -161,12 +161,12 @@ const RightPanel: React.FC = () => {
       "operation-menu-3": "Live Monitoring",
       "operation-menu-4": "Alert System",
       "operation-menu-5": "Operation Logs",
-      // EdgeBuilder
-      "edge-menu-1": "Straight Rails",
-      "edge-menu-2": "Curved Rails",
-      "edge-menu-3": "Junction Parts",
-      "edge-menu-4": "Special Components",
-      "edge-menu-5": "Connection Tools",
+      // MapBuilder
+      "map-menu-1": "Straight Rails",
+      "map-menu-2": "Curved Rails",
+      "map-menu-3": "Junction Parts",
+      "map-menu-4": "Special Components",
+      "map-menu-5": "Connection Tools",
     };
     return labels[menuId] || menuId;
   };

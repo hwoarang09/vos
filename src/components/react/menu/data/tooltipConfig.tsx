@@ -11,7 +11,7 @@ export const tooltipsByLevel: {
     Statistics: "통계 및 분석",
     Vehicle: "차량 관리",
     Operation: "운영 관리",
-    EdgeBuilder: "도로 편집기",
+    MapBuilder: "도로 편집기",
   },
   2: {
     // 서브메뉴 레벨
@@ -33,15 +33,15 @@ export const tooltipsByLevel: {
     "operation-menu-4": "알림 관리",
     "operation-menu-5": "운영 로그",
 
-    "edge-menu-1": "직선 도로 생성",
-    "edge-menu-2": "90° 곡선 도로",
-    "edge-menu-3": "180° 곡선 도로",
-    "edge-menu-4": "S자 곡선 도로",
-    "edge-menu-5": "H자 교차로",
-    "edge-menu-6": "R자 회전교차로",
-    "edge-menu-7": "다중 교차로",
-    "edge-menu-8": "교량 및 고가도로",
-    "edge-menu-9": "사용자 정의 도로",
+    "map-menu-1": "직선 도로 생성",
+    "map-menu-2": "90° 곡선 도로",
+    "map-menu-3": "180° 곡선 도로",
+    "map-menu-4": "S자 곡선 도로",
+    "map-menu-5": "H자 교차로",
+    "map-menu-6": "R자 회전교차로",
+    "map-menu-7": "다중 교차로",
+    "map-menu-8": "교량 및 고가도로",
+    "map-menu-9": "사용자 정의 도로",
   },
   3: {
     // 서브서브메뉴 레벨 (필요한 경우에만)

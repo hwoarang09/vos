@@ -28,8 +28,8 @@ import {
 } from "lucide-react";
 import { ReactComponent as Curve180Icon } from "@/assets/icons/curve180.svg";
 import { ReactComponent as Curve90Icon } from "@/assets/icons/curve90.svg";
-import { ReactComponent as StrEdgeIcon } from "@/assets/icons/str_edge.svg";
-import { ReactComponent as R_EdgeIcon } from "@/assets/icons/r_edge.svg";
+import { ReactComponent as StrmapIcon } from "@/assets/icons/str_edge.svg";
+import { ReactComponent as R_mapIcon } from "@/assets/icons/r_edge.svg";
 
 import {
   SubMenuItem,
@@ -248,12 +248,12 @@ export const subMenuConfig: Record<string, SubMenuItem[]> = {
       ),
     },
   ],
-  EdgeBuilder: [
+  MapBuilder: [
     {
-      id: "edge-menu-1",
+      id: "map-menu-1",
       label: "Straight",
       iconFn: (isActive: boolean) => (
-        <StrEdgeIcon
+        <StrmapIcon
           width={40}
           height={40}
           style={{
@@ -265,7 +265,7 @@ export const subMenuConfig: Record<string, SubMenuItem[]> = {
       ),
     },
     {
-      id: "edge-menu-2",
+      id: "map-menu-2",
       label: "90° Curve",
       iconFn: (isActive: boolean) => (
         <Curve90Icon
@@ -280,7 +280,7 @@ export const subMenuConfig: Record<string, SubMenuItem[]> = {
       ),
     },
     {
-      id: "edge-menu-3",
+      id: "map-menu-3",
       label: "180° Curve",
       iconFn: (isActive: boolean) => (
         <Curve180Icon
@@ -295,7 +295,7 @@ export const subMenuConfig: Record<string, SubMenuItem[]> = {
       ),
     },
     {
-      id: "edge-menu-4",
+      id: "map-menu-4",
       label: "S Curve",
       iconFn: (isActive: boolean) => (
         <Waves
@@ -308,7 +308,7 @@ export const subMenuConfig: Record<string, SubMenuItem[]> = {
       ),
     },
     {
-      id: "edge-menu-5",
+      id: "map-menu-5",
       label: "H Shape",
       iconFn: (isActive: boolean) => (
         <Hash
@@ -321,10 +321,10 @@ export const subMenuConfig: Record<string, SubMenuItem[]> = {
       ),
     },
     {
-      id: "edge-menu-6",
+      id: "map-menu-6",
       label: "R Shape",
       iconFn: (isActive: boolean) => (
-        <R_EdgeIcon
+        <R_mapIcon
           // size={36}
           style={{
             stroke: isActive ? ACTIVE_STROKE_COLOR : INACTIVE_STROKE_COLOR,
@@ -334,7 +334,7 @@ export const subMenuConfig: Record<string, SubMenuItem[]> = {
       ),
     },
     {
-      id: "edge-menu-7",
+      id: "map-menu-7",
       label: "Junction",
       iconFn: (isActive: boolean) => (
         <Shuffle
@@ -347,7 +347,7 @@ export const subMenuConfig: Record<string, SubMenuItem[]> = {
       ),
     },
     {
-      id: "edge-menu-8",
+      id: "map-menu-8",
       label: "Bridge",
       iconFn: (isActive: boolean) => (
         <Building2
@@ -360,7 +360,7 @@ export const subMenuConfig: Record<string, SubMenuItem[]> = {
       ),
     },
     {
-      id: "edge-menu-9",
+      id: "map-menu-9",
       label: "Custom",
       iconFn: (isActive: boolean) => (
         <Cog

@@ -1,17 +1,17 @@
 // config/topicList.ts
 const topicList = [
   {
-    topic: "UI/LayOut/moveToEdge",
+    topic: "UI/LayOut/moveTomap",
     keyList: {
       vehId: "string",
-      edges: "array",
+      maps: "array",
     },
   },
   {
     topic: "UI/LayOut/moveToPickUp",
     keyList: {
       vehId: "string",
-      edges: "array",
+      maps: "array",
       from_station: "string",
       to_station: "string",
     },
@@ -20,7 +20,7 @@ const topicList = [
     topic: "UI/LayOut/moveToDropDown",
     keyList: {
       vehId: "string",
-      edges: "array",
+      maps: "array",
       from_station: "string",
       to_station: "string",
     },

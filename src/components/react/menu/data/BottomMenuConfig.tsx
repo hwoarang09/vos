@@ -63,8 +63,8 @@ export const bottomMenuGroups: BottomMenuItem[][] = [
   // 그룹 3: 엣지빌더
   [
     {
-      id: "EdgeBuilder",
-      label: "EdgeBuilder",
+      id: "MapBuilder",
+      label: "MapBuilder",
       iconFn: (isActive) => (
         <TrainTrack
           size={ICON_SIZE_SMALL}

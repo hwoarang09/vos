@@ -29,10 +29,10 @@ const SubMenu: React.FC = () => {
     // 서브메뉴가 선택된 경우에만 3단계 메뉴 처리
     if (newActiveSubMenu) {
       // 서브메뉴 클릭시 3단계 메뉴가 있는지 확인하고 처리
-      // 예: EdgeBuilder의 일부 메뉴만 3단계까지 있다고 가정
+      // 예: MapBuilder의 일부 메뉴만 3단계까지 있다고 가정
       const hasThirdLevelMenu =
-        activeMainMenu === "EdgeBuilder" &&
-        // ["edge-menu-1", "edge-menu-2"].includes(menuId);
+        activeMainMenu === "MapBuilder" &&
+        // ["map-menu-1", "map-menu-2"].includes(menuId);
         ['잠시'].includes(menuId);
 
       if (hasThirdLevelMenu) {

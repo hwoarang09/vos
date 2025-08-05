@@ -5,7 +5,7 @@ export type MainMenuType =
   | "Statistics"
   | "Vehicle"
   | "Operation"
-  | "EdgeBuilder";
+  | "MapBuilder";
 
 export interface MenuState {
   // 메뉴 계층 구조에 맞는 명확한 네이밍
