@@ -2,10 +2,9 @@ import React from "react";
 import { Canvas } from "@react-three/fiber";
 import { OrbitControls } from "@react-three/drei";
 import { Perf } from "r3f-perf";
-import Box from "./Stations/Box";
 import { useMqttStore } from "../../store/mqttStore";
-import Stations from "./Stations/Stations";
 import CameraController from "./Camera/cameraController";
+import MapBuilder from "./MapBuilder/MapBuilder";
 
 const ThreeScene: React.FC = () => {
   const { sendMessage } = useMqttStore();
@@ -21,6 +20,10 @@ const ThreeScene: React.FC = () => {
 
       {/* <Box color="orange" onClick={handleBoxClick} /> */}
       {/* <Stations /> */}
+
+      {/* Add MapBuilder with edges */}
+      <MapBuilder />
+
       <Perf position="bottom-right" />
       {/* 카메라 상태 업데이트 */}
       <CameraController />
