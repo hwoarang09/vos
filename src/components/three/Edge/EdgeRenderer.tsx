@@ -11,7 +11,7 @@ interface EdgeProps {
   opacity?: number;
 }
 
-const EdgeRenderer: React.FC<EdgeProps> = ({
+const EdgeRenderer: React.FC<EdgeProps> = React.memo(({
   startPosition,
   endPosition,
   color = '#00ff00',
@@ -21,21 +21,28 @@ const EdgeRenderer: React.FC<EdgeProps> = ({
 
   // Calculate edge properties
   const { geometry, length } = useMemo(() => {
-    const start = new THREE.Vector3(...startPosition);
-    const end = new THREE.Vector3(...endPosition);
+    // Force z-coordinate to be 30 for both start and end points
+    const start = new THREE.Vector3(startPosition[0], startPosition[1], 30);
+    const end = new THREE.Vector3(endPosition[0], endPosition[1], 30);
     const length = start.distanceTo(end);
 
-    // Create a simple line geometry
-    const geometry = new THREE.CylinderGeometry(0.05, 0.05, length, 8);
+    // Create a rectangular plane geometry
+    const width = 0.5; // Edge width
+    const geometry = new THREE.PlaneGeometry(length, width);
 
-    // Position the cylinder between start and end points
+    // Position the plane between start and end points (z = 30)
     const midPoint = new THREE.Vector3().addVectors(start, end).multiplyScalar(0.5);
-    geometry.translate(midPoint.x, midPoint.y, midPoint.z);
+    geometry.translate(midPoint.x, midPoint.y, 30);
 
-    // Rotate to align with the direction
+    // Rotate to align with the direction in XY plane only
+    // The plane normal should point towards +Z axis
     const direction = new THREE.Vector3().subVectors(end, start).normalize();
-    const up = new THREE.Vector3(0, 1, 0);
-    const quaternion = new THREE.Quaternion().setFromUnitVectors(up, direction);
+    // Project direction to XY plane (z=0)
+    direction.z = 0;
+    direction.normalize();
+
+    const right = new THREE.Vector3(1, 0, 0);
+    const quaternion = new THREE.Quaternion().setFromUnitVectors(right, direction);
     geometry.applyQuaternion(quaternion);
 
     return { geometry, length };
@@ -53,6 +60,7 @@ const EdgeRenderer: React.FC<EdgeProps> = ({
         uOpacity: { value: opacity }
       },
       transparent: true,
+      side: THREE.DoubleSide, // 양면 렌더링
     });
   }, [length, color, opacity]);
 
@@ -66,6 +74,6 @@ const EdgeRenderer: React.FC<EdgeProps> = ({
   return (
     <mesh ref={meshRef} geometry={geometry} material={material} />
   );
-};
+});
 
 export default EdgeRenderer;

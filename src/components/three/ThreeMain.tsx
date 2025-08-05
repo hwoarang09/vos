@@ -2,32 +2,46 @@ import React from "react";
 import { Canvas } from "@react-three/fiber";
 import { OrbitControls } from "@react-three/drei";
 import { Perf } from "r3f-perf";
-import { useMqttStore } from "../../store/mqttStore";
+import * as THREE from "three";
 import CameraController from "./Camera/cameraController";
 import MapBuilder from "./MapBuilder/MapBuilder";
+import MapRenderer from "./MapRenderer";
+import Floor from "./Floor";
+import AxisHelper from "./AxisHelper";
 
 const ThreeScene: React.FC = () => {
-  const { sendMessage } = useMqttStore();
-  const handleBoxClick = () => {
-    sendMessage({ topic: "control/box", message: "Box clicked!" });
-    console.log("Box clicked!");
-  };
-
   return (
-    <Canvas className="absolute inset-0">
-      <ambientLight />
-      <pointLight position={[10, 10, 10]} />
+    <Canvas
+      className="absolute inset-0"
+      scene={{ background: new THREE.Color("#1a1a1a") }}
+    >
+      {/* Basic lighting for factory environment */}
+      <ambientLight intensity={0.4} />
+      <directionalLight
+        position={[50, 50, 50]}
+        intensity={0.8}
+        castShadow
+        shadow-mapSize-width={2048}
+        shadow-mapSize-height={2048}
+      />
 
-      {/* <Box color="orange" onClick={handleBoxClick} /> */}
-      {/* <Stations /> */}
+      {/* Factory floor */}
+      <Floor />
 
-      {/* Add MapBuilder with edges */}
+      {/* Coordinate axes for orientation */}
+      <AxisHelper />
+
+      {/* Map management - handles data operations */}
       <MapBuilder />
 
+      {/* Map rendering - displays the actual 3D objects */}
+      <MapRenderer />
+
+      {/* Development tools */}
       <Perf position="bottom-right" />
-      {/* 카메라 상태 업데이트 */}
+
+      {/* Camera controls */}
       <CameraController />
-      {/* OrbitControls 추가 */}
       <OrbitControls makeDefault />
     </Canvas>
   );
