@@ -25,29 +25,41 @@ const RoadBuilder: React.FC = () => {
       return;
     }
 
-    // Use the intersection point from the event - React Three Fiber handles this automatically!
-    const intersectionPoint = event.point;
+    // Get mouse position in normalized device coordinates (-1 to +1)
+    const mouse = new THREE.Vector2();
+    mouse.x = (event.nativeEvent.clientX / window.innerWidth) * 2 - 1;
+    mouse.y = -(event.nativeEvent.clientY / window.innerHeight) * 2 + 1;
 
-    // Create a straight road of length 5 at the clicked position
-    const startX = intersectionPoint.x;
-    const startY = intersectionPoint.y;
-    const endX = startX + 5; // 5 units to the right
-    const endY = startY;
-    const z = 30; // Fixed z coordinate
+    // Update raycaster
+    raycaster.setFromCamera(mouse, camera);
 
-    const newEdge = {
-      id: generateEdgeId(),
-      startPosition: [startX, startY, z] as [number, number, number],
-      endPosition: [endX, endY, z] as [number, number, number],
-      color: '#ffff00', // Yellow for user-created roads
-      opacity: 1.0,
-      source: 'user' as const
-    };
+    // Create a plane at z=30 to intersect with
+    const plane = new THREE.Plane(new THREE.Vector3(0, 0, 1), -30);
+    const intersectionPoint = new THREE.Vector3();
 
-    // Add the new edge to the store
-    addEdge(newEdge);
+    // Get intersection point with the z=30 plane
+    if (raycaster.ray.intersectPlane(plane, intersectionPoint)) {
+      // Create a straight road of length 5 at the clicked position
+      const startX = intersectionPoint.x;
+      const startY = intersectionPoint.y;
+      const endX = startX + 5; // 5 units to the right
+      const endY = startY;
+      const z = 30; // Fixed z coordinate
 
-    console.log('Created new straight road:', newEdge);
+      const newEdge = {
+        id: generateEdgeId(),
+        startPosition: [startX, startY, z] as [number, number, number],
+        endPosition: [endX, endY, z] as [number, number, number],
+        color: '#ffff00', // Yellow for user-created roads
+        opacity: 1.0,
+        source: 'user' as const
+      };
+
+      // Add the new edge to the store
+      addEdge(newEdge);
+
+      console.log('Created new straight road:', newEdge);
+    }
   };
 
   return (
