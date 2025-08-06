@@ -113,7 +113,6 @@ const RoadBuilder: React.FC = () => {
 
   // Handle mouse move for preview (only called when straight road is selected)
   const handleMouseMove = useCallback((event: ThreeEvent<PointerEvent>) => {
-    console.log(1)
     const mousePosition = getMousePosition3D(event.nativeEvent);
     if (mousePosition) {
       // Initialize preview objects if not done yet
@@ -122,7 +121,7 @@ const RoadBuilder: React.FC = () => {
       }
       // Only update positions (much more efficient)
       updatePreviewPosition(mousePosition);
-      console.log(mousePosition)
+      // console.log(mousePosition)
     }
   }, [getMousePosition3D, initializePreview, updatePreviewPosition]);
 
