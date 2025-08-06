@@ -3,9 +3,11 @@ uniform float uTime;
 uniform float uLength;
 varying vec3 vPosition;
 varying float vProgress;
+varying vec2 vUv;
 
 void main() {
     vPosition = position;
+    vUv = uv;
 
     // Calculate progress along the edge (0.0 to 1.0)
     vProgress = (position.x + uLength * 0.5) / uLength;

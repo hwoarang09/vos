@@ -3,12 +3,13 @@ import { create } from "zustand";
 // Edge data interface
 export interface EdgeData {
   id: string;
-  startPosition: [number, number, number];
-  endPosition: [number, number, number];
+  fromNode: string; // Node ID/name
+  toNode: string; // Node ID/name
   color: string;
   opacity: number;
   readonly?: boolean; // true면 수정 불가, false/undefined면 수정 가능
   source?: 'config' | 'user' | 'system'; // 데이터 출처 (선택사항)
+  mode? : "normal" | "preview";
 }
 
 // Node data interface (for future use)
@@ -54,11 +55,14 @@ export const useMapStore = create<MapState>((set) => ({
     edges: state.edges.filter(edge => edge.id !== id)
   })),
 
-  updateEdge: (id, updates) => set((state) => ({
-    edges: state.edges.map(edge =>
-      edge.id === id ? { ...edge, ...updates } : edge
-    )
-  })),
+  updateEdge: (id, updates) => set((state) => {
+    const edge = state.edges.find(e => e.id === id);
+    if (edge) {
+      Object.assign(edge, updates);
+      return { edges: [...state.edges] }; // 배열 참조만 새로 만들어서 리렌더링 트리거
+    }
+    return state;
+  }),
 
   clearEdges: () => set({ edges: [] }),
 
