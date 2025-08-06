@@ -7,12 +7,15 @@ import EdgeRenderer from './Edge/EdgeRenderer';
  * This component is responsible for displaying edges and nodes from the store
  */
 const MapRenderer: React.FC = () => {
-  const { edges } = useMapStore();
+  const { edges, previewEdge } = useMapStore();
+
+  // Combine regular edges with preview edge for rendering
+  const allEdges = previewEdge ? [...edges, previewEdge] : edges;
 
   return (
     <group>
-      {/* Render all edges using EdgeRenderer container */}
-      <EdgeRenderer edges={edges} />
+      {/* Render all edges (including preview) using EdgeRenderer container */}
+      <EdgeRenderer edges={allEdges} />
 
       {/* TODO: Add NodeRenderer when needed */}
       {/* {nodes.map((node) => (

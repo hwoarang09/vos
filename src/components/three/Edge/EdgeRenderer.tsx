@@ -48,7 +48,7 @@ const SingleEdge: React.FC<SingleEdgeProps> = React.memo(({
     // Second: Position the plane between start and end points (z = 30)
     const midPoint = new THREE.Vector3().addVectors(start, end).multiplyScalar(0.5);
     geometry.translate(midPoint.x, midPoint.y, 30);
-    console.log(geometry, length)
+
     return { geometry, length };
   }, [startPosition, endPosition]);
 
@@ -96,7 +96,6 @@ const MemoizedEdge: React.FC<{ edge: EdgeData }> = React.memo(({ edge }) => {
   const fromNode = getNodeById(edge.fromNode);
   const toNode = getNodeById(edge.toNode);
 
-  console.log(edge, fromNode, toNode)
   // If nodes don't exist, don't render the edge
   if (!fromNode || !toNode) {
     console.warn(`Edge ${edge.id}: Missing nodes - fromNode: ${edge.fromNode}, toNode: ${edge.toNode}`);

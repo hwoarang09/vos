@@ -24,12 +24,17 @@ export interface NodeData {
 interface MapState {
   edges: EdgeData[];
   nodes: NodeData[];
+  previewEdge: EdgeData | null; // Preview edge for road building
 
   // Edge management functions
   addEdge: (edge: EdgeData) => void;
   removeEdge: (id: string) => void;
   updateEdge: (id: string, updates: Partial<EdgeData>) => void;
   clearEdges: () => void;
+
+  // Preview edge management
+  setPreviewEdge: (edge: EdgeData | null) => void;
+  clearPreviewEdge: () => void;
 
   // Node management functions
   addNode: (node: NodeData) => void;
@@ -45,6 +50,7 @@ interface MapState {
 export const useMapStore = create<MapState>((set) => ({
   edges: [],
   nodes: [],
+  previewEdge: null,
 
   // Edge management
   addEdge: (edge) => set((state) => ({
@@ -66,6 +72,11 @@ export const useMapStore = create<MapState>((set) => ({
 
   clearEdges: () => set({ edges: [] }),
 
+  // Preview edge management
+  setPreviewEdge: (edge) => set({ previewEdge: edge }),
+
+  clearPreviewEdge: () => set({ previewEdge: null }),
+
   // Node management
   addNode: (node) => set((state) => ({
     nodes: [...state.nodes, node]
@@ -84,7 +95,7 @@ export const useMapStore = create<MapState>((set) => ({
   clearNodes: () => set({ nodes: [] }),
 
   // Utility functions
-  clearAll: () => set({ edges: [], nodes: [] }),
+  clearAll: () => set({ edges: [], nodes: [], previewEdge: null }),
 
   loadMapData: (edges, nodes) => set({ edges, nodes }),
 }));
