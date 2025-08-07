@@ -1,68 +1,265 @@
-import React, { useEffect } from 'react';
+import React, { useRef, useCallback, useEffect } from 'react';
+import { useThree, ThreeEvent } from '@react-three/fiber';
+import { useMenuStore } from '../../../store/menuStore';
 import { useMapStore } from '../../../store/edgeStore';
 import { useNodeStore } from '../../../store/nodeStore';
-import RoadBuilder from './RoadBuilder';
+import * as THREE from 'three';
 
 /**
- * MapBuilder component - Manages map data in the store
- * This component is responsible for adding/editing/removing map elements
- * It does NOT render anything directly - that's MapRenderer's job
+ * MapBuilder component - Handles Edge creation based on active menu
  */
 const MapBuilder: React.FC = () => {
-  const { addEdge, clearAll } = useMapStore();
-  const { addNode, clearNodes, setNodeCounter } = useNodeStore();
+  const { camera, raycaster } = useThree();
+  const { activeMainMenu, activeSubMenu } = useMenuStore();
+  const { addEdge, setPreviewEdge, clearPreviewEdge } = useMapStore();
+  const { addNode, generateNodeName, setPreviewNodes, clearPreviewNodes, updatePreviewNodesPosition } = useNodeStore();
+  const meshRef = useRef<THREE.Mesh>(null);
+  const currentMousePositionRef = useRef<THREE.Vector3 | null>(null);
+  const previewInitializedRef = useRef<boolean>(false);
+  const lastUpdateTimeRef = useRef<number>(0);
 
-  // Initialize with hardcoded test data
-  useEffect(() => {
-    // Clear existing data first
-    clearAll();
-    clearNodes();
+  // Generate unique ID for new edges
+  const generateEdgeId = () => {
+    return `edge_${Date.now()}_${Math.random().toString(36).substring(2, 11)}`;
+  };
 
-    // Add test nodes to the store
-    const testNodes = [
-      { id: 'NODE0001', name: 'NODE0001', x: 0, y: 0, z: 30, color: '#ff0000', size: 1.0 },
-      { id: 'NODE0002', name: 'NODE0002', x: 15, y: 2, z: 30, color: '#ff0000', size: 1.0 },
-      { id: 'NODE0003', name: 'NODE0003', x: 5, y: 2, z: 30, color: '#00ff00', size: 1.0 },
-    ];
+  // Initialize preview objects once
+  const initializePreview = useCallback(() => {
+    if (previewInitializedRef.current) return;
 
-    // Add test edges to the store
-    const testEdges = [
-      {
-        id: 'edge1',
-        fromNode: 'NODE0001',
-        toNode: 'NODE0002',
-        color: '#ff0000', // Red
-        opacity: 0.8,
-        mode: "normal" as 'normal' | 'preview'
-      },
-      {
-        id: 'edge2',
-        fromNode: 'NODE0002',
-        toNode: 'NODE0003',
-        color: '#00ff00', // Green
-        opacity: 0.9,
-        mode: "normal" as 'normal' | 'preview'
-      },
-      {
-        id: 'edge3',
-        fromNode: 'NODE0003',
-        toNode: 'NODE0001',
-        color: '#0000ff', // Blue
-        opacity: 1.0,
-        mode: "normal" as 'normal' | 'preview'
+    // Create preview nodes
+    const previewStartNode = {
+      id: 'preview_start',
+      name: 'preview_start',
+      x: 0,
+      y: 0,
+      z: 30,
+      color: '#ffff00',
+      size: 1.0,
+      source: 'user' as const
+    };
+
+    const previewEndNode = {
+      id: 'preview_end',
+      name: 'preview_end',
+      x: 5,
+      y: 0,
+      z: 30,
+      color: '#ffff00',
+      size: 1.0,
+      source: 'user' as const
+    };
+
+    // Set preview nodes
+    setPreviewNodes([previewStartNode, previewEndNode]);
+
+    // Create preview edge
+    const previewEdge = {
+      id: 'preview_edge',
+      fromNode: 'preview_start',
+      toNode: 'preview_end',
+      color: '#ffff00', // Yellow for preview
+      opacity: 0.7,
+      source: 'user' as const,
+      mode: "preview" as 'normal' | 'preview'
+    };
+
+    setPreviewEdge(previewEdge);
+    previewInitializedRef.current = true;
+  }, [setPreviewNodes, setPreviewEdge]);
+
+  // Update preview position (optimized - only updates positions with throttling)
+  const updatePreviewPosition = useCallback((point: THREE.Vector3) => {
+    const now = performance.now();
+    const timeSinceLastUpdate = now - lastUpdateTimeRef.current;
+
+    // Throttle updates to ~60fps (16ms) to reduce GPU load
+    if (timeSinceLastUpdate < 16) {
+      return;
+    }
+
+    const startX = point.x;
+    const startY = point.y;
+    const endX = startX + 5; // 5 units to the right
+    const endY = startY;
+    const z = 30; // Fixed z coordinate
+
+    currentMousePositionRef.current = point;
+    updatePreviewNodesPosition([startX, startY, z], [endX, endY, z]);
+    lastUpdateTimeRef.current = now;
+  }, [updatePreviewNodesPosition]);
+
+  // Reuse objects to avoid garbage collection
+  const mouseVector = useRef(new THREE.Vector2());
+  const planeNormal = useRef(new THREE.Vector3(0, 0, 1));
+  const plane = useRef(new THREE.Plane(planeNormal.current, -30));
+  const intersectionPoint = useRef(new THREE.Vector3());
+
+  // Get mouse position in 3D space (optimized)
+  const getMousePosition3D = useCallback((event: MouseEvent) => {
+    const mouse = mouseVector.current;
+    mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+    mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+
+    raycaster.setFromCamera(mouse, camera);
+
+    const intersection = intersectionPoint.current;
+    if (raycaster.ray.intersectPlane(plane.current, intersection)) {
+      // Return a new Vector3 to avoid reference issues
+      return new THREE.Vector3(intersection.x, intersection.y, intersection.z);
+    }
+    return null;
+  }, [camera, raycaster]);
+
+  // Handle mouse move for preview (only called when straight Edge is selected)
+  const handleMouseMove = useCallback((event: ThreeEvent<PointerEvent>) => {
+    const mousePosition = getMousePosition3D(event.nativeEvent);
+    if (mousePosition) {
+      // Initialize preview objects if not done yet
+      if (!previewInitializedRef.current) {
+        initializePreview();
       }
-    ];
+      // Only update positions (much more efficient)
+      updatePreviewPosition(mousePosition);
+      // console.log(mousePosition)
+    }
+  }, [getMousePosition3D, initializePreview, updatePreviewPosition]);
 
-    // Add nodes and edges to the store
-    testNodes.forEach(node => addNode(node));
-    testEdges.forEach(edge => addEdge(edge));
+  // Clear preview when menu changes or component unmounts
+  useEffect(() => {
+    // Clear preview when not in straight Edge mode
+    if (activeMainMenu !== 'MapBuilder' || activeSubMenu !== 'map-menu-1') {
+      clearPreviewEdge();
+      clearPreviewNodes();
+      previewInitializedRef.current = false;
+    }
+  }, [activeMainMenu, activeSubMenu, clearPreviewEdge, clearPreviewNodes]);
 
-    // Set node counter to 6 so next generated node will be NODE0006
-    setNodeCounter(6);
-  }, [addEdge, addNode, clearAll, clearNodes, setNodeCounter]);
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      clearPreviewEdge();
+      clearPreviewNodes();
+      previewInitializedRef.current = false;
+    };
+  }, [clearPreviewEdge, clearPreviewNodes]);
 
-  // This component manages data and handles road building interactions
-  return <RoadBuilder />;
+  // Edge creation functions for different types
+  const createStraightEdge = (point: THREE.Vector3) => {
+    const startX = point.x;
+    const startY = point.y;
+    const endX = startX + 5; // 5 units to the right
+    const endY = startY;
+    const z = 30; // Fixed z coordinate
+
+    // Create start and end nodes
+    const startNodeName = generateNodeName();
+    const endNodeName = generateNodeName();
+
+    const startNode = {
+      id: startNodeName,
+      name: startNodeName,
+      x: startX,
+      y: startY,
+      z: z,
+      color: '#ffff00',
+      size: 1.0,
+      source: 'user' as const
+    };
+
+    const endNode = {
+      id: endNodeName,
+      name: endNodeName,
+      x: endX,
+      y: endY,
+      z: z,
+      color: '#ffff00',
+      size: 1.0,
+      source: 'user' as const
+    };
+
+    // Add nodes to store
+    addNode(startNode);
+    addNode(endNode);
+
+    // Create edge connecting the nodes
+    return {
+      id: generateEdgeId(),
+      fromNode: startNodeName,
+      toNode: endNodeName,
+      color: '#ffff00', // Yellow for user-created Edges
+      opacity: 1.0,
+      source: 'user' as const,
+      mode: "normal" as 'normal' | 'preview'
+    };
+  };
+
+  const createCurvedEdge = (_point: THREE.Vector3) => {
+    // TODO: Implement curved Edge creation
+    console.log('Curved Edge creation not implemented yet');
+    return null;
+  };
+
+  const createCircularEdge = (_point: THREE.Vector3) => {
+    // TODO: Implement circular Edge creation
+    console.log('Circular Edge creation not implemented yet');
+    return null;
+  };
+
+  // Handle mouse click for Edge creation
+  const handleClick = useCallback((event: ThreeEvent<MouseEvent>) => {
+    // Only handle clicks when MapBuilder is active
+    if (activeMainMenu !== 'MapBuilder') {
+      return;
+    }
+
+    const mousePosition = getMousePosition3D(event.nativeEvent);
+    if (mousePosition) {
+      let newEdge = null;
+
+      // Create different types of Edges based on active submenu
+      switch (activeSubMenu) {
+        case 'map-menu-1': // Straight Edge
+          newEdge = createStraightEdge(mousePosition);
+          break;
+        case 'map-menu-2': // Curved Edge
+          newEdge = createCurvedEdge(mousePosition);
+          break;
+        case 'map-menu-3': // Circular Edge
+          newEdge = createCircularEdge(mousePosition);
+          break;
+        default:
+          console.log('Unknown Edge type:', activeSubMenu);
+          return;
+      }
+
+      // Add the new edge to the store if creation was successful
+      if (newEdge) {
+        addEdge(newEdge);
+        // Clear preview after creating actual Edge
+        clearPreviewEdge();
+        clearPreviewNodes();
+        previewInitializedRef.current = false;
+      }
+    }
+  }, [activeMainMenu, activeSubMenu, getMousePosition3D, createStraightEdge, createCurvedEdge, createCircularEdge, addEdge, clearPreviewEdge, clearPreviewNodes]);
+
+  // Only attach onPointerMove when straight Edge is selected
+  const shouldShowPreview = activeMainMenu === 'MapBuilder' && activeSubMenu === 'map-menu-1';
+
+  return (
+    <mesh
+      ref={meshRef}
+      onClick={handleClick}
+      onPointerMove={shouldShowPreview ? handleMouseMove : undefined}
+      visible={false} // Invisible click handler
+      position={[0, 0, 0]}
+    >
+      {/* Large invisible plane to catch clicks and mouse moves */}
+      <planeGeometry args={[1000, 1000]} />
+      <meshBasicMaterial transparent opacity={0} />
+    </mesh>
+  );
 };
 
 export default MapBuilder;

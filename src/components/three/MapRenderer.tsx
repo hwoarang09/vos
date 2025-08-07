@@ -1,6 +1,8 @@
 import React from 'react';
 import { useMapStore } from '../../store/edgeStore';
+import { useNodeStore } from '../../store/nodeStore';
 import EdgeRenderer from './Edge/EdgeRenderer';
+import NodeRenderer from './Node/NodeRenderer';
 
 /**
  * MapRenderer component - Renders the map based on data from MapStore
@@ -8,24 +10,21 @@ import EdgeRenderer from './Edge/EdgeRenderer';
  */
 const MapRenderer: React.FC = () => {
   const { edges, previewEdge } = useMapStore();
+  const { nodes, previewNodes } = useNodeStore();
 
   // Combine regular edges with preview edge for rendering
   const allEdges = previewEdge ? [...edges, previewEdge] : edges;
 
+  // Combine regular nodes with preview nodes for rendering
+  const allNodes = [...nodes, ...previewNodes];
+
   return (
     <group>
+      {/* Render all nodes (including preview) using NodeRenderer container */}
+      <NodeRenderer nodes={allNodes} />
+
       {/* Render all edges (including preview) using EdgeRenderer container */}
       <EdgeRenderer edges={allEdges} />
-
-      {/* TODO: Add NodeRenderer when needed */}
-      {/* {nodes.map((node) => (
-        <NodeRenderer
-          key={node.id}
-          position={node.position}
-          color={node.color}
-          size={node.size}
-        />
-      ))} */}
 
       {/* Basic lighting for better visibility */}
       <ambientLight intensity={0.6} />
