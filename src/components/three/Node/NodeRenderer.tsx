@@ -1,27 +1,33 @@
 import React from 'react';
-import { NodeData } from '../../../store/nodeStore';
-import GenericRenderer from '../common/GenericRenderer';
-import { createNodeRendererConfig } from '../hooks/useRenderer';
-import nodeVertexShader from './shaders/nodeVertex.glsl?raw';
-import nodeFragmentShader from './shaders/nodeFragment.glsl?raw';
+import { NodeData, useNodeStore } from '../../../store/nodeStore';
+import NodeInstance from './NodeInstance';
+import PreviewNodeInstance from './PreviewNodeInstance';
 
-// Props for the NodeRenderer container component
 interface NodeRendererProps {
   nodes: NodeData[];
 }
 
 /**
- * NodeRenderer container component that renders multiple nodes
- * Uses the generic renderer with node-specific configuration
+ * NodeRenderer: non-generic, edge-like implementation.
+ * - Renders actual nodes via NodeInstance (each subscribes to its own data)
+ * - Renders a PreviewNodeInstance for live preview without React re-renders
  */
 const NodeRenderer: React.FC<NodeRendererProps> = ({ nodes }) => {
-  const config = createNodeRendererConfig(
-    nodes,
-    nodeVertexShader,
-    nodeFragmentShader
-  );
+  // Do not include previewNodes here; PreviewNodeInstance handles that live.
+  const { previewNodes } = useNodeStore();
+  const previewActive = previewNodes.length > 0;
 
-  return <GenericRenderer config={config} />;
+  return (
+    <group>
+      {nodes
+        .filter((n) => !previewNodes.some((p) => p.id === n.id))
+        .map((n) => (
+          <NodeInstance key={n.id} nodeId={n.id} />
+        ))}
+
+      {previewActive && <PreviewNodeInstance />}
+    </group>
+  );
 };
 
 export default NodeRenderer;

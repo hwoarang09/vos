@@ -3,6 +3,7 @@ import { useThree, ThreeEvent } from '@react-three/fiber';
 import { useMenuStore } from '../../../store/menuStore';
 import { useMapStore } from '../../../store/edgeStore';
 import { useNodeStore } from '../../../store/nodeStore';
+
 import * as THREE from 'three';
 
 /**
@@ -17,15 +18,23 @@ const MapBuilder: React.FC = () => {
   const currentMousePositionRef = useRef<THREE.Vector3 | null>(null);
   const previewInitializedRef = useRef<boolean>(false);
   const lastUpdateTimeRef = useRef<number>(0);
+  const lastCreatedEdgeRef = useRef<{startX: number, startY: number, endX: number, endY: number} | null>(null);
 
   // Generate unique ID for new edges
   const generateEdgeId = () => {
     return `edge_${Date.now()}_${Math.random().toString(36).substring(2, 11)}`;
   };
 
+  // 메뉴 색상에서 투명도 제거한 버전
+  const MENU_BLUE_COLOR = '#5ec5ff'; // rgba(94, 197, 255, 1.0)
+
   // Initialize preview objects once
   const initializePreview = useCallback(() => {
-    if (previewInitializedRef.current) return;
+    console.log('🔵 initializePreview called');
+    if (previewInitializedRef.current) {
+      console.log('🔵 Preview already initialized, skipping');
+      return;
+    }
 
     // Create preview nodes
     const previewStartNode = {
@@ -33,9 +42,9 @@ const MapBuilder: React.FC = () => {
       name: 'preview_start',
       x: 0,
       y: 0,
-      z: 30,
-      color: '#ffff00',
-      size: 1.0,
+      z: 30.1, // Preview nodes slightly above
+      color: MENU_BLUE_COLOR,
+      size: 0.1,
       source: 'user' as const
     };
 
@@ -44,9 +53,9 @@ const MapBuilder: React.FC = () => {
       name: 'preview_end',
       x: 5,
       y: 0,
-      z: 30,
-      color: '#ffff00',
-      size: 1.0,
+      z: 30.1, // Preview nodes slightly above
+      color: MENU_BLUE_COLOR,
+      size: 0.1,
       source: 'user' as const
     };
 
@@ -58,7 +67,7 @@ const MapBuilder: React.FC = () => {
       id: 'preview_edge',
       fromNode: 'preview_start',
       toNode: 'preview_end',
-      color: '#ffff00', // Yellow for preview
+      color: MENU_BLUE_COLOR, // Menu blue for preview
       opacity: 0.7,
       source: 'user' as const,
       mode: "preview" as 'normal' | 'preview'
@@ -66,6 +75,7 @@ const MapBuilder: React.FC = () => {
 
     setPreviewEdge(previewEdge);
     previewInitializedRef.current = true;
+    console.log('🔵 Preview initialized successfully');
   }, [setPreviewNodes, setPreviewEdge]);
 
   // Update preview position (optimized - only updates positions with throttling)
@@ -82,7 +92,7 @@ const MapBuilder: React.FC = () => {
     const startY = point.y;
     const endX = startX + 5; // 5 units to the right
     const endY = startY;
-    const z = 30; // Fixed z coordinate
+    const z = 30.1; // Preview z coordinate (above actual edges)
 
     currentMousePositionRef.current = point;
     updatePreviewNodesPosition([startX, startY, z], [endX, endY, z]);
@@ -115,6 +125,20 @@ const MapBuilder: React.FC = () => {
   const handleMouseMove = useCallback((event: ThreeEvent<PointerEvent>) => {
     const mousePosition = getMousePosition3D(event.nativeEvent);
     if (mousePosition) {
+      // Check if preview would overlap with existing edges
+      const startX = mousePosition.x;
+      const startY = mousePosition.y;
+      const endX = startX + 5;
+      const endY = startY;
+
+      // Check if preview would overlap with last created edge
+      // if (lastCreatedEdgeRef.current) {
+      //   const lastEdge = lastCreatedEdgeRef.current;
+      //   const startDist = Math.sqrt((lastEdge.startX - startX)**2 + (lastEdge.startY - startY)**2);
+      //   const endDist = Math.sqrt((lastEdge.endX - endX)**2 + (lastEdge.endY - endY)**2);
+      //   if (startDist < 2 && endDist < 2) return; // Don't show preview if too close
+      // }
+
       // Initialize preview objects if not done yet
       if (!previewInitializedRef.current) {
         initializePreview();
@@ -132,6 +156,7 @@ const MapBuilder: React.FC = () => {
       clearPreviewEdge();
       clearPreviewNodes();
       previewInitializedRef.current = false;
+      lastCreatedEdgeRef.current = null; // Clear last created edge on menu change
     }
   }, [activeMainMenu, activeSubMenu, clearPreviewEdge, clearPreviewNodes]);
 
@@ -141,6 +166,7 @@ const MapBuilder: React.FC = () => {
       clearPreviewEdge();
       clearPreviewNodes();
       previewInitializedRef.current = false;
+      lastCreatedEdgeRef.current = null;
     };
   }, [clearPreviewEdge, clearPreviewNodes]);
 
@@ -162,8 +188,8 @@ const MapBuilder: React.FC = () => {
       x: startX,
       y: startY,
       z: z,
-      color: '#ffff00',
-      size: 1.0,
+      color: MENU_BLUE_COLOR,
+      size: 0.1,
       source: 'user' as const
     };
 
@@ -173,8 +199,8 @@ const MapBuilder: React.FC = () => {
       x: endX,
       y: endY,
       z: z,
-      color: '#ffff00',
-      size: 1.0,
+      color: MENU_BLUE_COLOR,
+      size: 0.1,
       source: 'user' as const
     };
 
@@ -187,7 +213,7 @@ const MapBuilder: React.FC = () => {
       id: generateEdgeId(),
       fromNode: startNodeName,
       toNode: endNodeName,
-      color: '#ffff00', // Yellow for user-created Edges
+      color: MENU_BLUE_COLOR, // Menu blue for user-created Edges
       opacity: 1.0,
       source: 'user' as const,
       mode: "normal" as 'normal' | 'preview'
@@ -236,10 +262,19 @@ const MapBuilder: React.FC = () => {
       // Add the new edge to the store if creation was successful
       if (newEdge) {
         addEdge(newEdge);
-        // Clear preview after creating actual Edge
-        clearPreviewEdge();
-        clearPreviewNodes();
-        previewInitializedRef.current = false;
+
+        // Store the created edge position to avoid preview overlap
+        const startX = mousePosition.x;
+        const startY = mousePosition.y;
+        const endX = startX + 5;
+        const endY = startY;
+        lastCreatedEdgeRef.current = { startX, startY, endX, endY };
+
+        // // Clear preview after creating actual Edge
+        // console.log('🔴 Clearing preview after edge creation');
+        // clearPreviewEdge();
+        // clearPreviewNodes();
+        // previewInitializedRef.current = false;
       }
     }
   }, [activeMainMenu, activeSubMenu, getMousePosition3D, createStraightEdge, createCurvedEdge, createCircularEdge, addEdge, clearPreviewEdge, clearPreviewNodes]);
