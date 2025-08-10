@@ -15,7 +15,7 @@ const SubMenu: React.FC = () => {
   } = useMenuStore();
 
   // 메인 메뉴가 활성화되지 않았으면 서브메뉴 표시하지 않음
-  console.log('activeMainMenu ', activeMainMenu)
+
   if (!activeMainMenu) return null;
   
 
