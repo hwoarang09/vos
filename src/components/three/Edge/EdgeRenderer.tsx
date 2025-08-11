@@ -15,17 +15,20 @@ const EdgeRenderer: React.FC<EdgeRendererProps> = ({ edges }) => {
   return (
     <group>
       {/* 실제 엣지들: 트랜스폼은 EdgeInstance 내부에서 useFrame + subscribe로 갱신 */}
-      {edges.map((edge) => (
-        <EdgeInstance
-          key={edge.id}
-          fromNodeId={edge.fromNode}
-          toNodeId={edge.toNode}
-          color={edge.color}
-          opacity={edge.opacity}
-          mode={edge.mode}
-          width={0.25}
-        />
-      ))}
+      {/* Preview mode edges are handled separately by PreviewEdgeInstance */}
+      {edges
+        .filter((edge) => edge.mode !== 'preview')
+        .map((edge) => (
+          <EdgeInstance
+            key={edge.id}
+            fromNodeId={edge.fromNode}
+            toNodeId={edge.toNode}
+            color={edge.color}
+            opacity={edge.opacity}
+            mode={edge.mode}
+            width={0.25}
+          />
+        ))}
 
       {/* 프리뷰 엣지: previewNodes를 useFrame에서 직접 읽어 트랜스폼 갱신 */}
       {previewEdge && (

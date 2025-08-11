@@ -16,7 +16,6 @@ const MapBuilder: React.FC = () => {
   const { addNode, generateNodeName, setPreviewNodes, clearPreviewNodes, updatePreviewNodesPosition } = useNodeStore();
   const meshRef = useRef<THREE.Mesh>(null);
   const currentMousePositionRef = useRef<THREE.Vector3 | null>(null);
-  const previewInitializedRef = useRef<boolean>(false);
   const lastUpdateTimeRef = useRef<number>(0);
   const lastCreatedEdgeRef = useRef<{startX: number, startY: number, endX: number, endY: number} | null>(null);
 
@@ -27,56 +26,6 @@ const MapBuilder: React.FC = () => {
 
   // 메뉴 색상에서 투명도 제거한 버전
   const MENU_BLUE_COLOR = '#5ec5ff'; // rgba(94, 197, 255, 1.0)
-
-  // Initialize preview objects once
-  const initializePreview = useCallback(() => {
-    console.log('🔵 initializePreview called');
-    if (previewInitializedRef.current) {
-      console.log('🔵 Preview already initialized, skipping');
-      return;
-    }
-
-    // Create preview nodes
-    const previewStartNode = {
-      id: 'preview_start',
-      name: 'preview_start',
-      x: 0,
-      y: 0,
-      z: 30.1, // Preview nodes slightly above
-      color: MENU_BLUE_COLOR,
-      size: 0.1,
-      source: 'user' as const
-    };
-
-    const previewEndNode = {
-      id: 'preview_end',
-      name: 'preview_end',
-      x: 5,
-      y: 0,
-      z: 30.1, // Preview nodes slightly above
-      color: MENU_BLUE_COLOR,
-      size: 0.1,
-      source: 'user' as const
-    };
-
-    // Set preview nodes
-    setPreviewNodes([previewStartNode, previewEndNode]);
-
-    // Create preview edge
-    const previewEdge = {
-      id: 'preview_edge',
-      fromNode: 'preview_start',
-      toNode: 'preview_end',
-      color: MENU_BLUE_COLOR, // Menu blue for preview
-      opacity: 0.7,
-      source: 'user' as const,
-      mode: "preview" as 'normal' | 'preview'
-    };
-
-    setPreviewEdge(previewEdge);
-    previewInitializedRef.current = true;
-    console.log('🔵 Preview initialized successfully');
-  }, [setPreviewNodes, setPreviewEdge]);
 
   // Update preview position (optimized - only updates positions with throttling)
   const updatePreviewPosition = useCallback((point: THREE.Vector3) => {
@@ -125,47 +74,67 @@ const MapBuilder: React.FC = () => {
   const handleMouseMove = useCallback((event: ThreeEvent<PointerEvent>) => {
     const mousePosition = getMousePosition3D(event.nativeEvent);
     if (mousePosition) {
-      // Check if preview would overlap with existing edges
-      const startX = mousePosition.x;
-      const startY = mousePosition.y;
-      const endX = startX + 5;
-      const endY = startY;
-
-      // Check if preview would overlap with last created edge
-      // if (lastCreatedEdgeRef.current) {
-      //   const lastEdge = lastCreatedEdgeRef.current;
-      //   const startDist = Math.sqrt((lastEdge.startX - startX)**2 + (lastEdge.startY - startY)**2);
-      //   const endDist = Math.sqrt((lastEdge.endX - endX)**2 + (lastEdge.endY - endY)**2);
-      //   if (startDist < 2 && endDist < 2) return; // Don't show preview if too close
-      // }
-
-      // Initialize preview objects if not done yet
-      if (!previewInitializedRef.current) {
-        initializePreview();
-      }
       // Only update positions (much more efficient)
       updatePreviewPosition(mousePosition);
       // console.log(mousePosition)
     }
-  }, [getMousePosition3D, initializePreview, updatePreviewPosition]);
+  }, [getMousePosition3D, updatePreviewPosition]);
 
-  // Clear preview when menu changes or component unmounts
+  // Show/hide preview based on menu state
   useEffect(() => {
-    // Clear preview when not in straight Edge mode
-    if (activeMainMenu !== 'MapBuilder' || activeSubMenu !== 'map-menu-1') {
+    if (activeMainMenu === 'MapBuilder' && activeSubMenu === 'map-menu-1') {
+      // Show preview for straight edge mode
+      const startX = currentMousePositionRef.current?.x || 0;
+      const startY = currentMousePositionRef.current?.y || 0;
+      
+      const previewStartNode = {
+        id: 'preview_start',
+        name: 'preview_start',
+        x: startX,
+        y: startY,
+        z: 30.1,
+        color: MENU_BLUE_COLOR,
+        size: 0.1,
+        source: 'user' as const
+      };
+
+      const previewEndNode = {
+        id: 'preview_end',
+        name: 'preview_end',
+        x: startX + 5,
+        y: startY,
+        z: 30.1,
+        color: MENU_BLUE_COLOR,
+        size: 0.1,
+        source: 'user' as const
+      };
+
+      setPreviewNodes([previewStartNode, previewEndNode]);
+
+      const previewEdge = {
+        id: 'preview_edge',
+        fromNode: 'preview_start',
+        toNode: 'preview_end',
+        color: MENU_BLUE_COLOR,
+        opacity: 0.7,
+        source: 'user' as const,
+        mode: "preview" as 'normal' | 'preview'
+      };
+
+      setPreviewEdge(previewEdge);
+    } else {
+      // Hide preview when not in straight edge mode
       clearPreviewEdge();
       clearPreviewNodes();
-      previewInitializedRef.current = false;
       lastCreatedEdgeRef.current = null; // Clear last created edge on menu change
     }
-  }, [activeMainMenu, activeSubMenu, clearPreviewEdge, clearPreviewNodes]);
+  }, [activeMainMenu, activeSubMenu, setPreviewNodes, setPreviewEdge, clearPreviewEdge, clearPreviewNodes]);
 
   // Cleanup on unmount
   useEffect(() => {
     return () => {
       clearPreviewEdge();
       clearPreviewNodes();
-      previewInitializedRef.current = false;
       lastCreatedEdgeRef.current = null;
     };
   }, [clearPreviewEdge, clearPreviewNodes]);
@@ -263,18 +232,24 @@ const MapBuilder: React.FC = () => {
       if (newEdge) {
         addEdge(newEdge);
 
+        // Debug: Count all nodes and edges after creation
+        const { edges, previewEdge } = useMapStore.getState();
+        const { nodes, previewNodes } = useNodeStore.getState();
+
+        console.log('🔵 [DEBUG] After edge creation:');
+        console.log(`  📊 Regular nodes: ${nodes.length}`);
+        console.log(`  📊 Preview nodes: ${previewNodes.length}`);
+        console.log(`  📊 Regular edges: ${edges.length}`);
+        console.log(`  📊 Preview edge: ${previewEdge ? 1 : 0}`);
+        console.log(`  📊 Total nodes: ${nodes.length + previewNodes.length}`);
+        console.log(`  📊 Total edges: ${edges.length + (previewEdge ? 1 : 0)}`);
+
         // Store the created edge position to avoid preview overlap
         const startX = mousePosition.x;
         const startY = mousePosition.y;
         const endX = startX + 5;
         const endY = startY;
         lastCreatedEdgeRef.current = { startX, startY, endX, endY };
-
-        // // Clear preview after creating actual Edge
-        // console.log('🔴 Clearing preview after edge creation');
-        // clearPreviewEdge();
-        // clearPreviewNodes();
-        // previewInitializedRef.current = false;
       }
     }
   }, [activeMainMenu, activeSubMenu, getMousePosition3D, createStraightEdge, createCurvedEdge, createCircularEdge, addEdge, clearPreviewEdge, clearPreviewNodes]);

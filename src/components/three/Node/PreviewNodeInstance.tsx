@@ -21,7 +21,6 @@ const PreviewNodeInstance: React.FC<Props> = ({
   size = 0.1, // shrink more than half
   opacity = 0.9,
 }) => {
-  console.log('PreviewNodeInstance RENDERED, size: ', size);
   const meshRefA = useRef<THREE.Mesh>(null);
   const meshRefB = useRef<THREE.Mesh>(null);
 
@@ -91,7 +90,6 @@ const PreviewNodeInstance: React.FC<Props> = ({
         p.x = x; p.y = y; p.z = z; p.size = s; p.color = c;
         mA.position.set(x, y, z);
         mA.scale.set(s, s, s);
-        console.log('ma S : ', s);
         (materialA.uniforms.uSize as any).value = s;
         (materialA.uniforms.uColor as any).value = new THREE.Color(c);
       }
@@ -114,7 +112,6 @@ const PreviewNodeInstance: React.FC<Props> = ({
         p.x = x; p.y = y; p.z = z; p.size = s; p.color = c;
         mB.position.set(x, y, z);
         mB.scale.set(s, s, s);
-        console.log('mB S : ', s);
         (materialB.uniforms.uSize as any).value = s;
         (materialB.uniforms.uColor as any).value = new THREE.Color(c);
       }
