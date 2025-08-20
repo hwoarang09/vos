@@ -1,5 +1,18 @@
 import { create } from "zustand";
 
+// Edge creation phases
+export type EdgeCreationPhase = 'idle' | 'initial' | 'direction_selection' | 'length_adjustment';
+
+// Edge creation state interface
+export interface EdgeCreationState {
+  phase: EdgeCreationPhase;
+  startPosition: { x: number; y: number; z: number } | null;
+  currentDirection: number; // 0, 90, 180, 270 degrees
+  fromNodeId: string | null;
+  tempToNodeId: string | null;
+  edgeLength: number;
+}
+
 // Edge data interface
 export interface EdgeData {
   id: string;
@@ -25,6 +38,7 @@ interface MapState {
   edges: EdgeData[];
   nodes: NodeData[];
   previewEdge: EdgeData | null; // Preview edge for road building
+  edgeCreation: EdgeCreationState; // Edge creation state
 
   // Edge management functions
   addEdge: (edge: EdgeData) => void;
@@ -35,6 +49,12 @@ interface MapState {
   // Preview edge management
   setPreviewEdge: (edge: EdgeData | null) => void;
   clearPreviewEdge: () => void;
+
+  // Edge creation management
+  setEdgeCreationPhase: (phase: EdgeCreationPhase) => void;
+  setEdgeCreationState: (state: Partial<EdgeCreationState>) => void;
+  resetEdgeCreation: () => void;
+  rotateEdgeDirection: () => void;
 
   // Node management functions
   addNode: (node: NodeData) => void;
@@ -47,10 +67,18 @@ interface MapState {
   loadMapData: (edges: EdgeData[], nodes: NodeData[]) => void;
 }
 
-export const useMapStore = create<MapState>((set) => ({
+export const useMapStore = create<MapState>((set, get) => ({
   edges: [],
   nodes: [],
   previewEdge: null,
+  edgeCreation: {
+    phase: 'idle',
+    startPosition: null,
+    currentDirection: 0,
+    fromNodeId: null,
+    tempToNodeId: null,
+    edgeLength: 5, // Default length
+  },
 
   // Edge management
   addEdge: (edge) => set((state) => ({
@@ -94,8 +122,43 @@ export const useMapStore = create<MapState>((set) => ({
 
   clearNodes: () => set({ nodes: [] }),
 
+  // Edge creation management
+  setEdgeCreationPhase: (phase) => set((state) => ({
+    edgeCreation: { ...state.edgeCreation, phase }
+  })),
+
+  setEdgeCreationState: (updates) => set((state) => ({
+    edgeCreation: { ...state.edgeCreation, ...updates }
+  })),
+
+  resetEdgeCreation: () => set(() => ({
+    edgeCreation: {
+      phase: 'idle',
+      startPosition: null,
+      currentDirection: 0,
+      fromNodeId: null,
+      tempToNodeId: null,
+      edgeLength: 5,
+    }
+  })),
+
+  rotateEdgeDirection: () => set((state) => {
+    const currentDirection = state.edgeCreation.currentDirection;
+    const newDirection = (currentDirection + 90) % 360;
+    return {
+      edgeCreation: { ...state.edgeCreation, currentDirection: newDirection }
+    };
+  }),
+
   // Utility functions
-  clearAll: () => set({ edges: [], nodes: [], previewEdge: null }),
+  clearAll: () => set({ edges: [], nodes: [], previewEdge: null, edgeCreation: {
+    phase: 'idle',
+    startPosition: null,
+    currentDirection: 0,
+    fromNodeId: null,
+    tempToNodeId: null,
+    edgeLength: 5,
+  }}),
 
   loadMapData: (edges, nodes) => set({ edges, nodes }),
 }));
