@@ -1,7 +1,7 @@
 import { create } from "zustand";
 
 // Edge creation phases
-export type EdgeCreationPhase = 'idle' | 'initial' | 'direction_selection' | 'length_adjustment';
+export type EdgeCreationPhase = 'idle' | 'initial' | 'direction_selection' | 'length_adjustment' | 'adjusting';
 
 // Edge creation state interface
 export interface EdgeCreationState {
@@ -9,7 +9,9 @@ export interface EdgeCreationState {
   startPosition: { x: number; y: number; z: number } | null;
   currentDirection: number; // 0, 90, 180, 270 degrees
   fromNodeId: string | null;
+  toNodeId: string | null;
   tempToNodeId: string | null;
+  snappedToNodeId: string | null;
   edgeLength: number;
 }
 
@@ -76,7 +78,9 @@ export const useMapStore = create<MapState>((set, get) => ({
     startPosition: null,
     currentDirection: 0,
     fromNodeId: null,
+    toNodeId: null,
     tempToNodeId: null,
+    snappedToNodeId: null,
     edgeLength: 5, // Default length
   },
 
@@ -137,7 +141,9 @@ export const useMapStore = create<MapState>((set, get) => ({
       startPosition: null,
       currentDirection: 0,
       fromNodeId: null,
+      toNodeId: null,
       tempToNodeId: null,
+      snappedToNodeId: null,
       edgeLength: 5,
     }
   })),
@@ -156,7 +162,9 @@ export const useMapStore = create<MapState>((set, get) => ({
     startPosition: null,
     currentDirection: 0,
     fromNodeId: null,
+    toNodeId: null,
     tempToNodeId: null,
+    snappedToNodeId: null,
     edgeLength: 5,
   }}),
 

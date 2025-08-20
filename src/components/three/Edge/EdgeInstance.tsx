@@ -63,23 +63,18 @@ export const EdgeInstance: React.FC<EdgeInstanceProps> = ({
     if (s) startRef.current.set(s.x, s.y, Z_ELEVATION);
     if (e) endRef.current.set(e.x, e.y, Z_ELEVATION);
 
-    const unsub = useNodeStore.subscribe(
-      (st) => {
-        const s2 = st.getNodeById(fromNodeId);
-        const e2 = st.getNodeById(toNodeId);
-        return {
-          sx: s2?.x, sy: s2?.y, sz: s2?.z,
-          ex: e2?.x, ey: e2?.y, ez: e2?.z,
-        };
-      },
-      (p) => {
-        if (p.sx != null && p.sy != null)
-          startRef.current.set(p.sx, p.sy, Z_ELEVATION); // z는 고정
-        if (p.ex != null && p.ey != null)
-          endRef.current.set(p.ex, p.ey, Z_ELEVATION);
-        // 여기서 setState 없음 → 컴포넌트 리렌더 안 됨
+    const unsub = useNodeStore.subscribe((state) => {
+      const s2 = state.getNodeById(fromNodeId);
+      const e2 = state.getNodeById(toNodeId);
+
+      if (s2) {
+        startRef.current.set(s2.x, s2.y, Z_ELEVATION); // z는 고정
       }
-    );
+      if (e2) {
+        endRef.current.set(e2.x, e2.y, Z_ELEVATION);
+      }
+      // 여기서 setState 없음 → 컴포넌트 리렌더 안 됨
+    });
     return unsub;
   }, [fromNodeId, toNodeId]);
 
