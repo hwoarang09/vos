@@ -1,55 +1,21 @@
 import { create } from "zustand";
-
-// Edge creation phases
-export type EdgeCreationPhase = 'idle' | 'initial' | 'direction_selection' | 'length_adjustment' | 'adjusting';
-
-// Edge creation state interface
-export interface EdgeCreationState {
-  phase: EdgeCreationPhase;
-  startPosition: { x: number; y: number; z: number } | null;
-  currentDirection: number; // 0, 90, 180, 270 degrees
-  fromNodeId: string | null;
-  toNodeId: string | null;
-  tempToNodeId: string | null;
-  snappedToNodeId: string | null;
-  edgeLength: number;
-}
-
-// Edge data interface
-export interface EdgeData {
-  id: string;
-  fromNode: string; // Node ID/name
-  toNode: string; // Node ID/name
-  color: string;
-  opacity: number;
-  readonly?: boolean; // true면 수정 불가, false/undefined면 수정 가능
-  source?: 'config' | 'user' | 'system'; // 데이터 출처 (선택사항)
-  mode? : "normal" | "preview";
-}
-
-// Node data interface (for future use)
-export interface NodeData {
-  id: string;
-  position: [number, number, number];
-  color: string;
-  size: number;
-}
+import { Edge, EdgeCreationPhase, EdgeCreationState, Node } from "../types";
 
 // Map store interface
 interface MapState {
-  edges: EdgeData[];
-  nodes: NodeData[];
-  previewEdge: EdgeData | null; // Preview edge for road building
+  edges: Edge[];
+  nodes: Node[];
+  previewEdge: Edge | null; // Preview edge for road building
   edgeCreation: EdgeCreationState; // Edge creation state
 
   // Edge management functions
-  addEdge: (edge: EdgeData) => void;
-  removeEdge: (id: string) => void;
-  updateEdge: (id: string, updates: Partial<EdgeData>) => void;
+  addEdge: (edge: Edge) => void;
+  removeEdge: (edge_name: string) => void;
+  updateEdge: (edge_name: string, updates: Partial<Edge>) => void;
   clearEdges: () => void;
 
   // Preview edge management
-  setPreviewEdge: (edge: EdgeData | null) => void;
+  setPreviewEdge: (edge: Edge | null) => void;
   clearPreviewEdge: () => void;
 
   // Edge creation management
@@ -59,22 +25,36 @@ interface MapState {
   rotateEdgeDirection: () => void;
 
   // Node management functions
-  addNode: (node: NodeData) => void;
+  addNode: (node: Node) => void;
   removeNode: (id: string) => void;
-  updateNode: (id: string, updates: Partial<NodeData>) => void;
+  updateNode: (id: string, updates: Partial<Node>) => void;
   clearNodes: () => void;
 
   // Utility functions
   clearAll: () => void;
-  loadMapData: (edges: EdgeData[], nodes: NodeData[]) => void;
+  loadMapData: (edges: Edge[], nodes: Node[]) => void;
 }
 
 export const useMapStore = create<MapState>((set, get) => ({
-  edges: [],
+  edges: [
+    // 테스트용 기본 엣지
+    // {
+    //   edge_name: "E9901",
+    //   from_node: "N9901",
+    //   to_node: "N9902",
+    //   waypoints: ["N9901", "N9902"],
+    //   vos_rail_type: "S",
+    //   distance: 10,
+    //   color: "#0000ff",
+    //   opacity: 1.0,
+    //   source: "system",
+    //   rendering_mode: "normal",
+    // },
+  ],
   nodes: [],
   previewEdge: null,
   edgeCreation: {
-    phase: 'idle',
+    phase: "idle",
     startPosition: null,
     currentDirection: 0,
     fromNodeId: null,
@@ -85,22 +65,25 @@ export const useMapStore = create<MapState>((set, get) => ({
   },
 
   // Edge management
-  addEdge: (edge) => set((state) => ({
-    edges: [...state.edges, edge]
-  })),
+  addEdge: (edge) =>
+    set((state) => ({
+      edges: [...state.edges, edge],
+    })),
 
-  removeEdge: (id) => set((state) => ({
-    edges: state.edges.filter(edge => edge.id !== id)
-  })),
+  removeEdge: (edge_name) =>
+    set((state) => ({
+      edges: state.edges.filter((edge) => edge.edge_name !== edge_name),
+    })),
 
-  updateEdge: (id, updates) => set((state) => {
-    const edge = state.edges.find(e => e.id === id);
-    if (edge) {
-      Object.assign(edge, updates);
-      return { edges: [...state.edges] }; // 배열 참조만 새로 만들어서 리렌더링 트리거
-    }
-    return state;
-  }),
+  updateEdge: (edge_name, updates) =>
+    set((state) => {
+      const edge = state.edges.find((e) => e.edge_name === edge_name);
+      if (edge) {
+        Object.assign(edge, updates);
+        return { edges: [...state.edges] }; // 배열 참조만 새로 만들어서 리렌더링 트리거
+      }
+      return state;
+    }),
 
   clearEdges: () => set({ edges: [] }),
 
@@ -110,63 +93,76 @@ export const useMapStore = create<MapState>((set, get) => ({
   clearPreviewEdge: () => set({ previewEdge: null }),
 
   // Node management
-  addNode: (node) => set((state) => ({
-    nodes: [...state.nodes, node]
-  })),
+  addNode: (node) =>
+    set((state) => ({
+      nodes: [...state.nodes, node],
+    })),
 
-  removeNode: (id) => set((state) => ({
-    nodes: state.nodes.filter(node => node.id !== id)
-  })),
+  removeNode: (id) =>
+    set((state) => ({
+      nodes: state.nodes.filter((node) => node.node_name !== id),
+    })),
 
-  updateNode: (id, updates) => set((state) => ({
-    nodes: state.nodes.map(node =>
-      node.id === id ? { ...node, ...updates } : node
-    )
-  })),
+  updateNode: (id, updates) =>
+    set((state) => ({
+      nodes: state.nodes.map((node) =>
+        node.node_name === id ? { ...node, ...updates } : node
+      ),
+    })),
 
   clearNodes: () => set({ nodes: [] }),
 
   // Edge creation management
-  setEdgeCreationPhase: (phase) => set((state) => ({
-    edgeCreation: { ...state.edgeCreation, phase }
-  })),
+  setEdgeCreationPhase: (phase) =>
+    set((state) => ({
+      edgeCreation: { ...state.edgeCreation, phase },
+    })),
 
-  setEdgeCreationState: (updates) => set((state) => ({
-    edgeCreation: { ...state.edgeCreation, ...updates }
-  })),
+  setEdgeCreationState: (updates) =>
+    set((state) => ({
+      edgeCreation: { ...state.edgeCreation, ...updates },
+    })),
 
-  resetEdgeCreation: () => set(() => ({
-    edgeCreation: {
-      phase: 'idle',
-      startPosition: null,
-      currentDirection: 0,
-      fromNodeId: null,
-      toNodeId: null,
-      tempToNodeId: null,
-      snappedToNodeId: null,
-      edgeLength: 5,
-    }
-  })),
+  resetEdgeCreation: () =>
+    set(() => ({
+      edgeCreation: {
+        phase: "idle",
+        startPosition: null,
+        currentDirection: 0,
+        fromNodeId: null,
+        toNodeId: null,
+        tempToNodeId: null,
+        snappedToNodeId: null,
+        edgeLength: 5,
+      },
+    })),
 
-  rotateEdgeDirection: () => set((state) => {
-    const currentDirection = state.edgeCreation.currentDirection;
-    const newDirection = (currentDirection + 90) % 360;
-    return {
-      edgeCreation: { ...state.edgeCreation, currentDirection: newDirection }
-    };
-  }),
+  rotateEdgeDirection: () =>
+    set((state) => {
+      const currentDirection = state.edgeCreation.currentDirection;
+      const newDirection = (currentDirection + 90) % 360;
+      return {
+        edgeCreation: { ...state.edgeCreation, currentDirection: newDirection },
+      };
+    }),
 
   // Utility functions
-  clearAll: () => set({ edges: [], nodes: [], previewEdge: null, edgeCreation: {
-    phase: 'idle',
-    startPosition: null,
-    currentDirection: 0,
-    fromNodeId: null,
-    toNodeId: null,
-    tempToNodeId: null,
-    snappedToNodeId: null,
-    edgeLength: 5,
-  }}),
+  clearAll: () =>
+    set({
+      edges: [],
+      nodes: [],
+      previewEdge: null,
+      edgeCreation: {
+        phase: "idle",
+        startPosition: null,
+        currentDirection: 0,
+        fromNodeId: null,
+        toNodeId: null,
+        tempToNodeId: null,
+        snappedToNodeId: null,
+        edgeLength: 5,
+      },
+    }),
 
   loadMapData: (edges, nodes) => set({ edges, nodes }),
 }));

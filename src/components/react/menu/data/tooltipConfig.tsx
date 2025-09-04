@@ -8,6 +8,7 @@ export const tooltipsByLevel: {
 } = {
   1: {
     // 메인메뉴 레벨
+    MapLoader: "맵 불러오기",
     Statistics: "통계 및 분석",
     Vehicle: "차량 관리",
     Operation: "운영 관리",
@@ -15,6 +16,10 @@ export const tooltipsByLevel: {
   },
   2: {
     // 서브메뉴 레벨
+    "maploader-menu-1": "CFG 파일 불러오기",
+    "maploader-menu-2": "맵 데이터 가져오기",
+    "maploader-menu-3": "맵 데이터 내보내기",
+
     "stats-menu-1": "실시간 데이터 분석",
     "stats-menu-2": "일일 통계 리포트",
     "stats-menu-3": "주간 통계 리포트",

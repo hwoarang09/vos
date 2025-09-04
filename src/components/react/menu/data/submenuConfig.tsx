@@ -25,6 +25,9 @@ import {
   Shuffle,
   Building2,
   Cog,
+  FolderOpen,
+  Download,
+  Upload,
 } from "lucide-react";
 import { ReactComponent as Curve180Icon } from "@/assets/icons/curve180.svg";
 import { ReactComponent as Curve90Icon } from "@/assets/icons/curve90.svg";
@@ -44,6 +47,47 @@ import {
 } from "../shared";
 
 export const subMenuConfig: Record<string, SubMenuItem[]> = {
+  MapLoader: [
+    {
+      id: "maploader-menu-1",
+      label: "Load CFG",
+      iconFn: (isActive) => (
+        <FolderOpen
+          size={ICON_SIZE_SMALL}
+          style={{
+            stroke: isActive ? ACTIVE_STROKE_COLOR : INACTIVE_STROKE_COLOR,
+            strokeWidth: 2,
+          }}
+        />
+      ),
+    },
+    {
+      id: "maploader-menu-2",
+      label: "Import",
+      iconFn: (isActive) => (
+        <Download
+          size={ICON_SIZE_SMALL}
+          style={{
+            stroke: isActive ? ACTIVE_STROKE_COLOR : INACTIVE_STROKE_COLOR,
+            strokeWidth: 2,
+          }}
+        />
+      ),
+    },
+    {
+      id: "maploader-menu-3",
+      label: "Export",
+      iconFn: (isActive) => (
+        <Upload
+          size={ICON_SIZE_SMALL}
+          style={{
+            stroke: isActive ? ACTIVE_STROKE_COLOR : INACTIVE_STROKE_COLOR,
+            strokeWidth: 2,
+          }}
+        />
+      ),
+    },
+  ],
   Statistics: [
     {
       id: "stats-menu-1",

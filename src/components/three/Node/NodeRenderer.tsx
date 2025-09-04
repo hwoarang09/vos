@@ -1,31 +1,46 @@
-import React from 'react';
-import { NodeData, useNodeStore } from '../../../store/nodeStore';
-import NodeInstance from './NodeInstance';
-import PreviewNodeInstance from './PreviewNodeInstance';
+import React, { useMemo } from "react";
+import { Node } from "../../../types";
+import NodeInstance from "./NodeInstance";
+import { useRenderCheck } from "../../../utils/renderDebug";
 
 interface NodeRendererProps {
-  nodes: NodeData[];
+  nodes: Node[];
 }
 
 /**
- * NodeRenderer: non-generic, edge-like implementation.
+ * NodeRenderer: optimized to avoid re-renders from preview node updates.
  * - Renders actual nodes via NodeInstance (each subscribes to its own data)
- * - Renders a PreviewNodeInstance for live preview without React re-renders
+ * - Always renders PreviewNodeInstance (it handles visibility internally via useFrame)
+ * - No subscription to previewNodes to avoid re-renders on mouse movement
  */
 const NodeRenderer: React.FC<NodeRendererProps> = ({ nodes }) => {
-  // Do not include previewNodes here; PreviewNodeInstance handles that live.
-  const { previewNodes } = useNodeStore();
-  const previewActive = previewNodes.length > 0;
+  useRenderCheck("NodeRenderer");
+
+  // Memoize the node instances to avoid recreating them on every render
+  const nodeInstances = useMemo(
+    () =>
+      nodes.map((n) => <NodeInstance key={n.node_name} nodeId={n.node_name} />),
+    [nodes]
+  );
+
+  // Preview node instances - always rendered but handle their own visibility
+  const previewNodeInstances = useMemo(
+    () => [
+      <NodeInstance
+        key="preview_start"
+        nodeId="preview_start"
+        isPreview={true}
+      />,
+      <NodeInstance key="preview_end" nodeId="preview_end" isPreview={true} />,
+    ],
+    []
+  );
 
   return (
     <group>
-      {nodes
-        .filter((n) => !previewNodes.some((p) => p.id === n.id))
-        .map((n) => (
-          <NodeInstance key={n.id} nodeId={n.id} />
-        ))}
-
-      {previewActive && <PreviewNodeInstance />}
+      {nodeInstances}
+      {/* Preview nodes - they handle their own visibility based on activeMenu */}
+      {previewNodeInstances}
     </group>
   );
 };

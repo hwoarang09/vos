@@ -3,6 +3,8 @@ import React, { useEffect } from "react";
 import BottomMenu from "./BottomMenu";
 import RightPanel from "./RightPanel";
 import SubMenu from "./SubMenu";
+import MapLoader from "../MapLoader/MapLoader";
+import DebugPanel from "../debug/DebugPanel";
 import { useMenuStore } from "../../../store/menuStore";
 import { useMqttStore } from "../../../store/mqttStore";
 import { mqttUrl } from "../../../config/mqttConfig";
@@ -56,8 +58,14 @@ const MenuContainer: React.FC = () => {
         </div>
       )}
 
+      {/* Debug Panel - Debug 메뉴가 활성화되었을 때만 표시 */}
+      {activeMainMenu === "Debug" && <DebugPanel />}
+
       {/* Global Tooltip - 항상 렌더링 */}
       <GlobalTooltip />
+
+      {/* Map Loader - 맵 로딩 기능 */}
+      <MapLoader />
     </>
   );
 };

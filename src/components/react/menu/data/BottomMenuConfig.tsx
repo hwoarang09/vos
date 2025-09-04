@@ -1,4 +1,11 @@
-import { TrainTrack, ChartPie, Car, ShipWheel } from "lucide-react";
+import {
+  TrainTrack,
+  ChartPie,
+  Car,
+  ShipWheel,
+  Folder,
+  Table,
+} from "lucide-react";
 import {
   MenuContainer,
   MenuButton,
@@ -15,7 +22,23 @@ import {
 
 // 그룹별로 메뉴 아이템들을 분류
 export const bottomMenuGroups: BottomMenuItem[][] = [
-  // 그룹 1: 통계
+  // 그룹 1: 맵 로더
+  [
+    {
+      id: "MapLoader",
+      label: "MapLoader",
+      iconFn: (isActive) => (
+        <Folder
+          size={ICON_SIZE_SMALL}
+          style={{
+            stroke: isActive ? ACTIVE_STROKE_COLOR : INACTIVE_STROKE_COLOR,
+            strokeWidth: 2,
+          }}
+        />
+      ),
+    },
+  ],
+  // 그룹 2: 통계
   [
     {
       id: "Statistics",
@@ -31,7 +54,7 @@ export const bottomMenuGroups: BottomMenuItem[][] = [
       ),
     },
   ],
-  // 그룹 2: 차량 & 운영
+  // 그룹 3: 차량 & 운영
   [
     {
       id: "Vehicle",
@@ -60,7 +83,7 @@ export const bottomMenuGroups: BottomMenuItem[][] = [
       ),
     },
   ],
-  // 그룹 3: 엣지빌더
+  // 그룹 4: 엣지빌더
   [
     {
       id: "MapBuilder",
@@ -72,6 +95,22 @@ export const bottomMenuGroups: BottomMenuItem[][] = [
             fill: isActive ? ACTIVE_FILL_COLOR : INACTIVE_FILL_COLOR,
             stroke: isActive ? ACTIVE_STROKE_COLOR : INACTIVE_STROKE_COLOR,
             strokeWidth: 1.5,
+          }}
+        />
+      ),
+    },
+  ],
+  // 그룹 5: 디버그
+  [
+    {
+      id: "Debug",
+      label: "Debug",
+      iconFn: (isActive) => (
+        <Table
+          size={ICON_SIZE_SMALL}
+          style={{
+            stroke: isActive ? ACTIVE_STROKE_COLOR : INACTIVE_STROKE_COLOR,
+            strokeWidth: 2,
           }}
         />
       ),

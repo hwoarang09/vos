@@ -1,0 +1,167 @@
+import { Node } from "../../../../types";
+import { DirectionUtils } from "./DirectionUtils";
+import { StraightPointsCalculator } from "./StraightPointsCalculator";
+import * as THREE from "three";
+import {
+  calculateStraightDistance,
+  calculateCurveLength,
+} from "@/utils/geometry/calculateDistance";
+const DEFAULT_SEGMENTS = 100;
+
+/**
+ * 90도 곡선 (LEFT_CURVE, RIGHT_CURVE) Edge Points Calculator
+ * 직선 + 90도 곡선 + 직선 구조로 처리
+ * 각 구간의 길이에 비례해서 점을 배분
+ */
+export class Curve90EdgePointsCalculator {
+  /**
+   * 90도 곡선 타입의 edge 포인트 계산
+   * @param edgeRowData CFG에서 파싱된 edge row 데이터
+   * @param nodes 전체 노드 배열
+   * @param totalSegments 전체 세그먼트 수 (기본값: 20)
+   * @returns 3D 렌더링 포인트 배열
+   */
+  static calculate(
+    edgeRowData: any,
+    nodes: Node[],
+    totalSegments: number = DEFAULT_SEGMENTS
+  ): THREE.Vector3[] {
+    const { waypoints, radius, edge_name, vos_rail_type } = edgeRowData;
+
+    console.log(
+      ` Processing ${vos_rail_type} edge: ${edge_name} (radius: ${radius}, waypoints: [${waypoints.join(
+        ", "
+      )}])`
+    );
+
+    // waypoints 구조: [a, b, c, d]
+    // a→b: 첫 번째 직선
+    // b→c: 90도 곡선 (LEFT 또는 RIGHT)
+    // c→d: 두 번째 직선
+    const nodeA = nodes.find((n: Node) => n.node_name === waypoints[0]);
+    const nodeB = nodes.find((n: Node) => n.node_name === waypoints[1]);
+    const nodeC = nodes.find((n: Node) => n.node_name === waypoints[2]);
+    const nodeD = nodes.find((n: Node) => n.node_name === waypoints[3]);
+
+    if (!nodeA || !nodeB || !nodeC || !nodeD) {
+      console.warn(
+        `${vos_rail_type} waypoint nodes not found for edge: ${edge_name}`
+      );
+      console.warn(
+        `Missing nodes: A(${waypoints[0]}):${!!nodeA}, B(${
+          waypoints[1]
+        }):${!!nodeB}, C(${waypoints[2]}):${!!nodeC}, D(${
+          waypoints[3]
+        }):${!!nodeD}`
+      );
+      return [];
+    }
+
+    // 1. 각 구간의 길이 계산
+    const straight1Length = calculateStraightDistance(nodeA, nodeB);
+    const curveLength = calculateCurveLength(radius, 90); // 90도 곡선
+    const straight2Length = calculateStraightDistance(nodeC, nodeD);
+
+    const totalLength = straight1Length + curveLength + straight2Length;
+
+    console.log(
+      `  📏 Section lengths: straight1=${straight1Length.toFixed(
+        2
+      )}, curve=${curveLength.toFixed(2)}, straight2=${straight2Length.toFixed(
+        2
+      )}`
+    );
+    console.log(`  📏 Total length: ${totalLength.toFixed(2)}`);
+
+    // 2. 길이 비율에 따른 세그먼트 배분
+    const straight1Ratio = straight1Length / totalLength;
+    const curveRatio = curveLength / totalLength;
+    const straight2Ratio = straight2Length / totalLength;
+
+    console.log(
+      `  📊 Length ratios: straight1=${straight1Ratio.toFixed(
+        3
+      )}, curve=${curveRatio.toFixed(3)}, straight2=${straight2Ratio.toFixed(
+        3
+      )}`
+    );
+
+    // 세그먼트 수 배분 (최소 1개는 보장)
+    let straight1Segments = Math.max(
+      1,
+      Math.round(totalSegments * straight1Ratio)
+    );
+    let curveSegments = Math.max(1, Math.round(totalSegments * curveRatio));
+    let straight2Segments = Math.max(
+      1,
+      Math.round(totalSegments * straight2Ratio)
+    );
+
+    // 반올림으로 인한 오차 보정 (가장 긴 구간에서 조정)
+    const assignedSegments =
+      straight1Segments + curveSegments + straight2Segments;
+    const segmentDiff = totalSegments - assignedSegments;
+
+    if (segmentDiff !== 0) {
+      if (curveRatio >= straight1Ratio && curveRatio >= straight2Ratio) {
+        curveSegments += segmentDiff;
+      } else if (straight1Ratio >= straight2Ratio) {
+        straight1Segments += segmentDiff;
+      } else {
+        straight2Segments += segmentDiff;
+      }
+    }
+
+    console.log(
+      `  🎯 Segment allocation: straight1=${straight1Segments}, curve=${curveSegments}, straight2=${straight2Segments} (total=${
+        straight1Segments + curveSegments + straight2Segments
+      })`
+    );
+
+    // 직선 방향 계산 (첫 번째와 두 번째 waypoint 기준)
+    const straightLineDirection = DirectionUtils.getLineDirection(nodeA, nodeB);
+    console.log(`  📐 Straight line direction: ${straightLineDirection}`);
+
+    const allPoints: THREE.Vector3[] = [];
+
+    // 3. 첫 번째 직선 구간 (a → b)
+    console.log(
+      `  📏 Adding straight section: ${waypoints[0]} → ${waypoints[1]} (${straight1Segments} segments)`
+    );
+    const straightPoints1 = StraightPointsCalculator.calculateSegmentedPoints(
+      nodeA,
+      nodeB,
+      straight1Segments
+    );
+    allPoints.push(...straightPoints1);
+
+    // 4. 90도 곡선 구간 (b → c)
+    console.log(
+      `  🌀 Adding curve section: ${waypoints[1]} → ${waypoints[2]} (radius: ${radius}, ${curveSegments} segments)`
+    );
+    const curvePoints = DirectionUtils.calculateCurveAreaPoints(
+      nodeB,
+      nodeC,
+      straightLineDirection,
+      radius,
+      90, // 90도 곡선
+      curveSegments,
+      "from"
+    );
+    allPoints.push(...curvePoints);
+
+    // 5. 두 번째 직선 구간 (c → d)
+    console.log(
+      `  📏 Adding straight section: ${waypoints[2]} → ${waypoints[3]} (${straight2Segments} segments)`
+    );
+    const straightPoints2 = StraightPointsCalculator.calculateSegmentedPoints(
+      nodeC,
+      nodeD,
+      straight2Segments
+    );
+    allPoints.push(...straightPoints2);
+
+    console.log(`  ✅ ${vos_rail_type} total points: ${allPoints.length}`);
+    return allPoints;
+  }
+}

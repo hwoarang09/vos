@@ -1,17 +1,12 @@
 // store/menuStore.ts (최종 버전)
 import { create } from "zustand";
-
-export type MainMenuType =
-  | "Statistics"
-  | "Vehicle"
-  | "Operation"
-  | "MapBuilder";
+import { MainMenuType } from "../types";
 
 export interface MenuState {
   // 메뉴 계층 구조에 맞는 명확한 네이밍
-  activeMainMenu: MainMenuType | null;        // 화면 하단의 메인 메뉴
-  activeSubMenu: string | null;               // 메인 메뉴 클릭시 나타나는 서브 메뉴
-  activeThirdMenu: string | null;             // 3단계 메뉴 (필요시)
+  activeMainMenu: MainMenuType | null; // 화면 하단의 메인 메뉴
+  activeSubMenu: string | null; // 메인 메뉴 클릭시 나타나는 서브 메뉴
+  activeThirdMenu: string | null; // 3단계 메뉴 (필요시)
   rightPanelOpen: boolean;
 
   // 툴팁 관련 상태
@@ -52,10 +47,10 @@ export const useMenuStore = create<MenuState>((set, get) => ({
   getCurrentTopLevel: () => {
     const { activeMainMenu, activeSubMenu, activeThirdMenu } = get();
 
-    if (activeThirdMenu) return 3;     // 3단계 메뉴가 활성화된 경우
-    if (activeSubMenu) return 2;       // 서브 메뉴가 활성화된 경우  
-    if (activeMainMenu) return 2;      // 메인 메뉴가 활성화된 경우 (서브메뉴 표시 준비)
-    return 1;                          // 기본 상태
+    if (activeThirdMenu) return 3; // 3단계 메뉴가 활성화된 경우
+    if (activeSubMenu) return 2; // 서브 메뉴가 활성화된 경우
+    if (activeMainMenu) return 2; // 메인 메뉴가 활성화된 경우 (서브메뉴 표시 준비)
+    return 1; // 기본 상태
   },
 
   // 메인 메뉴 설정 (화면 하단의 메뉴)
