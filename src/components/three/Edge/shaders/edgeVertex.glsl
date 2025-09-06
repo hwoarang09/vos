@@ -1,4 +1,4 @@
-// Edge vertex shader
+// Edge vertex shader for InstancedMesh
 uniform float uTime;
 uniform float uLength;
 varying vec3 vPosition;
@@ -10,9 +10,11 @@ void main() {
     vUv = uv;
 
     // Calculate progress along the edge (0.0 to 1.0)
-    vProgress = (position.x + uLength * 0.5) / uLength;
+    vProgress = (position.x + 0.5);
 
-    vec4 modelPosition = modelMatrix * vec4(position, 1.0);
+    // Apply instance matrix transformation
+    vec4 instancePosition = instanceMatrix * vec4(position, 1.0);
+    vec4 modelPosition = modelMatrix * instancePosition;
     vec4 viewPosition = viewMatrix * modelPosition;
     vec4 projectedPosition = projectionMatrix * viewPosition;
 

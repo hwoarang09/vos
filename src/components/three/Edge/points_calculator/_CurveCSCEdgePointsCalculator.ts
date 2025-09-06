@@ -28,12 +28,6 @@ export class CurveCSCEdgePointsCalculator {
   ): THREE.Vector3[] {
     const { waypoints, radius, edge_name, vos_rail_type } = edgeRowData;
 
-    console.log(
-      ` Processing ${vos_rail_type} edge: ${edge_name} (radius: ${radius}, waypoints: [${waypoints.join(
-        ", "
-      )}])`
-    );
-
     // waypoints 구조: [a, b, c, d, e, f] (6개)
     // a→b: 첫 번째 직선
     // b→c: 첫 번째 90도 곡선
@@ -77,35 +71,12 @@ export class CurveCSCEdgePointsCalculator {
       curve2Length +
       straight3Length;
 
-    console.log(
-      `  📏 Section lengths: straight1=${straight1Length.toFixed(
-        2
-      )}, curve1=${curve1Length.toFixed(
-        2
-      )}, straight2=${straight2Length.toFixed(
-        2
-      )}, curve2=${curve2Length.toFixed(
-        2
-      )}, straight3=${straight3Length.toFixed(2)}`
-    );
-    console.log(`  📏 Total length: ${totalLength.toFixed(2)}`);
-
     // 2. 길이 비율에 따른 세그먼트 배분
     const straight1Ratio = straight1Length / totalLength;
     const curve1Ratio = curve1Length / totalLength;
     const straight2Ratio = straight2Length / totalLength;
     const curve2Ratio = curve2Length / totalLength;
     const straight3Ratio = straight3Length / totalLength;
-
-    console.log(
-      `  📊 Length ratios: straight1=${straight1Ratio.toFixed(
-        3
-      )}, curve1=${curve1Ratio.toFixed(3)}, straight2=${straight2Ratio.toFixed(
-        3
-      )}, curve2=${curve2Ratio.toFixed(3)}, straight3=${straight3Ratio.toFixed(
-        3
-      )}`
-    );
 
     // 세그먼트 수 배분 (최소 1개는 보장)
     let straight1Segments = Math.max(
@@ -178,22 +149,9 @@ export class CurveCSCEdgePointsCalculator {
       }
     }
 
-    console.log(
-      `  🎯 Segment allocation: straight1=${straight1Segments}, curve1=${curve1Segments}, straight2=${straight2Segments}, curve2=${curve2Segments}, straight3=${straight3Segments} (total=${
-        straight1Segments +
-        curve1Segments +
-        straight2Segments +
-        curve2Segments +
-        straight3Segments
-      })`
-    );
-
     const allPoints: THREE.Vector3[] = [];
 
     // 3. 첫 번째 직선 구간 (a → b)
-    console.log(
-      `  📏 Adding straight1 section: ${waypoints[0]} → ${waypoints[1]} (${straight1Segments} segments)`
-    );
     const straightPoints1 = StraightPointsCalculator.calculateSegmentedPoints(
       nodeA,
       nodeB,
@@ -202,9 +160,6 @@ export class CurveCSCEdgePointsCalculator {
     allPoints.push(...straightPoints1);
 
     // 4. 첫 번째 90도 곡선 구간 (b → c)
-    console.log(
-      `  🌀 Adding curve1 section: ${waypoints[1]} → ${waypoints[2]} (radius: ${radius}, ${curve1Segments} segments)`
-    );
     const straightLineDirection1 = DirectionUtils.getLineDirection(
       nodeA,
       nodeB
@@ -221,9 +176,6 @@ export class CurveCSCEdgePointsCalculator {
     allPoints.push(...curvePoints1);
 
     // 5. 두 번째 직선 구간 (c → d)
-    console.log(
-      `  📏 Adding straight2 section: ${waypoints[2]} → ${waypoints[3]} (${straight2Segments} segments)`
-    );
     const straightPoints2 = StraightPointsCalculator.calculateSegmentedPoints(
       nodeC,
       nodeD,
@@ -232,9 +184,6 @@ export class CurveCSCEdgePointsCalculator {
     allPoints.push(...straightPoints2);
 
     // 6. 두 번째 90도 곡선 구간 (d → e)
-    console.log(
-      `  🌀 Adding curve2 section: ${waypoints[3]} → ${waypoints[4]} (radius: ${radius}, ${curve2Segments} segments)`
-    );
     const straightLineDirection2 = DirectionUtils.getLineDirection(
       nodeC,
       nodeD
@@ -251,17 +200,12 @@ export class CurveCSCEdgePointsCalculator {
     allPoints.push(...curvePoints2);
 
     // 7. 세 번째 직선 구간 (e → f)
-    console.log(
-      `  📏 Adding straight3 section: ${waypoints[4]} → ${waypoints[5]} (${straight3Segments} segments)`
-    );
     const straightPoints3 = StraightPointsCalculator.calculateSegmentedPoints(
       nodeE,
       nodeF,
       straight3Segments
     );
     allPoints.push(...straightPoints3);
-
-    console.log(`  ✅ ${vos_rail_type} total points: ${allPoints.length}`);
 
     // Z 오프셋 적용 (CSC 타입은 복잡한 곡선이므로 더 높은 우선순위)
     const zOffset = 0.003;

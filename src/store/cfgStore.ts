@@ -114,9 +114,6 @@ const parseEdgesCFG = (content: string): Edge[] => {
   const headers = parseCSVLine(lines[headerIndex]);
   const waypointsIndex = headers.indexOf("waypoints");
 
-  console.log("Headers found:", headers);
-  console.log("Waypoints column index:", waypointsIndex);
-
   // 데이터 라인 파싱
   for (let i = headerIndex + 1; i < lines.length; i++) {
     const line = lines[i];
@@ -143,8 +140,6 @@ const parseEdgesCFG = (content: string): Edge[] => {
           waypoints = parsed;
         }
       }
-
-      console.log(`Edge ${edgeName}: waypoints = [${waypoints.join(", ")}]`);
 
       // rendering points 계산
       let renderingPoints: THREE.Vector3[] = [];
@@ -186,7 +181,6 @@ const parseEdgesCFG = (content: string): Edge[] => {
         rendering_mode: "normal",
         renderingPoints: renderingPoints,
       };
-      console.log(`Rendering points for ${edgeName}:`, renderingPoints);
       edges.push(edge);
     } catch (error) {
       console.warn(`Failed to parse edge line: ${line}`, error);
@@ -212,34 +206,26 @@ export const useCFGStore = create<CFGStore>((set) => ({
 
   loadCFGFiles: async () => {
     set({ isLoading: true, error: null });
-    console.log("🔄 Starting CFG file loading...");
 
     try {
-      // CFG 파일들 로드
-      const [nodesContent, edgesContent] = await Promise.all([
-        loadCFGFile("nodes.cfg"),
-        loadCFGFile("edges.cfg"),
-      ]);
-
-      // 파싱
+      // 1. 먼저 nodes.cfg 로드 및 파싱
+      const nodesContent = await loadCFGFile("nodes.cfg");
       const nodes = parseNodesCFG(nodesContent);
+
+      // 2. 노드 스토어 업데이트 (완전히 끝날 때까지 기다림)
+      const nodeStore = useNodeStore.getState();
+      nodeStore.clearNodes();
+      nodes.forEach((node) => nodeStore.addNode(node));
+
+      // 3. 노드 파싱이 완료된 후 edges.cfg 로드 및 파싱
+      const edgesContent = await loadCFGFile("edges.cfg");
       const edges = parseEdgesCFG(edgesContent);
 
-      console.log(`✅ Parsed ${nodes.length} nodes and ${edges.length} edges`);
-
-      // 스토어 업데이트
-      const nodeStore = useNodeStore.getState();
+      // 4. 엣지 스토어 업데이트
       const mapStore = useMapStore.getState();
-
-      nodeStore.clearNodes();
       mapStore.clearEdges();
-
-      nodes.forEach((node) => nodeStore.addNode(node));
       edges.forEach((edge) => mapStore.addEdge(edge));
 
-      console.log(
-        `Loaded ${nodes.length} nodes and ${edges.length} edges from CFG files`
-      );
       set({ isLoading: false });
     } catch (error) {
       const errorMessage =

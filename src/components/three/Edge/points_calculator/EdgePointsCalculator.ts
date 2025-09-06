@@ -6,6 +6,7 @@ import { Curve90EdgePointsCalculator } from "./_Curve90EdgePointsCalculator";
 import { SCurvePointsCalculator } from "./_SCurvePointsCalculator";
 import { CurveCSCEdgePointsCalculator } from "./_CurveCSCEdgePointsCalculator";
 import { Curve180EdgePointsCalculator } from "./_Curve180EdgePointsCalculator";
+import { useRenderCheck } from "@/utils/renderDebug";
 
 /**
  * Edge Points Calculator 라우터
@@ -37,6 +38,7 @@ export class EdgePointsCalculator {
         return CurveCSCEdgePointsCalculator.calculate(edgeRowData, nodes);
 
       case "LINEAR":
+        return StraightPointsCalculator.calculate(edgeRowData, nodes);
       default:
         console.log(
           `⚪ Processing UNKNOWN rail type: ${vosRailType} for edge ${edgeName} - using LINEAR`

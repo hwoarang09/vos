@@ -1,9 +1,10 @@
-// Curve180EdgeRenderer.tsx - 단순히 점들을 받아서 곡선으로 렌더링
+// Curve180EdgeRenderer.tsx - InstancedMesh 버전
 import React, { useRef, useEffect, useMemo } from "react";
 import { useFrame } from "@react-three/fiber";
 import * as THREE from "three";
 import edgeVertexShader from "../shaders/edgeVertex.glsl?raw";
 import edgeFragmentShader from "../shaders/edgeFragment.glsl?raw";
+import { useRenderCheck } from "@/utils/renderDebug";
 
 interface Curve180EdgeRendererProps {
   renderingPoints: THREE.Vector3[];
@@ -22,19 +23,14 @@ export const Curve180EdgeRenderer: React.FC<Curve180EdgeRendererProps> = ({
   isPreview = false,
   renderOrder = 3,
 }) => {
-  const groupRef = useRef<THREE.Group>(null);
-  const segmentRefs = useRef<THREE.Mesh[]>([]);
+  const instancedMeshRef = useRef<THREE.InstancedMesh>(null);
+  const segmentCount = Math.max(0, renderingPoints.length - 1);
+  useRenderCheck("Curve180Renderer");
 
-  console.log(
-    `Curve180EdgeRenderer: ${
-      renderingPoints.length
-    } points, isPreview: ${isPreview}, renderOrder: ${renderOrder}
-    renderingPoints: ${renderingPoints
-      .map((p) => `(${p.x}, ${p.y}, ${p.z})`)
-      .join(", ")}`
-  );
+  // 기본 geometry (한 번만 생성)
+  const geometry = useMemo(() => new THREE.PlaneGeometry(1, 1), []);
 
-  // 셰이더 머티리얼 생성
+  // 셰이더 머티리얼 (한 번만 생성)
   const shaderMaterial = useMemo(() => {
     return new THREE.ShaderMaterial({
       uniforms: {
@@ -48,92 +44,78 @@ export const Curve180EdgeRenderer: React.FC<Curve180EdgeRendererProps> = ({
       fragmentShader: edgeFragmentShader,
       transparent: true,
       side: THREE.DoubleSide,
-      // Z-fighting 해결을 위한 설정 추가
       depthTest: true,
       depthWrite: true,
       depthFunc: THREE.LessEqualDepth,
     });
   }, [color, opacity, isPreview]);
 
-  // 직선 segment 업데이트 함수
-  const updateSegment = (
-    mesh: THREE.Mesh,
-    start: THREE.Vector3,
-    end: THREE.Vector3
-  ) => {
-    const centerX = (start.x + end.x) / 2;
-    const centerY = (start.y + end.y) / 2;
-    const centerZ = (start.z + end.z) / 2;
-
-    const length = start.distanceTo(end);
-    const angle = Math.atan2(end.y - start.y, end.x - start.x);
-
-    mesh.position.set(centerX, centerY, centerZ);
-    mesh.rotation.set(0, 0, angle);
-    mesh.scale.set(length, width, 1);
-    mesh.visible = true;
-
-    // 셰이더 uniform 업데이트
-    if (mesh.material instanceof THREE.ShaderMaterial) {
-      mesh.material.uniforms.uLength.value = length;
-    }
-  };
-
-  // renderingPoints로 곡선 그리기
+  // 인스턴스 행렬 계산 및 적용
   useEffect(() => {
-    const group = groupRef.current;
-    if (!group) return;
+    const mesh = instancedMeshRef.current;
+    if (!mesh) return;
 
-    // 점이 없으면 숨기기
-    if (!renderingPoints || renderingPoints.length < 2) {
-      group.visible = false;
+    // 점이 충분하지 않으면 숨기기
+    if (segmentCount <= 0) {
+      mesh.visible = false;
       return;
     }
 
-    // 기존 mesh들 정리
-    segmentRefs.current.forEach((mesh) => {
-      if (mesh) {
-        group.remove(mesh);
-        mesh.geometry.dispose();
-        if (mesh.material instanceof THREE.Material) {
-          mesh.material.dispose();
-        }
-      }
-    });
-    segmentRefs.current = [];
+    // 변환 행렬 계산용 임시 변수들
+    const matrix = new THREE.Matrix4();
+    const position = new THREE.Vector3();
+    const quaternion = new THREE.Quaternion();
+    const scale = new THREE.Vector3();
+    const euler = new THREE.Euler();
 
-    // 점들을 연결하는 직선 segments 생성
-    for (let i = 0; i < renderingPoints.length - 1; i++) {
+    // 각 세그먼트에 대한 변환 행렬 계산
+    for (let i = 0; i < segmentCount; i++) {
       const start = renderingPoints[i];
       const end = renderingPoints[i + 1];
 
-      const geometry = new THREE.PlaneGeometry(1, 1);
-      const material = shaderMaterial.clone();
-      const mesh = new THREE.Mesh(geometry, material);
+      // 중심점 계산
+      const centerX = (start.x + end.x) / 2;
+      const centerY = (start.y + end.y) / 2;
+      const centerZ = (start.z + end.z) / 2;
 
-      // renderOrder 설정 추가
-      mesh.renderOrder = renderOrder;
+      // 길이와 각도 계산
+      const length = start.distanceTo(end);
+      const angle = Math.atan2(end.y - start.y, end.x - start.x);
 
-      updateSegment(mesh, start, end);
+      // 변환 설정
+      position.set(centerX, centerY, centerZ);
+      euler.set(0, 0, angle);
+      quaternion.setFromEuler(euler);
+      scale.set(length * 2, width, 1);
 
-      group.add(mesh);
-      segmentRefs.current.push(mesh);
+      // 행렬 생성 및 인스턴스에 적용
+      matrix.compose(position, quaternion, scale);
+      mesh.setMatrixAt(i, matrix);
     }
 
-    group.visible = true;
-    console.log(
-      `180곡선 렌더링 완료: ${segmentRefs.current.length}개 세그먼트`
-    );
-  }, [renderingPoints, width, shaderMaterial, renderOrder]);
+    // GPU에 인스턴스 행렬 업데이트 알림
+    mesh.instanceMatrix.needsUpdate = true;
+    mesh.visible = true;
+  }, [renderingPoints, width, segmentCount, renderOrder]);
 
-  // 셰이더 애니메이션 업데이트
+  // 셰이더 애니메이션 업데이트 (모든 인스턴스에 공통 적용)
   useFrame((state) => {
-    segmentRefs.current.forEach((mesh) => {
-      if (mesh && mesh.material instanceof THREE.ShaderMaterial) {
-        mesh.material.uniforms.uTime.value = state.clock.elapsedTime;
-      }
-    });
+    if (shaderMaterial.uniforms.uTime) {
+      shaderMaterial.uniforms.uTime.value = state.clock.elapsedTime;
+    }
   });
 
-  return <group ref={groupRef} />;
+  // segmentCount가 0이면 아무것도 렌더링하지 않음
+  if (segmentCount <= 0) {
+    return null;
+  }
+
+  return (
+    <instancedMesh
+      key={segmentCount} // segmentCount 변경 시 재생성
+      ref={instancedMeshRef}
+      args={[geometry, shaderMaterial, segmentCount]}
+      frustumCulled={false} // 성능을 위해 frustum culling 비활성화
+    />
+  );
 };

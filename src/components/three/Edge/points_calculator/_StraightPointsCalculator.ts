@@ -14,10 +14,6 @@ export class StraightPointsCalculator {
   static calculate(edgeRowData: any, nodes: Node[]): THREE.Vector3[] {
     const { edge_name, from_node, to_node } = edgeRowData;
 
-    console.log(
-      `🟢 Processing LINEAR edge: ${edge_name} (${from_node} → ${to_node})`
-    );
-
     const fromNode = nodes.find((n: Node) => n.node_name === from_node);
     const toNode = nodes.find((n: Node) => n.node_name === to_node);
 
@@ -36,7 +32,6 @@ export class StraightPointsCalculator {
       new THREE.Vector3(toNode.editor_x, toNode.editor_y, toNode.editor_z),
     ];
 
-    console.log(`  ✅ LINEAR total points: ${points.length}`);
     return points;
   }
 

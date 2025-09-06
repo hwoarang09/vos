@@ -1,4 +1,4 @@
-// StraightEdgeRenderer.tsx - 단순히 점들을 받아서 직선으로 렌더링
+// StraightEdgeRenderer.tsx - InstancedMesh 버전
 import React, { useRef, useEffect, useMemo } from "react";
 import { useFrame } from "@react-three/fiber";
 import * as THREE from "three";
@@ -22,11 +22,13 @@ export const StraightEdgeRenderer: React.FC<StraightEdgeRendererProps> = ({
   isPreview = false,
   renderOrder = 1,
 }) => {
-  const meshRef = useRef<THREE.Mesh>(null);
+  const instancedMeshRef = useRef<THREE.InstancedMesh>(null);
 
-  console.log(
-    `StraightEdgeRenderer: ${renderingPoints.length}개 점, isPreview: ${isPreview}, renderOrder: ${renderOrder}`
-  );
+  // 직선은 항상 1개의 인스턴스만 필요
+  const instanceCount = renderingPoints.length >= 2 ? 1 : 0;
+
+  // 기본 geometry (한 번만 생성)
+  const geometry = useMemo(() => new THREE.PlaneGeometry(1, 1), []);
 
   // 셰이더 머티리얼 생성
   const shaderMaterial = useMemo(() => {
@@ -42,20 +44,16 @@ export const StraightEdgeRenderer: React.FC<StraightEdgeRendererProps> = ({
       fragmentShader: edgeFragmentShader,
       transparent: true,
       side: THREE.DoubleSide,
-      // Z-fighting 해결을 위한 설정 추가
       depthTest: true,
       depthWrite: true,
       depthFunc: THREE.LessEqualDepth,
     });
   }, [color, opacity, isPreview]);
 
-  // 직선 렌더링
+  // 인스턴스 행렬 계산 및 적용
   useEffect(() => {
-    const mesh = meshRef.current;
+    const mesh = instancedMeshRef.current;
     if (!mesh) return;
-
-    // renderOrder 설정
-    mesh.renderOrder = renderOrder;
 
     // 점 데이터 검증 (직선은 최소 2개 점 필요)
     if (!renderingPoints || renderingPoints.length < 2) {
@@ -81,34 +79,46 @@ export const StraightEdgeRenderer: React.FC<StraightEdgeRendererProps> = ({
       return;
     }
 
-    // mesh 변형 적용
-    mesh.position.set(centerX, centerY, centerZ);
-    mesh.rotation.set(0, 0, angle);
-    mesh.scale.set(length, width, 1);
+    // 변환 행렬 계산용 임시 변수들
+    const matrix = new THREE.Matrix4();
+    const position = new THREE.Vector3();
+    const quaternion = new THREE.Quaternion();
+    const scale = new THREE.Vector3();
+    const euler = new THREE.Euler();
+
+    // 변환 설정
+    position.set(centerX, centerY, centerZ);
+    euler.set(0, 0, angle);
+    quaternion.setFromEuler(euler);
+    scale.set(length, width, 1);
+
+    // 행렬 생성 및 인스턴스에 적용
+    matrix.compose(position, quaternion, scale);
+    mesh.setMatrixAt(0, matrix);
+
+    // GPU에 인스턴스 행렬 업데이트 알림
+    mesh.instanceMatrix.needsUpdate = true;
     mesh.visible = true;
-
-    // 셰이더 uniform 업데이트
-    if (mesh.material instanceof THREE.ShaderMaterial) {
-      mesh.material.uniforms.uLength.value = length;
-    }
-
-    console.log(`직선 렌더링 완료: 길이 ${length.toFixed(2)}`);
   }, [renderingPoints, width, renderOrder]);
 
-  // 셰이더 애니메이션 업데이트
+  // 셰이더 애니메이션 업데이트 (모든 인스턴스에 공통 적용)
   useFrame((state) => {
-    const mesh = meshRef.current;
-    if (!mesh) return;
-
-    if (mesh.material instanceof THREE.ShaderMaterial) {
-      mesh.material.uniforms.uTime.value = state.clock.elapsedTime;
+    if (shaderMaterial.uniforms.uTime) {
+      shaderMaterial.uniforms.uTime.value = state.clock.elapsedTime;
     }
   });
 
+  // instanceCount가 0이면 아무것도 렌더링하지 않음
+  if (instanceCount <= 0) {
+    return null;
+  }
+
   return (
-    <mesh ref={meshRef}>
-      <planeGeometry args={[1, 1]} />
-      <primitive object={shaderMaterial} attach="material" />
-    </mesh>
+    <instancedMesh
+      key={instanceCount} // instanceCount 변경 시 재생성
+      ref={instancedMeshRef}
+      args={[geometry, shaderMaterial, instanceCount]}
+      frustumCulled={false} // 성능을 위해 frustum culling 비활성화
+    />
   );
 };

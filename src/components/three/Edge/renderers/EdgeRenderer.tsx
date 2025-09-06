@@ -18,8 +18,6 @@ const EdgeRenderer: React.FC<EdgeRendererProps> = ({
   edges,
   previewEdges = [],
 }) => {
-  console.log("EdgeRenderer - rendering", edges.length, "edges");
-
   // rail type에 따른 기본 색상 가져오기
   const getDefaultColor = (vos_rail_type: string): string => {
     switch (vos_rail_type) {
@@ -60,14 +58,6 @@ const EdgeRenderer: React.FC<EdgeRendererProps> = ({
       isPreview,
       renderOrder: getRenderOrder(edge.vos_rail_type), // renderOrder 추가
     };
-
-    console.log(
-      `Rendering edge: ${edge.edge_name} (${edge.vos_rail_type}) - ${
-        edge.renderingPoints?.length || 0
-      } points - color: ${commonProps.color} - renderOrder: ${
-        commonProps.renderOrder
-      }`
-    );
 
     // points가 없으면 렌더링하지 않음
     if (!edge.renderingPoints || edge.renderingPoints.length === 0) {

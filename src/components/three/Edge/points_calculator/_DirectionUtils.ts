@@ -158,12 +158,6 @@ export class DirectionUtils {
       curveEndNode
     );
 
-    console.log(
-      `  🔄 Curve rotation direction: ${
-        rotationDirection > 0 ? "counter-clockwise" : "clockwise"
-      } (${rotationDirection})`
-    );
-
     // 4. 지정된 각도만큼 호를 segments로 나누어 점들 생성
     const rotationRadians = (rotationDegrees * Math.PI) / 180;
 
