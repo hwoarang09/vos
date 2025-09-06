@@ -1,11 +1,11 @@
 import { useNodeStore } from "../../../../store/nodeStore";
 import * as THREE from "three";
 
-import { StraightPointsCalculator } from "./StraightPointsCalculator";
-import { Curve90EdgePointsCalculator } from "./Curve90EdgePointsCalculator";
-import { SCurvePointsCalculator } from "./SCurvePointsCalculator";
-import { CSCCurvePointsCalculator } from "./CSCCurvePointsCalculator";
-import { Curve180EdgePointsCalculator } from "./Curve180EdgePointsCalculator";
+import { StraightPointsCalculator } from "./_StraightPointsCalculator";
+import { Curve90EdgePointsCalculator } from "./_Curve90EdgePointsCalculator";
+import { SCurvePointsCalculator } from "./_SCurvePointsCalculator";
+import { CurveCSCEdgePointsCalculator } from "./_CurveCSCEdgePointsCalculator";
+import { Curve180EdgePointsCalculator } from "./_Curve180EdgePointsCalculator";
 
 /**
  * Edge Points Calculator 라우터
@@ -24,20 +24,17 @@ export class EdgePointsCalculator {
     const nodes = useNodeStore.getState().nodes;
 
     switch (vosRailType) {
-      case "LEFT_CURVE":
-      case "RIGHT_CURVE":
+      case "CURVE_90":
         return Curve90EdgePointsCalculator.calculate(edgeRowData, nodes);
 
-      case "CW_CURVE":
-      case "CCW_CURVE":
+      case "CURVE_180":
         return Curve180EdgePointsCalculator.calculate(edgeRowData, nodes);
 
       case "S_CURVE":
         return SCurvePointsCalculator.calculate(edgeRowData, nodes);
 
-      case "CSC_CURVE_HOMO":
-      case "CSC_CURVE_HETE":
-        return CSCCurvePointsCalculator.calculate(edgeRowData, nodes);
+      case "CURVE_CSC":
+        return CurveCSCEdgePointsCalculator.calculate(edgeRowData, nodes);
 
       case "LINEAR":
       default:

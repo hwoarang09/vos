@@ -11,6 +11,7 @@ interface StraightEdgeRendererProps {
   opacity?: number;
   width?: number;
   isPreview?: boolean;
+  renderOrder?: number;
 }
 
 export const StraightEdgeRenderer: React.FC<StraightEdgeRendererProps> = ({
@@ -19,11 +20,12 @@ export const StraightEdgeRenderer: React.FC<StraightEdgeRendererProps> = ({
   opacity = 1,
   width = 0.5,
   isPreview = false,
+  renderOrder = 1,
 }) => {
   const meshRef = useRef<THREE.Mesh>(null);
 
   console.log(
-    `StraightEdgeRenderer: ${renderingPoints.length}개 점, isPreview: ${isPreview}`
+    `StraightEdgeRenderer: ${renderingPoints.length}개 점, isPreview: ${isPreview}, renderOrder: ${renderOrder}`
   );
 
   // 셰이더 머티리얼 생성
@@ -40,6 +42,10 @@ export const StraightEdgeRenderer: React.FC<StraightEdgeRendererProps> = ({
       fragmentShader: edgeFragmentShader,
       transparent: true,
       side: THREE.DoubleSide,
+      // Z-fighting 해결을 위한 설정 추가
+      depthTest: true,
+      depthWrite: true,
+      depthFunc: THREE.LessEqualDepth,
     });
   }, [color, opacity, isPreview]);
 
@@ -47,6 +53,9 @@ export const StraightEdgeRenderer: React.FC<StraightEdgeRendererProps> = ({
   useEffect(() => {
     const mesh = meshRef.current;
     if (!mesh) return;
+
+    // renderOrder 설정
+    mesh.renderOrder = renderOrder;
 
     // 점 데이터 검증 (직선은 최소 2개 점 필요)
     if (!renderingPoints || renderingPoints.length < 2) {
@@ -84,7 +93,7 @@ export const StraightEdgeRenderer: React.FC<StraightEdgeRendererProps> = ({
     }
 
     console.log(`직선 렌더링 완료: 길이 ${length.toFixed(2)}`);
-  }, [renderingPoints, width]);
+  }, [renderingPoints, width, renderOrder]);
 
   // 셰이더 애니메이션 업데이트
   useFrame((state) => {

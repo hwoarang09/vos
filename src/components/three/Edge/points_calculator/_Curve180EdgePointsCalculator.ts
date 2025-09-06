@@ -1,6 +1,6 @@
 import { Node } from "../../../../types";
-import { DirectionUtils } from "./DirectionUtils";
-import { StraightPointsCalculator } from "./StraightPointsCalculator";
+import { DirectionUtils } from "./_DirectionUtils";
+import { StraightPointsCalculator } from "./_StraightPointsCalculator";
 import * as THREE from "three";
 import {
   calculateStraightDistance,
@@ -9,13 +9,13 @@ import {
 const DEFAULT_SEGMENTS = 100;
 
 /**
- * 90도 곡선 (LEFT_CURVE, RIGHT_CURVE) Edge Points Calculator
- * 직선 + 90도 곡선 + 직선 구조로 처리
+ * 180도 곡선 (LEFT_CURVE, RIGHT_CURVE) Edge Points Calculator
+ * 직선 + 180도 곡선 + 직선 구조로 처리
  * 각 구간의 길이에 비례해서 점을 배분
  */
-export class Curve90EdgePointsCalculator {
+export class Curve180EdgePointsCalculator {
   /**
-   * 90도 곡선 타입의 edge 포인트 계산
+   * 180도 곡선 타입의 edge 포인트 계산
    * @param edgeRowData CFG에서 파싱된 edge row 데이터
    * @param nodes 전체 노드 배열
    * @param totalSegments 전체 세그먼트 수 (기본값: 20)
@@ -36,7 +36,7 @@ export class Curve90EdgePointsCalculator {
 
     // waypoints 구조: [a, b, c, d]
     // a→b: 첫 번째 직선
-    // b→c: 90도 곡선 (LEFT 또는 RIGHT)
+    // b→c: 180도 곡선 (LEFT 또는 RIGHT)
     // c→d: 두 번째 직선
     const nodeA = nodes.find((n: Node) => n.node_name === waypoints[0]);
     const nodeB = nodes.find((n: Node) => n.node_name === waypoints[1]);
@@ -59,7 +59,7 @@ export class Curve90EdgePointsCalculator {
 
     // 1. 각 구간의 길이 계산
     const straight1Length = calculateStraightDistance(nodeA, nodeB);
-    const curveLength = calculateCurveLength(radius, 90); // 90도 곡선
+    const curveLength = calculateCurveLength(radius, 180); // 180도 곡선
     const straight2Length = calculateStraightDistance(nodeC, nodeD);
 
     const totalLength = straight1Length + curveLength + straight2Length;
@@ -135,7 +135,7 @@ export class Curve90EdgePointsCalculator {
     );
     allPoints.push(...straightPoints1);
 
-    // 4. 90도 곡선 구간 (b → c)
+    // 4. 180도 곡선 구간 (b → c)
     console.log(
       `  🌀 Adding curve section: ${waypoints[1]} → ${waypoints[2]} (radius: ${radius}, ${curveSegments} segments)`
     );
@@ -144,7 +144,7 @@ export class Curve90EdgePointsCalculator {
       nodeC,
       straightLineDirection,
       radius,
-      90, // 90도 곡선
+      180, // 180도 곡선
       curveSegments,
       "from"
     );
@@ -162,6 +162,12 @@ export class Curve90EdgePointsCalculator {
     allPoints.push(...straightPoints2);
 
     console.log(`  ✅ ${vos_rail_type} total points: ${allPoints.length}`);
-    return allPoints;
+    // Z 오프셋 적용
+    const zOffset = 0.001; // 또는 파라미터로 받아서 사용
+    const offsetPoints = allPoints.map(
+      (point) => new THREE.Vector3(point.x, point.y, point.z + zOffset)
+    );
+
+    return offsetPoints;
   }
 }

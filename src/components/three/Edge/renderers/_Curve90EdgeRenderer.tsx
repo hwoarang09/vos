@@ -11,6 +11,7 @@ interface Curve90EdgeRendererProps {
   opacity?: number;
   width?: number;
   isPreview?: boolean;
+  renderOrder?: number;
 }
 
 export const Curve90EdgeRenderer: React.FC<Curve90EdgeRendererProps> = ({
@@ -19,12 +20,13 @@ export const Curve90EdgeRenderer: React.FC<Curve90EdgeRendererProps> = ({
   opacity = 1,
   width = 0.5,
   isPreview = false,
+  renderOrder = 2,
 }) => {
   const groupRef = useRef<THREE.Group>(null);
   const segmentRefs = useRef<THREE.Mesh[]>([]);
 
   console.log(
-    `Curve90EdgeRenderer: ${renderingPoints.length} points, isPreview: ${isPreview}`
+    `Curve90EdgeRenderer: ${renderingPoints.length} points, isPreview: ${isPreview}, renderOrder: ${renderOrder}`
   );
 
   // 셰이더 머티리얼 생성
@@ -41,6 +43,10 @@ export const Curve90EdgeRenderer: React.FC<Curve90EdgeRendererProps> = ({
       fragmentShader: edgeFragmentShader,
       transparent: true,
       side: THREE.DoubleSide,
+      // Z-fighting 해결을 위한 설정 추가
+      depthTest: true,
+      depthWrite: true,
+      depthFunc: THREE.LessEqualDepth, // 기본값이지만 명시적으로 설정
     });
   }, [color, opacity, isPreview]);
 
@@ -59,7 +65,7 @@ export const Curve90EdgeRenderer: React.FC<Curve90EdgeRendererProps> = ({
 
     mesh.position.set(centerX, centerY, centerZ);
     mesh.rotation.set(0, 0, angle);
-    mesh.scale.set(length, width, 1);
+    mesh.scale.set(length * 2, width, 1);
     mesh.visible = true;
 
     // 셰이더 uniform 업데이트
@@ -100,6 +106,9 @@ export const Curve90EdgeRenderer: React.FC<Curve90EdgeRendererProps> = ({
       const material = shaderMaterial.clone();
       const mesh = new THREE.Mesh(geometry, material);
 
+      // renderOrder 설정 추가
+      mesh.renderOrder = renderOrder;
+
       updateSegment(mesh, start, end);
 
       group.add(mesh);
@@ -108,7 +117,7 @@ export const Curve90EdgeRenderer: React.FC<Curve90EdgeRendererProps> = ({
 
     group.visible = true;
     console.log(`곡선 렌더링 완료: ${segmentRefs.current.length}개 세그먼트`);
-  }, [renderingPoints, width, shaderMaterial]);
+  }, [renderingPoints, width, shaderMaterial, renderOrder]);
 
   // 셰이더 애니메이션 업데이트
   useFrame((state) => {

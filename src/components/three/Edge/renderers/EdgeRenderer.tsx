@@ -1,9 +1,13 @@
 // EdgeRenderer.tsx - 순수 렌더러 버전
 import React, { useMemo } from "react";
 import { Edge } from "../../../../types";
-import { StraightEdgeRenderer } from "./StraightEdgeRenderer";
-import { Curve90EdgeRenderer } from "./Curve90EdgeRenderer";
+import { StraightEdgeRenderer } from "./_StraightEdgeRenderer";
+import { Curve90EdgeRenderer } from "./_Curve90EdgeRenderer";
+import { Curve180EdgeRenderer } from "./_Curve180EdgeRenderer";
+import { colors } from "./colors"; // EdgeRenderer 폴더 내의 colors.ts
 import * as THREE from "three";
+import { CurveCSCEdgePointsCalculator } from "../points_calculator";
+import { CurveCSCEdgeRenderer } from "./_CurveCSCEdgeRenderer";
 
 interface EdgeRendererProps {
   edges: Edge[];
@@ -16,19 +20,53 @@ const EdgeRenderer: React.FC<EdgeRendererProps> = ({
 }) => {
   console.log("EdgeRenderer - rendering", edges.length, "edges");
 
+  // rail type에 따른 기본 색상 가져오기
+  const getDefaultColor = (vos_rail_type: string): string => {
+    switch (vos_rail_type) {
+      case "LINEAR":
+        return colors.linear;
+      case "CURVE_90":
+        return colors.curve90;
+      case "CURVE_180":
+        return colors.curve180;
+      case "CURVE_CSC":
+        return colors.curveCSC;
+      default:
+        return colors.default;
+    }
+  };
+
+  // rail type에 따른 renderOrder 설정 (높을수록 위에 렌더링)
+  const getRenderOrder = (vos_rail_type: string): number => {
+    switch (vos_rail_type) {
+      case "LINEAR":
+        return 1; // 직선이 먼저 (뒤에)
+      case "CURVE_90":
+      case "CURVE_180":
+      case "CURVE_CSC":
+        return 2; // 90도 곡선이 나중에 (위에)
+
+      default:
+        return 0;
+    }
+  };
+
   // 일반 edge 렌더링 함수
   const renderEdge = (edge: Edge, isPreview: boolean = false) => {
     const commonProps = {
-      color: edge.color || "#00ff00",
+      color: edge.color || getDefaultColor(edge.vos_rail_type),
       opacity: edge.opacity || 1,
       width: 0.25,
       isPreview,
+      renderOrder: getRenderOrder(edge.vos_rail_type), // renderOrder 추가
     };
 
     console.log(
       `Rendering edge: ${edge.edge_name} (${edge.vos_rail_type}) - ${
         edge.renderingPoints?.length || 0
-      } points`
+      } points - color: ${commonProps.color} - renderOrder: ${
+        commonProps.renderOrder
+      }`
     );
 
     // points가 없으면 렌더링하지 않음
@@ -40,9 +78,7 @@ const EdgeRenderer: React.FC<EdgeRendererProps> = ({
     const key = isPreview ? `preview-${edge.edge_name}` : edge.edge_name;
 
     switch (edge.vos_rail_type) {
-      case "C90":
-      case "LEFT_CURVE":
-      case "RIGHT_CURVE":
+      case "CURVE_90":
         return (
           <Curve90EdgeRenderer
             key={key}
@@ -50,11 +86,22 @@ const EdgeRenderer: React.FC<EdgeRendererProps> = ({
             {...commonProps}
           />
         );
-      case "C180":
-        // C180 렌더러가 만들어지면 여기에 추가
-        console.warn("C180EdgeRenderer not implemented yet");
-        return null;
-      case "S":
+      case "CURVE_180":
+        return (
+          <Curve180EdgeRenderer
+            key={key}
+            renderingPoints={edge.renderingPoints}
+            {...commonProps}
+          />
+        );
+      case "CURVE_CSC":
+        return (
+          <CurveCSCEdgeRenderer
+            key={key}
+            renderingPoints={edge.renderingPoints}
+            {...commonProps}
+          />
+        );
       case "LINEAR":
       default:
         return (

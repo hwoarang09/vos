@@ -2,6 +2,8 @@ import { create } from "zustand";
 import { useNodeStore } from "./nodeStore";
 import { useMapStore } from "./edgeStore";
 import { Node, Edge } from "../types";
+import { getNodeColor } from "../types/nodeColors";
+import { getEdgeColor } from "../types/edgeColors";
 import { PointsCalculator } from "../components/three/Edge/points_calculator";
 import * as THREE from "three";
 
@@ -75,13 +77,15 @@ const parseNodesCFG = (content: string): Node[] => {
     if (parts.length < 5) continue;
 
     try {
+      const nodeName = parts[0];
+
       const node: Node = {
-        node_name: parts[0],
+        node_name: nodeName,
         barcode: parseInt(parts[1]) || 0,
         editor_x: parseFloat(parts[2]) || 0,
         editor_y: parseFloat(parts[3]) || 0,
         editor_z: parseFloat(parts[4]) || 3.8,
-        color: "#4CAF50",
+        color: getNodeColor(nodeName), // 노드 이름에 따른 색상 적용
         size: 0.5,
         readonly: true,
         source: "config",
@@ -175,8 +179,8 @@ const parseEdgesCFG = (content: string): Edge[] => {
         rotation:
           rotation ||
           (railType === "C90" ? 90 : railType === "C180" ? 180 : undefined),
-        color: getEdgeColorByType(railType),
-        opacity: 0.8,
+        color: getEdgeColor(railType), // VOS rail type에 따른 색상 적용
+        opacity: 1.0,
         readonly: true,
         source: "config",
         rendering_mode: "normal",
@@ -190,21 +194,6 @@ const parseEdgesCFG = (content: string): Edge[] => {
   }
 
   return edges;
-};
-
-// 레일 타입별 색상
-const getEdgeColorByType = (railType: string): string => {
-  const colorMap: Record<string, string> = {
-    LINEAR: "#2196F3",
-    LEFT_CURVE: "#4CAF50",
-    RIGHT_CURVE: "#F44336",
-    S: "#2196F3",
-    T: "#FF9800",
-    L: "#4CAF50",
-    R: "#F44336",
-  };
-
-  return colorMap[railType] || "#757575";
 };
 
 // CFG 파일 로드

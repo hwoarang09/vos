@@ -28,6 +28,14 @@ const NodeInstance: React.FC<NodeInstanceProps> = ({
   const sizeRef = useRef(1);
   const colorRef = useRef(new THREE.Color("#ff6b6b"));
 
+  // Preview 모드일 때 색상을 살짝 다르게 조정
+  const getPreviewColor = (baseColor: string): string => {
+    const color = new THREE.Color(baseColor);
+    // 밝기를 살짝 조정 (1.2배 밝게)
+    color.multiplyScalar(1.2);
+    return `#${color.getHexString()}`;
+  };
+
   // Create once
   const geometry = useMemo(() => new THREE.SphereGeometry(0.2, 16, 16), []);
   const material = useMemo(
@@ -40,14 +48,14 @@ const NodeInstance: React.FC<NodeInstanceProps> = ({
           uColor: { value: colorRef.current.clone() },
           uOpacity: { value: 1.0 },
           uSize: { value: 0.1 },
-          uIsPreview: { value: 0.0 },
+          uIsPreview: { value: isPreview ? 1.0 : 0.0 },
         },
         transparent: true,
         side: THREE.FrontSide,
         depthWrite: true,
         blending: THREE.NormalBlending,
       }),
-    []
+    [isPreview]
   );
 
   // Subscribe to node updates without causing React re-renders
@@ -62,7 +70,10 @@ const NodeInstance: React.FC<NodeInstanceProps> = ({
     if (n) {
       posRef.current.set(n.editor_x, n.editor_y, n.editor_z);
       sizeRef.current = n.size ?? 1;
-      colorRef.current.set(n.color ?? "#ff6b6b");
+
+      // CFG에서 이미 색상이 적용되어 있으므로 그대로 사용
+      const nodeColor = n.color || "#ff6b6b";
+      colorRef.current.set(nodeColor);
       (material.uniforms.uColor as any).value = colorRef.current;
       (material.uniforms.uSize as any).value = sizeRef.current;
     }
@@ -77,9 +88,11 @@ const NodeInstance: React.FC<NodeInstanceProps> = ({
         sizeRef.current = newSize;
         (material.uniforms.uSize as any).value = newSize;
       }
-      const newColor = node.color ?? "#ff6b6b";
-      if (!colorRef.current.equals(new THREE.Color(newColor))) {
-        colorRef.current.set(newColor);
+
+      // CFG에서 파싱된 색상 사용
+      const nodeColor = node.color || "#ff6b6b";
+      if (!colorRef.current.equals(new THREE.Color(nodeColor))) {
+        colorRef.current.set(nodeColor);
         (material.uniforms.uColor as any).value = colorRef.current;
       }
     });
@@ -112,10 +125,12 @@ const NodeInstance: React.FC<NodeInstanceProps> = ({
       const size = previewNode.size ?? 1;
       m.scale.set(size, size, size);
 
-      // Update material uniforms
-      const color = previewNode.color ?? "#1e90ff";
-      if (!colorRef.current.equals(new THREE.Color(color))) {
-        colorRef.current.set(color);
+      // Preview 노드 색상 처리 (CFG에서 파싱된 색상 기반)
+      const baseColor = previewNode.color || "#1e90ff";
+      const previewColor = getPreviewColor(baseColor);
+
+      if (!colorRef.current.equals(new THREE.Color(previewColor))) {
+        colorRef.current.set(previewColor);
         (material.uniforms.uColor as any).value = colorRef.current;
       }
       if (size !== sizeRef.current) {

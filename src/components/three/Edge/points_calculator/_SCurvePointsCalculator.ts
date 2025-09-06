@@ -1,15 +1,15 @@
 import { Node } from "../../../../types";
-import { DirectionUtils } from "./DirectionUtils";
+import { DirectionUtils } from "./_DirectionUtils";
 import * as THREE from "three";
 
 const CURVE_SEGMENTS = 20;
 
 /**
- * 180도 곡선 (CW, CCW) Edge Points Calculator
+ * S자 곡선 (S_CURVE_LEFT, S_CURVE_RIGHT) Edge Points Calculator
  */
-export class Curve180EdgePointsCalculator {
+export class SCurvePointsCalculator {
   /**
-   * 180도 곡선 타입의 edge 포인트 계산
+   * S자 곡선 타입의 edge 포인트 계산
    * @param edgeRowData CFG에서 파싱된 edge row 데이터
    * @param nodes 전체 노드 배열
    * @returns 3D 렌더링 포인트 배열
@@ -48,17 +48,15 @@ export class Curve180EdgePointsCalculator {
     );
     console.log(`  📐 Straight line direction: ${straightLineDirection}`);
 
-    // 180도 곡선 계산
-    // CW: 시계방향 180도
-    // CCW: 반시계방향 180도
+    // S자 곡선 - to 기준 arc center, 역방향
     const curvePoints = DirectionUtils.calculateCurveAreaPoints(
       fromNode,
       toNode,
       straightLineDirection,
       radius,
-      180, // 180도 곡선
+      90,
       segments,
-      "from"
+      "to"
     );
 
     console.log(`  ✅ ${vos_rail_type} total points: ${curvePoints.length}`);
