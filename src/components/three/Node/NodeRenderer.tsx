@@ -40,7 +40,7 @@ const NodeRenderer: React.FC<NodeRendererProps> = ({ nodes }) => {
     <group>
       {nodeInstances}
       {/* Preview nodes - they handle their own visibility based on activeMenu */}
-      {previewNodeInstances}
+      {/* {previewNodeInstances} */}
     </group>
   );
 };

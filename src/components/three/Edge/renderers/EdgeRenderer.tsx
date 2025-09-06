@@ -123,7 +123,7 @@ const EdgeRenderer: React.FC<EdgeRendererProps> = ({
   return (
     <group>
       {edgeInstances}
-      {previewEdgeInstances}
+      {/* {previewEdgeInstances} */}
     </group>
   );
 };
