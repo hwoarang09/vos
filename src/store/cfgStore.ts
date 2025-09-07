@@ -3,8 +3,8 @@ import { useNodeStore } from "./nodeStore";
 import { useMapStore } from "./edgeStore";
 import { useTextStore, TextPosition } from "./textStore";
 import { Node, Edge } from "../types";
-import { getNodeColor } from "../types/nodeColors";
-import { getEdgeColor } from "../types/edgeColors";
+import { getNodeColor } from "../utils/colors/nodeColors";
+import { getEdgeColor } from "../utils/colors/edgeColors";
 import { PointsCalculator } from "../components/three/Edge/points_calculator";
 import * as THREE from "three";
 
@@ -172,9 +172,7 @@ const parseEdgesCFG = (content: string): Edge[] => {
         vos_rail_type: railType,
         distance: distance,
         radius: radius || (railType.startsWith("C") ? 0.5 : undefined),
-        rotation:
-          rotation ||
-          (railType === "C90" ? 90 : railType === "C180" ? 180 : undefined),
+        rotation: rotation || 0,
         color: getEdgeColor(railType), // VOS rail type에 따른 색상 적용
         opacity: 1.0,
         readonly: true,

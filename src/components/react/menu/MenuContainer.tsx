@@ -4,7 +4,7 @@ import BottomMenu from "./BottomMenu";
 import RightPanel from "./RightPanel";
 import SubMenu from "./SubMenu";
 import MapLoader from "../MapLoader/MapLoader";
-import DebugPanel from "../debug/DebugPanel";
+import ConfigDataPanel from "../DataPanel/DataPanel";
 import { useMenuStore } from "../../../store/menuStore";
 import { useMqttStore } from "../../../store/mqttStore";
 import { mqttUrl } from "../../../config/mqttConfig";
@@ -49,7 +49,7 @@ const MenuContainer: React.FC = () => {
             position: "fixed",
             top: 80,
             right: 0,
-            bottom: 120, // 바텀메뉴가 더 커졌으니 여유공간 확보
+            bottom: 140, // 바텀메뉴가 더 커졌으니 여유공간 확보
             width: 320,
             zIndex: 20,
           }}
@@ -58,8 +58,8 @@ const MenuContainer: React.FC = () => {
         </div>
       )}
 
-      {/* Debug Panel - Debug 메뉴가 활성화되었을 때만 표시 */}
-      {activeMainMenu === "Debug" && <DebugPanel />}
+      {/* Config Data Panel - DataPanel 메뉴가 활성화되었을 때만 표시 */}
+      {activeMainMenu === "DataPanel" && <ConfigDataPanel />}
 
       {/* Global Tooltip - 항상 렌더링 */}
       <GlobalTooltip />

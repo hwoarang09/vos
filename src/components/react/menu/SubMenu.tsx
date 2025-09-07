@@ -7,17 +7,16 @@ import { tooltipsByLevel } from "./data/tooltipConfig";
 
 const SubMenu: React.FC = () => {
   const {
-    activeMainMenu,        // 메인 메뉴 상태
-    activeSubMenu,         // 서브 메뉴 상태
-    setActiveSubMenu,      // 서브 메뉴 설정
-    setActiveThirdMenu,    // 3단계 메뉴 설정
+    activeMainMenu, // 메인 메뉴 상태
+    activeSubMenu, // 서브 메뉴 상태
+    setActiveSubMenu, // 서브 메뉴 설정
+    setActiveThirdMenu, // 3단계 메뉴 설정
     setRightPanelOpen,
   } = useMenuStore();
 
   // 메인 메뉴가 활성화되지 않았으면 서브메뉴 표시하지 않음
 
   if (!activeMainMenu) return null;
-  
 
   const menuItems = subMenuConfig[activeMainMenu] || [];
 
@@ -33,7 +32,7 @@ const SubMenu: React.FC = () => {
       const hasThirdLevelMenu =
         activeMainMenu === "MapBuilder" &&
         // ["map-menu-1", "map-menu-2"].includes(menuId);
-        ['잠시'].includes(menuId);
+        ["잠시"].includes(menuId);
 
       if (hasThirdLevelMenu) {
         // 3단계 메뉴가 있는 경우 - 임시로 첫 번째 3단계 메뉴 자동 선택
@@ -50,7 +49,7 @@ const SubMenu: React.FC = () => {
   };
 
   return (
-    <div className="fixed bottom-[50px] left-0 right-0 z-50 flex justify-center">
+    <div className="fixed bottom-[80px] left-0 right-0 z-50 flex justify-center">
       <div
         className="flex space-x-2 p-2 rounded-xl shadow-lg border-2"
         style={{

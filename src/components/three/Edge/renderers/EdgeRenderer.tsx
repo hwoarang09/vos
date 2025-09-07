@@ -8,6 +8,11 @@ import { colors } from "./colors"; // EdgeRenderer 폴더 내의 colors.ts
 import * as THREE from "three";
 import { CurveCSCEdgePointsCalculator } from "../points_calculator";
 import { CurveCSCEdgeRenderer } from "./_CurveCSCEdgeRenderer";
+import {
+  RENDER_ORDER_DEFAULT,
+  RENDER_ORDER_RAIL_CURVE_90,
+  RENDER_ORDER_RAIL_LINEAR,
+} from "@/utils/renderOrder";
 
 interface EdgeRendererProps {
   edges: Edge[];
@@ -38,14 +43,14 @@ const EdgeRenderer: React.FC<EdgeRendererProps> = ({
   const getRenderOrder = (vos_rail_type: string): number => {
     switch (vos_rail_type) {
       case "LINEAR":
-        return 1; // 직선이 먼저 (뒤에)
+        return RENDER_ORDER_RAIL_LINEAR; // 직선이 먼저 (뒤에)
       case "CURVE_90":
       case "CURVE_180":
       case "CURVE_CSC":
-        return 2; // 90도 곡선이 나중에 (위에)
+        return RENDER_ORDER_RAIL_CURVE_90; // 90도 곡선이 나중에 (위에)
 
       default:
-        return 0;
+        return RENDER_ORDER_DEFAULT;
     }
   };
 

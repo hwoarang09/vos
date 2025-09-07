@@ -30,7 +30,7 @@ export const TOOLTIP_BORDER_RADIUS = "12px"; // 둥근 모서리
 
 // 메뉴 크기 상수
 export const MENU_BUTTON_LARGE_SIZE = { width: "w-12", height: "h-12" }; // 64px x 64px
-export const MENU_BUTTON_SMALL_SIZE = { width: "w-8", height: "h-6" }; // 40px x 32px
+export const MENU_BUTTON_SMALL_SIZE = { width: "w-12", height: "h-10" }; // 48px x 40px
 
 // 아이콘 크기 상수
 export const ICON_SIZE_LARGE = 30; // 서브메뉴용 큰 아이콘

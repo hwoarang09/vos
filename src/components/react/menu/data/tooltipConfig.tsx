@@ -1,5 +1,5 @@
 // components/react/menu/data/tooltipConfig.tsx (새로운 파일)
-import { MainMenuType } from "@store/menuStore";
+import { MainMenuType } from "@/types";
 
 export const tooltipsByLevel: {
   1: Record<MainMenuType, string>;
@@ -13,6 +13,7 @@ export const tooltipsByLevel: {
     Vehicle: "차량 관리",
     Operation: "운영 관리",
     MapBuilder: "도로 편집기",
+    DataPanel: "데이터 패널",
   },
   2: {
     // 서브메뉴 레벨

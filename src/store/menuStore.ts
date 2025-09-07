@@ -1,6 +1,6 @@
 // store/menuStore.ts (최종 버전)
 import { create } from "zustand";
-import { MainMenuType } from "../types";
+import { MainMenuType } from "@/types";
 
 export interface MenuState {
   // 메뉴 계층 구조에 맞는 명확한 네이밍
@@ -49,8 +49,7 @@ export const useMenuStore = create<MenuState>((set, get) => ({
 
     if (activeThirdMenu) return 3; // 3단계 메뉴가 활성화된 경우
     if (activeSubMenu) return 2; // 서브 메뉴가 활성화된 경우
-    if (activeMainMenu) return 2; // 메인 메뉴가 활성화된 경우 (서브메뉴 표시 준비)
-    return 1; // 기본 상태
+    return 1; // 기본 상태 (메인 메뉴 레벨)
   },
 
   // 메인 메뉴 설정 (화면 하단의 메뉴)

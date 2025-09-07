@@ -2,46 +2,72 @@ import { useEffect } from "react";
 import { useMenuStore } from "@/store/menuStore";
 import { useMapStore } from "@/store/edgeStore";
 import { subMenuConfig } from "../menu/data/submenuConfig";
+import { bottomMenuGroups } from "../menu/data/BottomMenuConfig";
 
 const KeyboardShortcutHandler = () => {
-  const { activeMainMenu, activeSubMenu, setActiveSubMenu } = useMenuStore();
+  const { activeMainMenu, activeSubMenu, setActiveSubMenu, setActiveMainMenu } =
+    useMenuStore();
   const { resetEdgeCreation } = useMapStore();
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      // Handle ESC key - cancel sub menu but keep main menu
+      // Handle ESC key - cancel sub menu or main menu
       if (e.key === "Escape") {
         if (activeSubMenu) {
+          // If submenu is active, close submenu but keep main menu
           e.preventDefault();
           setActiveSubMenu(null);
-          // 연속 생성 모드도 초기화
           resetEdgeCreation();
+        } else if (activeMainMenu) {
+          // If only main menu is active, close main menu
+          e.preventDefault();
+          setActiveMainMenu(null);
         }
         return;
       }
 
-      // Handle number keys for sub menu selection
+      // Handle number keys
       if (!/^[1-9]$/.test(e.key)) return;
-      // ⛔ 활성화된 메인 메뉴가 없으면 단축키 무시
-      if (!activeMainMenu) return;
-      const index = parseInt(e.key, 10) - 1;
-      const subMenus = subMenuConfig[activeMainMenu];
 
-      if (!subMenus || index >= subMenus.length) return;
+      const keyNumber = parseInt(e.key, 10);
 
-      e.preventDefault(); // 브라우저 버튼 반응 막기
+      // If main menu is active, handle submenu shortcuts
+      if (activeMainMenu) {
+        const index = keyNumber - 1;
+        const subMenus = subMenuConfig[activeMainMenu];
 
-      const targetSubMenu = subMenus[index];
-      if (targetSubMenu) {
-        setActiveSubMenu(targetSubMenu.id);
-        // 서브메뉴 변경 시 엣지 생성 상태 초기화
-        resetEdgeCreation();
+        if (subMenus && index < subMenus.length) {
+          e.preventDefault();
+          const targetSubMenu = subMenus[index];
+          setActiveSubMenu(targetSubMenu.id);
+          resetEdgeCreation();
+          return;
+        }
+      }
+
+      // If no main menu is active, handle bottom menu shortcuts
+      if (!activeMainMenu) {
+        // Flatten bottom menu groups to get all menu items in order
+        const allBottomMenuItems = bottomMenuGroups.flat();
+        const index = keyNumber - 1;
+
+        if (index < allBottomMenuItems.length) {
+          e.preventDefault();
+          const targetMainMenu = allBottomMenuItems[index];
+          setActiveMainMenu(targetMainMenu.id);
+        }
       }
     };
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [activeMainMenu, activeSubMenu, setActiveSubMenu, resetEdgeCreation]);
+  }, [
+    activeMainMenu,
+    activeSubMenu,
+    setActiveSubMenu,
+    setActiveMainMenu,
+    resetEdgeCreation,
+  ]);
 
   return null;
 };

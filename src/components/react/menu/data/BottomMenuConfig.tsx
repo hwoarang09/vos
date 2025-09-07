@@ -7,16 +7,11 @@ import {
   Table,
 } from "lucide-react";
 import {
-  MenuContainer,
-  MenuButton,
-  MenuDivider,
   BottomMenuItem,
   ACTIVE_STROKE_COLOR,
   INACTIVE_STROKE_COLOR,
   ACTIVE_FILL_COLOR,
   INACTIVE_FILL_COLOR,
-  ICON_SIZE_EXTRA_SMALL,
-  ICON_SIZE_SMALL,
   ICON_SIZE_MEDIUM,
 } from "../shared";
 
@@ -29,7 +24,7 @@ export const bottomMenuGroups: BottomMenuItem[][] = [
       label: "MapLoader",
       iconFn: (isActive) => (
         <Folder
-          size={ICON_SIZE_SMALL}
+          size={ICON_SIZE_MEDIUM}
           style={{
             stroke: isActive ? ACTIVE_STROKE_COLOR : INACTIVE_STROKE_COLOR,
             strokeWidth: 2,
@@ -45,7 +40,7 @@ export const bottomMenuGroups: BottomMenuItem[][] = [
       label: "Statistics",
       iconFn: (isActive) => (
         <ChartPie
-          size={ICON_SIZE_EXTRA_SMALL}
+          size={ICON_SIZE_MEDIUM}
           style={{
             stroke: isActive ? ACTIVE_STROKE_COLOR : INACTIVE_STROKE_COLOR,
             strokeWidth: 2,
@@ -74,7 +69,7 @@ export const bottomMenuGroups: BottomMenuItem[][] = [
       label: "Operation",
       iconFn: (isActive) => (
         <ShipWheel
-          size={ICON_SIZE_SMALL}
+          size={ICON_SIZE_MEDIUM}
           style={{
             stroke: isActive ? ACTIVE_STROKE_COLOR : INACTIVE_STROKE_COLOR,
             strokeWidth: 1.5,
@@ -90,7 +85,7 @@ export const bottomMenuGroups: BottomMenuItem[][] = [
       label: "MapBuilder",
       iconFn: (isActive) => (
         <TrainTrack
-          size={ICON_SIZE_SMALL}
+          size={ICON_SIZE_MEDIUM}
           style={{
             fill: isActive ? ACTIVE_FILL_COLOR : INACTIVE_FILL_COLOR,
             stroke: isActive ? ACTIVE_STROKE_COLOR : INACTIVE_STROKE_COLOR,
@@ -103,11 +98,11 @@ export const bottomMenuGroups: BottomMenuItem[][] = [
   // 그룹 5: 디버그
   [
     {
-      id: "Debug",
-      label: "Debug",
+      id: "DataPanel",
+      label: "DataPanel",
       iconFn: (isActive) => (
         <Table
-          size={ICON_SIZE_SMALL}
+          size={ICON_SIZE_MEDIUM}
           style={{
             stroke: isActive ? ACTIVE_STROKE_COLOR : INACTIVE_STROKE_COLOR,
             strokeWidth: 2,

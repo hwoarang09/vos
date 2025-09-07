@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useRef } from "react";
 import * as THREE from "three";
 import { useFrame, useThree } from "@react-three/fiber";
+import { RENDER_ORDER_TEXT } from "@/utils/renderOrder";
 
 type BillboardMode = "screen" | "spherical";
 
@@ -201,6 +202,7 @@ export default function NumberGridInstanced({
           ref={(el) => (instRefs.current[d] = el)}
           args={[quad, mat, cnt]}
           frustumCulled={false}
+          renderOrder={RENDER_ORDER_TEXT}
         />
       );
     });
@@ -294,7 +296,7 @@ export default function NumberGridInstanced({
         .normalize();
 
       // 2. 빌보드 회전 계산 - lookAt과 동일한 효과
-      // Y축을 up 벡터로 사용하여 회전 행렬 생성
+      // Z축을 up 벡터로 사용하여 회전 행렬 생성
       const upVector = new THREE.Vector3(0, 0, 1);
 
       // Look direction을 기준으로 회전 행렬 생성
