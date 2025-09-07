@@ -1,6 +1,7 @@
 import { create } from "zustand";
 import { useNodeStore } from "./nodeStore";
 import { useMapStore } from "./edgeStore";
+import { useTextStore, TextPosition } from "./textStore";
 import { Node, Edge } from "../types";
 import { getNodeColor } from "../types/nodeColors";
 import { getEdgeColor } from "../types/edgeColors";
@@ -225,6 +226,73 @@ export const useCFGStore = create<CFGStore>((set) => ({
       const mapStore = useMapStore.getState();
       mapStore.clearEdges();
       edges.forEach((edge) => mapStore.addEdge(edge));
+
+      // 5. 텍스트 데이터 생성 및 업데이트
+      const textStore = useTextStore.getState();
+      textStore.clearAllTexts();
+
+      // 노드 텍스트 생성: { 'N001': [x, y, z], ... } (TMP_ 제외)
+      const nodeTexts: Record<string, TextPosition> = {};
+      nodes.forEach((node) => {
+        // TMP_로 시작하는 노드는 제외
+        if (!node.node_name.startsWith("TMP_")) {
+          nodeTexts[node.node_name] = {
+            x: node.editor_x,
+            y: node.editor_y,
+            z: node.editor_z,
+          };
+        }
+      });
+      textStore.setNodeTexts(nodeTexts);
+      console.log("CFG Store - Generated nodeTexts:", nodeTexts);
+
+      // 엣지 텍스트 생성: { 'E001': [midpoint_x, midpoint_y, midpoint_z], ... } (TMP_ 제외)
+      const edgeTexts: Record<string, TextPosition> = {};
+      edges.forEach((edge) => {
+        // TMP_로 시작하는 엣지는 제외
+        if (!edge.edge_name.startsWith("TMP_")) {
+          // waypoints 배열에서 적절한 노드 선택
+          const waypoints = edge.waypoints || [];
+
+          let node1, node2;
+
+          if (waypoints.length >= 4) {
+            // 곡선 엣지: waypoints[1]과 waypoints[-2] 사용
+            const node1Name = waypoints[1];
+            const node2Name = waypoints[waypoints.length - 2];
+            node1 = nodes.find((n) => n.node_name === node1Name);
+            node2 = nodes.find((n) => n.node_name === node2Name);
+            console.log(
+              `Curve edge ${edge.edge_name}: using ${node1Name} and ${node2Name} from waypoints:`,
+              waypoints
+            );
+          } else {
+            // 직선 엣지: from_node와 to_node 사용
+            node1 = nodes.find((n) => n.node_name === edge.from_node);
+            node2 = nodes.find((n) => n.node_name === edge.to_node);
+            console.log(
+              `Linear edge ${edge.edge_name}: using ${edge.from_node} and ${edge.to_node}`
+            );
+          }
+
+          if (node1 && node2) {
+            // 중점 계산
+            edgeTexts[edge.edge_name] = {
+              x: (node1.editor_x + node2.editor_x) / 2,
+              y: (node1.editor_y + node2.editor_y) / 2,
+              z: (node1.editor_z + node2.editor_z) / 2,
+            };
+          }
+        }
+      });
+      textStore.setEdgeTexts(edgeTexts);
+      console.log("CFG Store - Generated edgeTexts:", edgeTexts);
+
+      // 강제 업데이트 트리거 (렌더링 확실히 하기 위해)
+      setTimeout(() => {
+        textStore.forceUpdate();
+        console.log("CFG Store - Force update triggered");
+      }, 100);
 
       set({ isLoading: false });
     } catch (error) {

@@ -1,23 +1,43 @@
-import React from "react";
+import React, { useState } from "react";
 import { Canvas } from "@react-three/fiber";
-import { OrbitControls } from "@react-three/drei";
+import {
+  OrbitControls,
+  PerspectiveCamera,
+  OrthographicCamera,
+  CameraControls,
+  // MapControls,
+  // FlyControls,
+  // FirstPersonControls
+} from "@react-three/drei";
 import { Perf } from "r3f-perf";
 import * as THREE from "three";
-import CameraController from "./Camera/cameraController";
+// import CameraController from "./Camera/cameraController"; // Replaced with drei controls
 import MapBuilder from "./MapBuilder/MapBuilder";
 import MapRenderer from "./MapRenderer";
 import Floor from "./Floor";
 import AxisHelper from "./AxisHelper";
-import NumberGrid from "./Text/spriteText/NumberGrid";
-import NumberGridInstanced from "./Text/customSpriteText/NumberGridInstnaced";
+import TextRenderer from "./Text/TextRenderer";
+import CameraToolbar from "./Camera/cameraToolbar";
+import CameraController from "./Camera/cameraController";
 
 const ThreeScene: React.FC = () => {
+  // Camera type state
+  const [cameraType, setCameraType] = useState<"perspective" | "orthographic">(
+    "perspective"
+  );
+  const [controlType, setControlType] = useState<"orbit" | "camera" | "map">(
+    "orbit"
+  );
+
   return (
     <>
       <Canvas
         className="absolute inset-0"
         scene={{ background: new THREE.Color("#1a1a1a") }}
       >
+        <OrbitControls makeDefault enablePan enableZoom enableRotate />
+        <CameraController />
+
         {/* Basic lighting for factory environment */}
         <ambientLight intensity={0.4} />
         <directionalLight
@@ -40,12 +60,11 @@ const ThreeScene: React.FC = () => {
         {/* Map rendering - displays the actual 3D objects */}
         <MapRenderer />
 
+        {/* Text rendering - displays node and edge labels */}
+        <TextRenderer scale={0.5} nodeColor="#00e5ff" edgeColor="#ff9800" />
+
         {/* Development tools */}
         <Perf position="bottom-right" />
-
-        {/* Camera controls */}
-        <CameraController />
-        <OrbitControls makeDefault />
 
         {/* spriteText test */}
         {/* <NumberGrid
@@ -60,7 +79,7 @@ const ThreeScene: React.FC = () => {
           showFrame
         /> */}
         {/* customSpriteTest */}
-        <NumberGridInstanced
+        {/* <NumberGridInstanced
           width={200}
           height={200}
           rows={100}
@@ -72,7 +91,7 @@ const ThreeScene: React.FC = () => {
           bgColor="transparent"
           digits={4}
           // billboard // 필요하면 켜기
-        />
+        /> */}
       </Canvas>
     </>
   );

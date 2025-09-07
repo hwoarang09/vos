@@ -4,7 +4,20 @@ import { useFrame, useThree } from "@react-three/fiber";
 
 type BillboardMode = "screen" | "spherical";
 
+// Group data structure for text rendering
+export interface TextGroup {
+  x: number;
+  y: number;
+  z: number;
+  digits: number[]; // Array of character indices (0-9=digits, 10=N, 11=E)
+}
+
 type Props = {
+  // New props for groups-based rendering
+  groups?: TextGroup[];
+  scale?: number;
+
+  // Legacy props (for backward compatibility)
   width?: number;
   height?: number;
   rows?: number;
@@ -20,6 +33,11 @@ type Props = {
 };
 
 export default function NumberGridInstanced({
+  // New props
+  groups = [],
+  scale = 1.0,
+
+  // Legacy props (with defaults)
   width = 200,
   height = 200,
   rows = 100,
@@ -35,9 +53,24 @@ export default function NumberGridInstanced({
 }: Props) {
   const { camera } = useThree();
 
-  // 0~9 텍스처 10개
+  // 0~9, N, E 텍스처 12개
   const digitMaterials = useMemo(() => {
-    const make = (d: number) => {
+    const characters = [
+      "0",
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6",
+      "7",
+      "8",
+      "9",
+      "N",
+      "E",
+    ];
+
+    const make = (char: string) => {
       const S = 256;
       const c = document.createElement("canvas");
       c.width = c.height = S;
@@ -51,7 +84,7 @@ export default function NumberGridInstanced({
       ctx.font = font;
       ctx.textAlign = "center";
       ctx.textBaseline = "middle";
-      ctx.fillText(String(d), S / 2, S / 2, S * 0.9);
+      ctx.fillText(char, S / 2, S / 2, S * 0.9);
 
       const tex = new THREE.Texture(c);
       tex.minFilter = THREE.LinearFilter;
@@ -66,109 +99,100 @@ export default function NumberGridInstanced({
         depthWrite: false,
       });
     };
-    return Array.from({ length: 10 }, (_, d) => make(d));
+    return characters.map((char) => make(char));
   }, [font, color, bgColor]);
 
   const quad = useMemo(() => new THREE.PlaneGeometry(1, 1), []);
 
-  /** ---------------- 라벨/인스턴스 구성 사전 계산 ---------------- */
+  /** ---------------- Groups 기반 데이터 구성 ---------------- */
   const dataRef = useRef<{
-    // 라벨 개수 = rows*cols
-    labelCount: number;
-    // 라벨 중심점 (x,y,z) * labelCount - 전체 레이블의 중심
-    labelCenter: Float32Array;
-    // 자릿수 가로 오프셋 (digits개) - 레이블 중심 기준 상대 위치
-    digitRelativeOffsetX: Float32Array;
-    charH: number;
-    // 숫자 d(0..9)의 인스턴스 개수
+    // 총 문자 개수 (모든 그룹의 모든 문자)
+    totalCharacters: number;
+    // 각 문자별 인스턴스 개수 (0-9, N, E)
     counts: number[];
-    // 라벨 i의 k번째 자릿수가 들어간 instancedMesh 슬롯 인덱스
-    slotIndex: Int32Array; // 길이 = labelCount*digits
-    // 라벨 i의 k번째 자릿수가 어떤 숫자인지
-    slotDigit: Int8Array; // 길이 = labelCount*digits, 값 0..9
+    // 각 문자의 슬롯 인덱스 매핑
+    slotIndex: Int32Array;
+    // 각 문자의 문자 타입 (0-11)
+    slotDigit: Int8Array;
+    // 각 문자의 그룹 인덱스
+    slotGroup: Int32Array;
+    // 각 문자의 그룹 내 위치 인덱스
+    slotPosition: Int32Array;
   } | null>(null);
 
-  // 한 번 셋업: 모든 매핑/버퍼 채우기
+  // Groups 기반 데이터 셋업
   useEffect(() => {
-    const total = rows * cols;
-    const cellW = width / cols;
-    const cellH = height / rows;
-    const startX = -width / 2 + cellW / 2;
-    const startY = height / 2 - cellH / 2;
-    const charH = Math.min(cellW, cellH) * charScale;
-    const stepX = charH * charSpacing;
-
-    // 각 자릿수의 레이블 중심 기준 상대 오프셋 계산
-    const digitRelativeOffsetX = new Float32Array(digits);
-    const totalLabelWidth = (digits - 1) * stepX;
-    const startOffset = -totalLabelWidth / 2;
-    for (let k = 0; k < digits; k++) {
-      digitRelativeOffsetX[k] = startOffset + k * stepX;
+    if (!groups || groups.length === 0) {
+      dataRef.current = null;
+      return;
     }
 
-    const counts = new Array(10).fill(0);
+    // 총 문자 개수 계산
+    let totalCharacters = 0;
+    groups.forEach((group) => {
+      totalCharacters += group.digits.length;
+    });
 
-    // 1) 라벨 중심점 / 어떤 숫자인지
-    const labelCenter = new Float32Array(total * 3);
-    const slotDigit = new Int8Array(total * digits);
+    // 각 문자별 개수 계산 (0-9, N, E)
+    const counts = new Array(12).fill(0);
+    const slotDigit = new Int8Array(totalCharacters);
+    const slotGroup = new Int32Array(totalCharacters);
+    const slotPosition = new Int32Array(totalCharacters);
 
-    for (let i = 0; i < total; i++) {
-      const r = Math.floor(i / cols);
-      const c = i % cols;
-      const centerX = startX + c * cellW;
-      const centerY = startY - r * cellH;
-      const p = i * 3;
-      labelCenter[p + 0] = centerX;
-      labelCenter[p + 1] = centerY;
-      labelCenter[p + 2] = z;
+    let charIndex = 0;
+    groups.forEach((group, groupIndex) => {
+      group.digits.forEach((digit, positionIndex) => {
+        // 유효한 문자 인덱스인지 확인 (0-11)
+        const validDigit = Math.max(0, Math.min(11, digit));
 
-      const s = i.toString().padStart(digits, "0");
-      for (let k = 0; k < digits; k++) {
-        const d = s.charCodeAt(k) - 48;
-        slotDigit[i * digits + k] = d;
-        counts[d]++;
-      }
-    }
+        slotDigit[charIndex] = validDigit;
+        slotGroup[charIndex] = groupIndex;
+        slotPosition[charIndex] = positionIndex;
+        counts[validDigit]++;
+        charIndex++;
+      });
+    });
 
-    // 2) 숫자별 instancedMesh 슬롯 인덱스 부여
-    const cursor = new Array(10).fill(0);
-    const slotIndex = new Int32Array(total * digits);
-    for (let i = 0; i < total; i++) {
-      for (let k = 0; k < digits; k++) {
-        const d = slotDigit[i * digits + k];
-        slotIndex[i * digits + k] = cursor[d]++;
-      }
+    // 슬롯 인덱스 매핑
+    const slotIndex = new Int32Array(totalCharacters);
+    const currentSlot = new Array(12).fill(0);
+
+    for (let i = 0; i < totalCharacters; i++) {
+      const digit = slotDigit[i];
+      slotIndex[i] = currentSlot[digit];
+      currentSlot[digit]++;
     }
 
     dataRef.current = {
-      labelCount: total,
-      labelCenter,
-      digitRelativeOffsetX,
-      charH,
+      totalCharacters,
       counts,
       slotIndex,
       slotDigit,
+      slotGroup,
+      slotPosition,
     };
-  }, [rows, cols, width, height, z, digits, charScale, charSpacing]);
 
-  /** ---------------- InstancedMesh 생성(숫자별) ---------------- */
-  const instRefs = useRef<(THREE.InstancedMesh | null)[]>(Array(10).fill(null));
+    // 디버깅: counts 출력
+    if (groups && groups.length > 0) {
+      console.log("Groups:", groups.length, "groups");
+      console.log("Character counts:", counts);
+      console.log("Total characters:", totalCharacters);
+    }
+  }, [groups]);
+
+  /** ---------------- InstancedMesh 생성(문자별) ---------------- */
+  const instRefs = useRef<(THREE.InstancedMesh | null)[]>(Array(12).fill(null));
 
   const meshes = useMemo(() => {
     const data = dataRef.current;
-    if (!data) {
-      // 데이터가 없으면 기본값으로 생성
-      return digitMaterials.map((mat, d) => (
-        <instancedMesh
-          key={`digit-${d}-1`}
-          ref={(el) => (instRefs.current[d] = el)}
-          args={[quad, mat, 1]}
-          frustumCulled={false}
-        />
-      ));
+    if (!data || !groups || groups.length === 0) {
+      // 데이터가 없으면 빈 배열 반환
+      return [];
     }
 
     const { counts } = data;
+    console.log("Creating meshes with counts:", counts);
+
     return digitMaterials.map((mat, d) => {
       const cnt = Math.max(1, counts[d]);
       return (
@@ -180,7 +204,7 @@ export default function NumberGridInstanced({
         />
       );
     });
-  }, [digitMaterials, quad, dataRef.current?.counts]);
+  }, [digitMaterials, quad, dataRef.current?.counts, groups]);
 
   // InstancedMesh 카운트 업데이트
   useEffect(() => {
@@ -188,7 +212,7 @@ export default function NumberGridInstanced({
     if (!data) return;
 
     const { counts } = data;
-    for (let d = 0; d < 10; d++) {
+    for (let d = 0; d < 12; d++) {
       const mesh = instRefs.current[d];
       if (mesh && counts[d] > 0) {
         mesh.count = counts[d];
@@ -197,147 +221,131 @@ export default function NumberGridInstanced({
     }
   }, [dataRef.current?.counts]);
 
-  /** ---------------- 초기 배치(회전 없이 XY평면) ---------------- */
+  /** ---------------- Groups 기반 초기 배치 ---------------- */
   useEffect(() => {
     const D = dataRef.current;
-    if (!D) return;
-    const {
-      labelCount,
-      labelCenter,
-      digitRelativeOffsetX,
-      charH,
-      slotDigit,
-      slotIndex,
-    } = D;
+    if (!D || !groups || groups.length === 0) return;
 
+    console.log("Initial placement starting...");
+
+    const { slotDigit, slotIndex } = D;
     const m = new THREE.Matrix4();
-    const q = new THREE.Quaternion(); // (0,0,0,1) - XY 평면
-    const s = new THREE.Vector3(charH, charH, 1);
+    const s = new THREE.Vector3(scale, scale, 1);
+    const charSpacing = 0.2 * scale;
 
-    for (let i = 0; i < labelCount; i++) {
-      const p = i * 3;
-      const centerX = labelCenter[p + 0];
-      const centerY = labelCenter[p + 1];
-      const centerZ = labelCenter[p + 2];
+    // 각 그룹별로 처리
+    groups.forEach((group, groupIndex) => {
+      // Y축 회전만 적용 (기본 정면 방향)
+      const q = new THREE.Quaternion(); // 기본 회전 (정면)
 
-      // 레이블 i의 모든 자릿수에 동일한 회전 적용 (XY 평면 기준)
-      for (let k = 0; k < digits; k++) {
-        const d = slotDigit[i * digits + k];
-        const slot = slotIndex[i * digits + k];
+      group.digits.forEach((_, positionIndex) => {
+        // 해당 문자의 전역 인덱스 찾기
+        let charIndex = 0;
+        for (let gi = 0; gi < groupIndex; gi++) {
+          charIndex += groups[gi].digits.length;
+        }
+        charIndex += positionIndex;
+
+        const d = slotDigit[charIndex];
+        const slot = slotIndex[charIndex];
         const mesh = instRefs.current[d];
-        if (!mesh) continue;
+        if (!mesh) return;
 
-        // 레이블 중심 + X방향 오프셋 (XY 평면이므로 +X가 right)
+        // 그룹 내에서의 상대 위치 계산 (중앙 정렬)
+        const offsetX =
+          (positionIndex - (group.digits.length - 1) / 2) * charSpacing;
+
         const pos = new THREE.Vector3(
-          centerX + digitRelativeOffsetX[k],
-          centerY,
-          centerZ
+          group.x + offsetX,
+          group.y,
+          group.z + 0.5 // z + 0.5
         );
+
         m.compose(pos, q, s);
         mesh.setMatrixAt(slot, m);
-      }
-    }
+      });
+    });
 
     instRefs.current.forEach(
       (msh) => msh && (msh.instanceMatrix.needsUpdate = true)
     );
-  }, [rows, cols, digits]);
 
-  /** ---------------- 평면 기반 4글자 배치 ---------------- */
-  /** ---------------- 평면 기반 4글자 배치 ---------------- */
+    console.log("Initial placement completed");
+  }, [groups, scale, dataRef.current]);
+
+  /** ---------------- Groups 기반 빌보드 렌더링 (수정됨) ---------------- */
   useFrame(({ camera }) => {
     const D = dataRef.current;
-    if (!D) return;
-    const {
-      labelCount,
-      labelCenter,
-      digitRelativeOffsetX,
-      charH,
-      slotDigit,
-      slotIndex,
-    } = D;
+    if (!D || !groups) return;
+
+    const { slotDigit, slotIndex } = D;
 
     const m = new THREE.Matrix4();
-    const s = new THREE.Vector3(charH, charH, 1);
+    const s = new THREE.Vector3(scale, scale, 1);
+    const charSpacing = 0.2 * scale;
 
-    // 카메라의 월드 변환 행렬에서 방향 벡터들 추출
-    const cameraMatrix = camera.matrixWorld;
-    const cameraRight = new THREE.Vector3().setFromMatrixColumn(
-      cameraMatrix,
-      0
-    ); // X축
-    const cameraUp = new THREE.Vector3().setFromMatrixColumn(cameraMatrix, 1); // Y축
-    const cameraForward = new THREE.Vector3()
-      .setFromMatrixColumn(cameraMatrix, 2)
-      .negate(); // -Z축
+    // 각 그룹별로 처리
+    groups.forEach((group, groupIndex) => {
+      const groupCenter = new THREE.Vector3(group.x, group.y, group.z);
 
-    // 각 4글자 그룹별로 처리
-    for (let i = 0; i < labelCount; i++) {
-      const ip = i * 3;
-      const groupCenter = new THREE.Vector3(
-        labelCenter[ip],
-        labelCenter[ip + 1],
-        labelCenter[ip + 2]
-      );
-
-      // 1. 그룹에서 카메라로의 방향 계산
-      const toCamera = new THREE.Vector3()
+      // 1. 카메라로부터 그룹 중심으로의 방향 벡터 계산
+      const lookDirection = new THREE.Vector3()
         .subVectors(camera.position, groupCenter)
         .normalize();
 
-      // 2. 화면 기준 수평 방향 계산
-      // 카메라의 right 벡터를 해당 평면에 투영
-      const planeRight = new THREE.Vector3()
-        .copy(cameraRight)
-        .projectOnPlane(toCamera)
-        .normalize();
+      // 2. 빌보드 회전 계산 - lookAt과 동일한 효과
+      // Y축을 up 벡터로 사용하여 회전 행렬 생성
+      const upVector = new THREE.Vector3(0, 0, 1);
 
-      // 3. 평면의 up 방향 계산 (right와 법선의 외적)
-      const planeUp = new THREE.Vector3()
-        .crossVectors(toCamera, planeRight)
-        .normalize();
-
-      // 4. 회전 행렬 구성 (화면 기준 좌표계)
-      const rotationMatrix = new THREE.Matrix4().makeBasis(
-        planeRight,
-        planeUp,
-        toCamera
-      );
-      const finalRotation = new THREE.Quaternion().setFromRotationMatrix(
-        rotationMatrix
+      // Look direction을 기준으로 회전 행렬 생성
+      const matrix = new THREE.Matrix4().lookAt(
+        new THREE.Vector3(0, 0, 0), // 원점에서
+        lookDirection.clone().negate(), // 카메라 방향의 반대 (카메라를 향하도록)
+        upVector
       );
 
-      // 5. 평면 위에 4글자 배치
-      for (let k = 0; k < digits; k++) {
-        const d = slotDigit[i * digits + k];
-        const slot = slotIndex[i * digits + k];
+      // 회전 행렬에서 쿼터니언 추출
+      const groupBillboardRotation =
+        new THREE.Quaternion().setFromRotationMatrix(matrix);
+
+      // 3. 회전된 평면에서의 오른쪽 방향 벡터 (글자 배치용)
+      const right = new THREE.Vector3(1, 0, 0).applyQuaternion(
+        groupBillboardRotation
+      );
+
+      // 4. 그룹 내 각 문자 배치
+      group.digits.forEach((_, positionIndex) => {
+        // 해당 문자의 전역 인덱스 찾기
+        let charIndex = 0;
+        for (let gi = 0; gi < groupIndex; gi++) {
+          charIndex += groups[gi].digits.length;
+        }
+        charIndex += positionIndex;
+
+        const d = slotDigit[charIndex];
+        const slot = slotIndex[charIndex];
         const mesh = instRefs.current[d];
-        if (!mesh) continue;
+        if (!mesh) return;
 
-        // 6. 화면 기준 수평 방향으로 오프셋 적용
-        const offsetVector = new THREE.Vector3()
-          .copy(planeRight)
-          .multiplyScalar(digitRelativeOffsetX[k]);
+        // 5. 그룹 내에서의 상대 위치 계산 (중앙 정렬)
+        const offsetX =
+          (positionIndex - (group.digits.length - 1) / 2) * charSpacing;
+        const offsetVector = right.clone().multiplyScalar(offsetX);
 
-        // 7. 최종 위치 = 그룹 중심 + 평면 위 오프셋
-        const finalPos = new THREE.Vector3()
-          .copy(groupCenter)
-          .add(offsetVector);
+        // 6. 최종 위치 = 그룹 중심 + 평면 위 오프셋
+        const finalPos = groupCenter.clone().add(offsetVector);
+        finalPos.z += 0.5; // z offset
 
-        // 8. 변환 행렬 구성 (위치 + 회전 + 스케일)
-        m.compose(finalPos, finalRotation, s);
+        // 10. 변환 행렬 구성 (위치 + 빌보드 회전 + 스케일)
+        m.compose(finalPos, groupBillboardRotation, s);
         mesh.setMatrixAt(slot, m);
-      }
-    }
+      });
+    });
 
     instRefs.current.forEach(
       (msh) => msh && (msh.instanceMatrix.needsUpdate = true)
     );
   });
-
-  instRefs.current.forEach(
-    (msh) => msh && (msh.instanceMatrix.needsUpdate = true)
-  );
 
   return <group>{meshes}</group>;
 }
