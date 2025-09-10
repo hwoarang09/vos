@@ -1,5 +1,4 @@
-import { MainMenuType } from "@store/menuStore";
-
+import { MainMenuType } from "@/types";
 export type BottomMenuItem = {
   id: MainMenuType;
   label: string;

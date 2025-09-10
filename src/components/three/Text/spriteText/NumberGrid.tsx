@@ -69,7 +69,7 @@ export default function NumberGrid({
     g.geometry.dispose();
     g.geometry = geo;
     g.position.set(0, 0, 0);
-    frameRef.current = g;
+    // frameRef.current = g;
     groupRef.current?.add(g);
     return () => {
       groupRef.current?.remove(g);

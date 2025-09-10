@@ -18,15 +18,8 @@ import MapRenderer from "./MapRenderer";
 import Floor from "./Floor";
 import AxisHelper from "./AxisHelper";
 import TextRenderer from "./Text/TextRenderer";
-import CameraToolbar from "./Camera/cameraToolbar";
-import CameraController from "./Camera/cameraController";
 
-import { useRef } from "react";
-import {
-  GridSquares,
-  GridSquaresRef,
-  GridSquaresTest_Dynamic,
-} from "./TestExample/GridSquares";
+import CameraController from "./Camera/cameraController";
 
 const ThreeScene: React.FC = () => {
   // Camera type state
@@ -36,12 +29,6 @@ const ThreeScene: React.FC = () => {
   const [controlType, setControlType] = useState<"orbit" | "camera" | "map">(
     "orbit"
   );
-  const gridRef = useRef<GridSquaresRef>(null);
-
-  const handleClick = () => {
-    // 25번째 사각형을 초록색으로 변경
-    gridRef.current?.updateColor(25, "#00ff00");
-  };
 
   return (
     <>

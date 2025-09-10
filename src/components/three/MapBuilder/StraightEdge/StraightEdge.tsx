@@ -3,7 +3,7 @@ import { useThree, ThreeEvent } from "@react-three/fiber";
 import { useMenuStore } from "@store/menuStore";
 import { useMapStore } from "@store/edgeStore";
 import { useNodeStore } from "@store/nodeStore";
-import { Edge, Node } from "../../../../types";
+import { Edge, Node, NodeData } from "@/types";
 import * as THREE from "three";
 
 /**
@@ -439,10 +439,6 @@ const StraightEdge: React.FC = () => {
       const previewStartNode: NodeData = {
         node_name: "preview_start",
         barcode: 0,
-        barcode_pre: 0,
-        inzone_point: 0,
-        spoint: 0,
-        next_node: "",
         editor_x: mousePos.x,
         editor_y: mousePos.y,
         editor_z: 30.1,
@@ -454,10 +450,6 @@ const StraightEdge: React.FC = () => {
       const previewEndNode: NodeData = {
         node_name: "preview_end",
         barcode: 0,
-        barcode_pre: 0,
-        inzone_point: 0,
-        spoint: 0,
-        next_node: "",
         editor_x: endPos.x,
         editor_y: endPos.y,
         editor_z: 30.1,
@@ -511,10 +503,6 @@ const StraightEdge: React.FC = () => {
         const startNode: NodeData = {
           node_name: startNodeName,
           barcode: 0,
-          barcode_pre: 0,
-          inzone_point: 0,
-          spoint: 0,
-          next_node: "",
           editor_x: startX,
           editor_y: startY,
           editor_z: z,
@@ -542,10 +530,6 @@ const StraightEdge: React.FC = () => {
       const previewStartNode: NodeData = {
         node_name: "preview_start",
         barcode: 0,
-        barcode_pre: 0,
-        inzone_point: 0,
-        spoint: 0,
-        next_node: "",
         editor_x: startX,
         editor_y: startY,
         editor_z: z,
@@ -557,10 +541,6 @@ const StraightEdge: React.FC = () => {
       const previewEndNode: NodeData = {
         node_name: "preview_end",
         barcode: 0,
-        barcode_pre: 0,
-        inzone_point: 0,
-        spoint: 0,
-        next_node: "",
         editor_x: endPos.x,
         editor_y: endPos.y,
         editor_z: z,
@@ -619,10 +599,6 @@ const StraightEdge: React.FC = () => {
       const finalEndNode: NodeData = {
         node_name: endNodeName,
         barcode: 0,
-        barcode_pre: 0,
-        inzone_point: 0,
-        spoint: 0,
-        next_node: "",
         editor_x: endNode.editor_x,
         editor_y: endNode.editor_y,
         editor_z: endNode.editor_z,
