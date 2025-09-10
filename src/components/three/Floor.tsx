@@ -5,7 +5,7 @@ import React from 'react';
  */
 const Floor: React.FC = () => {
   return (
-    <mesh position={[0, 0, 0]}>
+    <mesh position={[0, 0, -1]}>
       {/* Large plane for factory floor - normal vector points to +Z */}
       <planeGeometry args={[200, 200]} />
       <meshStandardMaterial
