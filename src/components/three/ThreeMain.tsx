@@ -20,6 +20,13 @@ import TextRenderer from "./Text/TextRenderer";
 import CameraToolbar from "./Camera/cameraToolbar";
 import CameraController from "./Camera/cameraController";
 
+import { useRef } from "react";
+import {
+  GridSquares,
+  GridSquaresRef,
+  GridSquaresTest_Dynamic,
+} from "./TestExample/GridSquares";
+
 const ThreeScene: React.FC = () => {
   // Camera type state
   const [cameraType, setCameraType] = useState<"perspective" | "orthographic">(
@@ -28,6 +35,12 @@ const ThreeScene: React.FC = () => {
   const [controlType, setControlType] = useState<"orbit" | "camera" | "map">(
     "orbit"
   );
+  const gridRef = useRef<GridSquaresRef>(null);
+
+  const handleClick = () => {
+    // 25번째 사각형을 초록색으로 변경
+    gridRef.current?.updateColor(25, "#00ff00");
+  };
 
   return (
     <>
@@ -66,31 +79,17 @@ const ThreeScene: React.FC = () => {
         {/* Development tools */}
         <Perf position="bottom-right" />
 
-        {/* spriteText test */}
-        {/* <NumberGrid
-          width={200}
-          height={200}
-          rows={30}
-          cols={30}
-          z={1.0}
-          color="#00e5ff"
-          backgroundColor="transparent" // 또는 'rgba(0,0,0,0.35)'
-          batchSize={500} // 빌드/머신에 맞게 조절
-          showFrame
-        /> */}
-        {/* customSpriteTest */}
-        {/* <NumberGridInstanced
-          width={200}
-          height={200}
-          rows={100}
-          cols={100}
-          z={1.0}
-          charScale={0.7}
-          charSpacing={0.2}
-          color="#00e5ff"
-          bgColor="transparent"
-          digits={4}
-          // billboard // 필요하면 켜기
+        {/* instnacedMesh color Test */}
+        {/* <GridSquares
+          rows={10}
+          cols={10}
+          highlighted={[0, 5, 10, 15]} // 빨간색으로 하이라이트
+          colorChanges={[
+            // 특정 인덱스 색상 변경
+            { index: 25, color: "#00ff00" }, // 25번째를 초록색
+            { index: 50, color: "#0000ff" }, // 50번째를 파란색
+            { index: 75, color: "#ffff00" }, // 75번째를 노란색
+          ]}
         /> */}
       </Canvas>
     </>
