@@ -104,17 +104,13 @@ export const useMenuStore = create<MenuState>((set, get) => ({
     position: { x: number; y: number },
     buttonLevel: number
   ) => {
-    const currentTopLevel = get().getCurrentTopLevel();
-
-    // 현재 최상단 레벨과 버튼 레벨이 같을 때만 툴팁 표시
-    if (buttonLevel === currentTopLevel) {
-      set({
-        hoveredMenuId: menuId,
-        tooltipMessage: message,
-        tooltipPosition: position,
-        tooltipLevel: buttonLevel,
-      });
-    }
+    // 항상 툴팁 표시
+    set({
+      hoveredMenuId: menuId,
+      tooltipMessage: message,
+      tooltipPosition: position,
+      tooltipLevel: buttonLevel,
+    });
   },
 
   hideTooltip: () => {

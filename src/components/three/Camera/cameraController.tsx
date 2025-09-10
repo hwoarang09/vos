@@ -8,8 +8,7 @@ import { OrbitControls } from 'three-stdlib';
 const CameraController: React.FC = () => {
   const { camera, controls } = useThree(); // controls는 drei가 set해줌
 
-  const position = useCameraStore((s) => s.position);
-  const target = useCameraStore((s) => s.target);
+  // Only use rotation requests from store, not position/target
   const rotateZDeg = useCameraStore((s) => s.rotateZDeg);
   const _resetRotateZ = useCameraStore((s) => s._resetRotateZ);
 
@@ -29,18 +28,20 @@ const CameraController: React.FC = () => {
     };
   } | null>(null);
 
-  // Z-up 보정 (한 번만)
+  // Z-up 보정 (항상 유지)
   useEffect(() => {
     camera.up.set(0, 0, 1);
-  }, [camera]);
+  }, [camera, activeMainMenu, activeSubMenu]); // 메뉴 변경 시에도 Z-up 유지
 
   // Bay Builder mode detection and Top View switching
   useEffect(() => {
-    const isBayBuilderMode = activeMainMenu === "MapBuilder" && activeSubMenu === "map-menu-10";
+    const isBayBuilderMode = activeMainMenu === "LayoutBuilder" && activeSubMenu === "layout-menu-1";
+
+    if (!controls) return;
+    const orbitControls = controls as OrbitControls;
 
     if (isBayBuilderMode && !originalStateRef.current) {
       // Save original state before switching to top view
-      const orbitControls = controls as OrbitControls;
       originalStateRef.current = {
         position: camera.position.clone(),
         rotation: camera.rotation.clone(),
@@ -56,33 +57,28 @@ const CameraController: React.FC = () => {
       // Switch to top view
       camera.position.set(0, 0, 100);
       camera.lookAt(0, 0, 0);
-      camera.up.set(0, 1, 0);
+      camera.up.set(0, 1, 0); // Y-up for top view
       camera.updateProjectionMatrix();
 
       // Configure controls for Bay Builder mode
       orbitControls.target.set(0, 0, 0);
       orbitControls.enableRotate = false;
-      orbitControls.enablePan = true; // Keep pan enabled for mouse drag
-      orbitControls.enableZoom = true; // Keep zoom enabled
+      orbitControls.enablePan = true;
+      orbitControls.enableZoom = true;
 
-      // Remap mouse buttons: LEFT for pan, disable RIGHT rotation
+      // Remap mouse buttons for Bay Builder mode
       orbitControls.mouseButtons.LEFT = THREE.MOUSE.PAN;
-      orbitControls.mouseButtons.RIGHT = undefined; // Disable right click rotation
+      orbitControls.mouseButtons.RIGHT = undefined;
 
       orbitControls.update();
 
     } else if (!isBayBuilderMode && originalStateRef.current) {
-      // Restore original state when leaving Bay Builder mode
-      const orbitControls = controls as OrbitControls;
+      // When leaving Bay Builder mode, only restore controls (keep current camera position)
+      camera.up.set(0, 0, 1); // Restore Z-up
 
-      camera.position.copy(originalStateRef.current.position);
-      camera.rotation.copy(originalStateRef.current.rotation);
-      camera.updateProjectionMatrix();
-
-      orbitControls.target.copy(originalStateRef.current.target);
       orbitControls.enableRotate = originalStateRef.current.enableRotate;
-      orbitControls.enablePan = true; // Restore pan
-      orbitControls.enableZoom = true; // Restore zoom
+      orbitControls.enablePan = true;
+      orbitControls.enableZoom = true;
 
       // Restore original mouse button settings
       orbitControls.mouseButtons.LEFT = originalStateRef.current.mouseButtons.LEFT;
@@ -97,7 +93,7 @@ const CameraController: React.FC = () => {
 
   // WSAD keyboard movement for Bay Builder mode
   useEffect(() => {
-    const isBayBuilderMode = activeMainMenu === "MapBuilder" && activeSubMenu === "map-menu-10";
+    const isBayBuilderMode = activeMainMenu === "LayoutBuilder" && activeSubMenu === "layout-menu-1";
     if (!isBayBuilderMode) return;
 
     const moveSpeed = 2; // Movement speed
@@ -154,33 +150,28 @@ const CameraController: React.FC = () => {
     };
   }, [activeMainMenu, activeSubMenu, camera, controls]);
 
-  // 위치/타깃 반영 + Z축 공전 처리 + 컨트롤 동기화 (Bay Builder 모드가 아닐 때만)
+  // Z축 회전 처리 (Bay Builder 모드가 아닐 때만)
   useEffect(() => {
     if (!controls) return;
 
     // Bay Builder 모드에서는 기존 카메라 로직을 무시
-    const isBayBuilderMode = activeMainMenu === "MapBuilder" && activeSubMenu === "map-menu-10";
+    const isBayBuilderMode = activeMainMenu === "LayoutBuilder" && activeSubMenu === "layout-menu-1";
     if (isBayBuilderMode) return;
 
-    // 1) 기본 위치/타깃 반영
-    camera.position.copy(position);
-
-    // 2) 회전 요청이 있으면 target 기준으로 Z축 공전
+    // 회전 요청이 있으면 현재 target 기준으로 Z축 공전
     if (rotateZDeg !== 0) {
+      const currentTarget = (controls as any).target;
       const axis = new THREE.Vector3(0, 0, 1);
       camera.position
-        .sub(target)
+        .sub(currentTarget)
         .applyAxisAngle(axis, THREE.MathUtils.degToRad(rotateZDeg))
-        .add(target);
+        .add(currentTarget);
       _resetRotateZ();
-    }
 
-    // 3) 컨트롤 동기화
-    // @ts-ignore - controls는 drei에서 주입되는 any
-    controls.target.copy(target);
-    // @ts-ignore
-    controls.update();
-  }, [camera, controls, position, target, rotateZDeg, _resetRotateZ, activeMainMenu, activeSubMenu]);
+      // @ts-ignore
+      controls.update();
+    }
+  }, [camera, controls, rotateZDeg, _resetRotateZ, activeMainMenu, activeSubMenu]);
 
   return null;
 };

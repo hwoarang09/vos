@@ -9,7 +9,7 @@ const BayBuilder: React.FC = () => {
   const { activeMainMenu, activeSubMenu } = useMenuStore();
 
   // Only render when BayBuilder is active
-  if (activeMainMenu !== "MapBuilder" || activeSubMenu !== "map-menu-10") {
+  if (activeMainMenu !== "LayoutBuilder" || activeSubMenu !== "layout-menu-1") {
     return null;
   }
 
@@ -27,7 +27,7 @@ const BayBuilder: React.FC = () => {
         <planeGeometry args={[1000, 1000]} />
         <meshBasicMaterial />
       </mesh>
-
+      
       {/* TODO: Add Ctrl+Drag rectangle drawing functionality here */}
     </>
   );

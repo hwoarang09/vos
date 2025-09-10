@@ -13,6 +13,7 @@ export const tooltipsByLevel: {
     Vehicle: "차량 관리",
     Operation: "운영 관리",
     MapBuilder: "도로 편집기",
+    LayoutBuilder: "레이아웃 편집기",
     DataPanel: "데이터 패널",
   },
   2: {
@@ -48,7 +49,10 @@ export const tooltipsByLevel: {
     "map-menu-7": "다중 교차로",
     "map-menu-8": "교량 및 고가도로",
     "map-menu-9": "사용자 정의 도로",
-    "map-menu-10": "Bay 생성기",
+
+    "layout-menu-1": "Bay 생성기",
+    "layout-menu-2": "Station 생성기",
+    "layout-menu-3": "Equipment 생성기",
   },
   3: {
     // 서브서브메뉴 레벨 (필요한 경우에만)

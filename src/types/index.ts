@@ -125,6 +125,7 @@ export type MainMenuType =
   | "Vehicle"
   | "Operation"
   | "MapBuilder"
+  | "LayoutBuilder"
   | "DataPanel";
 
 /**

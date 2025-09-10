@@ -2,7 +2,6 @@ import React from "react";
 import { useMenuStore } from "@store/menuStore";
 import StraightEdge from "./StraightEdge/StraightEdge";
 import Curve90Edge from "./Curve90Edge/Curve90Edge";
-import BayBuilder from "./BayBuilder/BayBuilder";
 // import CurvedEdge from './CurvedEdge';  // 추후 구현
 // import CircularEdge from './CircularEdge';  // 추후 구현
 
@@ -27,8 +26,6 @@ const MapBuilder: React.FC = () => {
       // return <CircularEdge />;
       console.log("Circular Edge creation not implemented yet");
       return null;
-    case "map-menu-10": // Bay Builder
-      return <BayBuilder />;
     default:
       return null;
   }

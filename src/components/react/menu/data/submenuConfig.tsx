@@ -417,11 +417,39 @@ export const subMenuConfig: Record<string, SubMenuItem[]> = {
         />
       ),
     },
+  ],
+  LayoutBuilder: [
     {
-      id: "map-menu-10",
+      id: "layout-menu-1",
       label: "Bay Builder",
       iconFn: (isActive: boolean) => (
         <Square
+          size={36}
+          style={{
+            stroke: isActive ? ACTIVE_STROKE_COLOR : INACTIVE_STROKE_COLOR,
+            strokeWidth: 2,
+          }}
+        />
+      ),
+    },
+    {
+      id: "layout-menu-2",
+      label: "Station Builder",
+      iconFn: (isActive: boolean) => (
+        <Building2
+          size={36}
+          style={{
+            stroke: isActive ? ACTIVE_STROKE_COLOR : INACTIVE_STROKE_COLOR,
+            strokeWidth: 2,
+          }}
+        />
+      ),
+    },
+    {
+      id: "layout-menu-3",
+      label: "Equipment Builder",
+      iconFn: (isActive: boolean) => (
+        <Cog
           size={36}
           style={{
             stroke: isActive ? ACTIVE_STROKE_COLOR : INACTIVE_STROKE_COLOR,

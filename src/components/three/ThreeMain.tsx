@@ -13,6 +13,7 @@ import { Perf } from "r3f-perf";
 import * as THREE from "three";
 // import CameraController from "./Camera/cameraController"; // Replaced with drei controls
 import MapBuilder from "./MapBuilder/MapBuilder";
+import LayoutBuilder from "./LayoutBuilder/LayoutBuilder";
 import MapRenderer from "./MapRenderer";
 import Floor from "./Floor";
 import AxisHelper from "./AxisHelper";
@@ -69,6 +70,9 @@ const ThreeScene: React.FC = () => {
 
         {/* Map management - handles data operations */}
         <MapBuilder />
+
+        {/* Layout management - handles bay, station, equipment creation */}
+        <LayoutBuilder />
 
         {/* Map rendering - displays the actual 3D objects */}
         <MapRenderer />

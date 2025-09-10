@@ -5,6 +5,7 @@ import {
   ShipWheel,
   Folder,
   Table,
+  Building,
 } from "lucide-react";
 import {
   BottomMenuItem,
@@ -78,7 +79,7 @@ export const bottomMenuGroups: BottomMenuItem[][] = [
       ),
     },
   ],
-  // 그룹 4: 엣지빌더
+  // 그룹 4: 맵빌더 & 레이아웃빌더
   [
     {
       id: "MapBuilder",
@@ -88,6 +89,19 @@ export const bottomMenuGroups: BottomMenuItem[][] = [
           size={ICON_SIZE_MEDIUM}
           style={{
             fill: isActive ? ACTIVE_FILL_COLOR : INACTIVE_FILL_COLOR,
+            stroke: isActive ? ACTIVE_STROKE_COLOR : INACTIVE_STROKE_COLOR,
+            strokeWidth: 1.5,
+          }}
+        />
+      ),
+    },
+    {
+      id: "LayoutBuilder",
+      label: "LayoutBuilder",
+      iconFn: (isActive) => (
+        <Building
+          size={ICON_SIZE_MEDIUM}
+          style={{
             stroke: isActive ? ACTIVE_STROKE_COLOR : INACTIVE_STROKE_COLOR,
             strokeWidth: 1.5,
           }}

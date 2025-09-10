@@ -65,10 +65,9 @@ export const MenuButton: React.FC<MenuButtonProps> = ({
 
   const handleMouseEnter = (e: React.MouseEvent) => {
     setIsHovered(true);
-    const currentTopLevel = getCurrentTopLevel();
 
-    // 현재 최상단 레벨과 버튼 레벨이 같고, 툴팁이 있을 때
-    if (buttonLevel === currentTopLevel && tooltip) {
+    // 툴팁이 있으면 항상 표시
+    if (tooltip) {
       const rect = e.currentTarget.getBoundingClientRect();
       showTooltip(
         dataMenuId || "",
