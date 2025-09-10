@@ -48,6 +48,7 @@ export const tooltipsByLevel: {
     "map-menu-7": "다중 교차로",
     "map-menu-8": "교량 및 고가도로",
     "map-menu-9": "사용자 정의 도로",
+    "map-menu-10": "Bay 생성기",
   },
   3: {
     // 서브서브메뉴 레벨 (필요한 경우에만)

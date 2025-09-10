@@ -28,6 +28,7 @@ import {
   FolderOpen,
   Download,
   Upload,
+  Square,
 } from "lucide-react";
 import { ReactComponent as Curve180Icon } from "@/assets/icons/curve180.svg";
 import { ReactComponent as Curve90Icon } from "@/assets/icons/curve90.svg";
@@ -408,6 +409,19 @@ export const subMenuConfig: Record<string, SubMenuItem[]> = {
       label: "Custom",
       iconFn: (isActive: boolean) => (
         <Cog
+          size={36}
+          style={{
+            stroke: isActive ? ACTIVE_STROKE_COLOR : INACTIVE_STROKE_COLOR,
+            strokeWidth: 2,
+          }}
+        />
+      ),
+    },
+    {
+      id: "map-menu-10",
+      label: "Bay Builder",
+      iconFn: (isActive: boolean) => (
+        <Square
           size={36}
           style={{
             stroke: isActive ? ACTIVE_STROKE_COLOR : INACTIVE_STROKE_COLOR,
