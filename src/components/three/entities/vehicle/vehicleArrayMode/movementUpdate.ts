@@ -10,6 +10,7 @@ import { handleEdgeTransition } from "./movementLogic/edgeTransition";
 import { interpolatePosition } from "./movementLogic/positionInterpolator";
 import { updateSensorPoints } from "./helpers/sensorPoints";
 import { logSensorSummary } from "./helpers/sensorDebug";
+import { getCurveAcceleration } from "@/config/movementConfig";
 
 interface MovementUpdateParams {
   data: Float32Array;
@@ -88,6 +89,11 @@ export function updateMovement(params: MovementUpdateParams) {
     // 3. Calculate Speed (accel OR decel, based on hitZone)
     let appliedAccel = acceleration;
     let appliedDecel = 0;
+
+    // Override acceleration for curves if not braking
+    if (currentEdge.vos_rail_type !== "LINEAR") {
+       appliedAccel = getCurveAcceleration();
+    }
 
     if (hitZone >= 0) {
       appliedAccel = 0;

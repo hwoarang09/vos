@@ -1,7 +1,7 @@
 // vehicleArrayMode/collisionLogic/checkLeadVehicle.ts
 
 import { edgeVehicleQueue } from "@/store/vehicle/arrayMode/edgeVehicleQueue";
-import { VEHICLE_DATA_SIZE, MovementData, SensorData, MovingStatus } from "@/store/vehicle/arrayMode/vehicleDataArray";
+import { VEHICLE_DATA_SIZE, MovementData, SensorData, MovingStatus, HitZone } from "@/store/vehicle/arrayMode/vehicleDataArray";
 import { Edge } from "@/types/edge";
 import { VehicleLoop } from "@/utils/vehicle/loopMaker";
 import { findTargetEdgeIndex } from "../helpers/edgeTargetFinder";
@@ -9,6 +9,8 @@ import { applyVehicleStatus } from "../helpers/statusApplier";
 import { checkMergeConflict } from "./mergeConflictChecker";
 import { checkSensorCollision, roughDistanceCheck } from "../helpers/sensorCollision";
 import { SENSOR_PRESETS, SensorZoneKey } from "@/store/vehicle/arrayMode/sensorPresets";
+import { getBodyLength } from "@/config/vehicleConfig";
+import { getApproachMinSpeed, getBrakeMinSpeed } from "@/config/movementConfig";
 
 export function checkLeadVehicle(params: {
   edgeIdx: number;
@@ -34,7 +36,7 @@ export function checkLeadVehicle(params: {
   const targetEdge = edgeArray[targetEdgeIdx];
   let canProceed = true;
   // Reset defaults
-  data[leadPtr + SensorData.HIT_ZONE] = -1;
+  data[leadPtr + SensorData.HIT_ZONE] = HitZone.NONE;
   data[leadPtr + MovementData.DECELERATION] = 0;
 
   // 3. Collision Check
@@ -44,6 +46,10 @@ export function checkLeadVehicle(params: {
   if (shouldLogDetails) {
     console.log(`[CollisionCheck] VEH${leadVehId}: currentEdge=${edge.edge_name}(idx:${edgeIdx}), targetEdge=${targetEdge.edge_name}(idx:${targetEdgeIdx}), targetCount=${targetCount}`);
   }
+
+  // Cache config values
+  const approachMinSpeed = getApproachMinSpeed();
+  const brakeMinSpeed = getBrakeMinSpeed();
 
   // If target edge is same as current edge, check if there are other vehicles ahead
   if (targetEdgeIdx === edgeIdx) {
@@ -80,6 +86,7 @@ export function checkLeadVehicle(params: {
     const yLead = data[leadPtr + MovementData.Y];
     const xTarget = data[targetLastPtr + MovementData.X];
     const yTarget = data[targetLastPtr + MovementData.Y];
+    const velocity = data[leadPtr + MovementData.VELOCITY];
 
     const currentIsLinear = edge.vos_rail_type === "LINEAR";
     const targetIsLinear = targetEdge.vos_rail_type === "LINEAR";
@@ -96,7 +103,7 @@ export function checkLeadVehicle(params: {
         if (zoneHit >= 0) {
           const presetIdx = data[leadPtr + SensorData.PRESET_IDX] | 0;
           const preset = SENSOR_PRESETS[presetIdx] ?? SENSOR_PRESETS[0];
-          const zoneKey: SensorZoneKey = zoneHit === 2 ? "stop" : zoneHit === 1 ? "brake" : "approach";
+          const zoneKey: SensorZoneKey = zoneHit === HitZone.STOP ? "stop" : zoneHit === HitZone.BRAKE ? "brake" : "approach";
           const dec = preset.zones[zoneKey]?.dec ?? 0;
 
           data[leadPtr + SensorData.HIT_ZONE] = zoneHit;
@@ -109,40 +116,83 @@ export function checkLeadVehicle(params: {
             return applyVehicleStatus(data, leadPtr, false);
           } else {
             // Apply zone deceleration, keep moving
-            data[leadPtr + MovementData.DECELERATION] = dec;
+            let shouldDecel = true;
+            if (zoneKey === "approach" && velocity <= approachMinSpeed) shouldDecel = false;
+            if (zoneKey === "brake" && velocity <= brakeMinSpeed) shouldDecel = false;
+
+            if (shouldDecel) {
+                data[leadPtr + MovementData.DECELERATION] = dec;
+            } else {
+                data[leadPtr + MovementData.DECELERATION] = 0;
+            }
             canProceed = true;
           }
 
           if (shouldLogDetails) console.log(`[Sensor] VEH${leadVehId} hit zone=${zoneKey} -> dec=${dec}`);
         } else {
           // no collision, reset decel/hit
-          data[leadPtr + SensorData.HIT_ZONE] = -1;
+          data[leadPtr + SensorData.HIT_ZONE] = HitZone.NONE;
           data[leadPtr + MovementData.DECELERATION] = 0;
         }
       } else {
-        data[leadPtr + SensorData.HIT_ZONE] = -1;
+        data[leadPtr + SensorData.HIT_ZONE] = HitZone.NONE;
         data[leadPtr + MovementData.DECELERATION] = 0;
       }
     } else {
-      // 직선 구간: 센서 길이 기반 거리 체크 (x 좌표만 사용)
+      // 직선 구간: 센서 길이 기반 1D 존 체크 (x 좌표만 사용)
       const distance = Math.abs(xTarget - xLead);
 
-      // Get sensor length from preset
       const presetIdx = data[leadPtr + SensorData.PRESET_IDX] | 0;
       const preset = SENSOR_PRESETS[presetIdx] ?? SENSOR_PRESETS[0];
-      const sensorLength = Math.max(preset.leftLength, preset.rightLength);
 
-      // Stop distance = sensor length + small buffer
-      const stopDistance = sensorLength + 0.5;
+      // Use actual zone lengths
+      // CORRECTION: distance is center-to-center. 
+      // We need to trigger when (distance - vehicleLength) <= sensorLength
+      // So checks should be: distance <= sensorLength + vehicleLength
+      const vehicleLength = getBodyLength();
 
-      if (distance <= stopDistance) {
-        canProceed = false;
-        data[leadPtr + SensorData.HIT_ZONE] = 1; // treat as brake zone
-        data[leadPtr + MovementData.DECELERATION] = -3; // straight-line braking
-        if (shouldLogDetails) console.log(`[Distance] VEH${leadVehId} blocked (${distance.toFixed(2)}m, sensor: ${sensorLength.toFixed(2)}m, straight)`);
-      } else {
-        data[leadPtr + SensorData.HIT_ZONE] = -1;
+      const stopDist = preset.zones.stop.leftLength + vehicleLength;
+      const brakeDist = preset.zones.brake.leftLength + vehicleLength;
+      const approachDist = preset.zones.approach.leftLength + vehicleLength;
+
+      // Check zones from inner to outer
+      if (distance <= stopDist) {
+        // STOP ZONE
+        data[leadPtr + MovementData.VELOCITY] = 0;
         data[leadPtr + MovementData.DECELERATION] = 0;
+        data[leadPtr + MovementData.MOVING_STATUS] = MovingStatus.STOPPED;
+        data[leadPtr + SensorData.HIT_ZONE] = HitZone.STOP; // Stop
+        canProceed = false;
+        if (shouldLogDetails) console.log(`[Linear] VEH${leadVehId} STOP zone (${distance.toFixed(2)}m <= ${stopDist})`);
+      } else if (distance <= brakeDist) {
+        // BRAKE ZONE
+        data[leadPtr + SensorData.HIT_ZONE] = HitZone.BRAKE; // Brake
+        // Check minimum speed
+        if (velocity > brakeMinSpeed) {
+             data[leadPtr + MovementData.DECELERATION] = preset.zones.brake.dec;
+        } else {
+             data[leadPtr + MovementData.DECELERATION] = 0;
+        }
+        
+        canProceed = true;
+        if (shouldLogDetails) console.log(`[Linear] VEH${leadVehId} BRAKE zone (${distance.toFixed(2)}m <= ${brakeDist})`);
+      } else if (distance <= approachDist) {
+        // APPROACH ZONE
+        data[leadPtr + SensorData.HIT_ZONE] = HitZone.APPROACH; // Approach
+        // Check minimum speed
+        if (velocity > approachMinSpeed) {
+             data[leadPtr + MovementData.DECELERATION] = preset.zones.approach.dec;
+        } else {
+             data[leadPtr + MovementData.DECELERATION] = 0;
+        }
+
+        canProceed = true;
+        if (shouldLogDetails) console.log(`[Linear] VEH${leadVehId} APPROACH zone (${distance.toFixed(2)}m <= ${approachDist})`);
+      } else {
+        // NO COLLISION
+        data[leadPtr + SensorData.HIT_ZONE] = HitZone.NONE;
+        data[leadPtr + MovementData.DECELERATION] = 0;
+        canProceed = true;
       }
     }
 

@@ -67,6 +67,13 @@ export const SensorData = {
   HIT_ZONE: 11,   // -1=none, 0=approach, 1=brake, 2=stop
 } as const;
 
+export const HitZone = {
+  NONE: -1,
+  APPROACH: 0,
+  BRAKE: 1,
+  STOP: 2,
+} as const;
+
 export const LogicData = {
   TRAFFIC_STATE: 12,
   STOP_REASON: 13,

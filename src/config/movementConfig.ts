@@ -4,6 +4,9 @@ interface MovementConfig {
   LINEAR_ACCELERATION: number;   // Acceleration on straight sections (m/s²)
   LINEAR_DECELERATION: number;   // Deceleration (Braking) (m/s²)
   CURVE_MAX_SPEED: number;       // Maximum speed on curved sections (m/s)
+  APPROACH_MIN_SPEED: number;    // Minimum speed in approach zone (m/s)
+  BRAKE_MIN_SPEED: number;       // Minimum speed in brake zone (m/s)
+  CURVE_ACCELERATION: number;    // Acceleration on curved sections (m/s²)
 }
 
 // Load movement configuration from JSON file
@@ -21,7 +24,10 @@ const loadMovementConfig = async (): Promise<MovementConfig> => {
       LINEAR_MAX_SPEED: 5.0,
       LINEAR_ACCELERATION: 3.0,
       LINEAR_DECELERATION: 5.0, // Stronger braking by default
-      CURVE_MAX_SPEED: 1.0
+      CURVE_MAX_SPEED: 1.0,
+      APPROACH_MIN_SPEED: 1.0,
+      BRAKE_MIN_SPEED: 0.5,
+      CURVE_ACCELERATION: 0.0
     };
   }
 };
@@ -34,7 +40,10 @@ let movementConfig: MovementConfig = {
   LINEAR_MAX_SPEED: 5.0,
   LINEAR_ACCELERATION: 3.0,
   LINEAR_DECELERATION: 5.0,
-  CURVE_MAX_SPEED: 1.0
+  CURVE_MAX_SPEED: 1.0,
+  APPROACH_MIN_SPEED: 1.0,
+  BRAKE_MIN_SPEED: 0.5,
+  CURVE_ACCELERATION: 0.0
 };
 
 // Load config immediately
@@ -48,6 +57,9 @@ export const getLinearMaxSpeed = () => movementConfig.LINEAR_MAX_SPEED;
 export const getLinearAcceleration = () => movementConfig.LINEAR_ACCELERATION;
 export const getLinearDeceleration = () => movementConfig.LINEAR_DECELERATION;
 export const getCurveMaxSpeed = () => movementConfig.CURVE_MAX_SPEED;
+export const getApproachMinSpeed = () => movementConfig.APPROACH_MIN_SPEED;
+export const getBrakeMinSpeed = () => movementConfig.BRAKE_MIN_SPEED;
+export const getCurveAcceleration = () => movementConfig.CURVE_ACCELERATION;
 
 // Export the config object itself
 export const getMovementConfigSync = () => movementConfig;

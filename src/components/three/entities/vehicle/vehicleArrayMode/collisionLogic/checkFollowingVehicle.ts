@@ -1,7 +1,11 @@
 import { edgeVehicleQueue } from "@/store/vehicle/arrayMode/edgeVehicleQueue";
-import { VEHICLE_DATA_SIZE, MovementData, MovingStatus } from "@/store/vehicle/arrayMode/vehicleDataArray";
+import { VEHICLE_DATA_SIZE, MovementData, MovingStatus, SensorData, HitZone } from "@/store/vehicle/arrayMode/vehicleDataArray";
 import { Edge } from "@/types/edge";
 import { calculateSameEdgeDistances } from "../helpers/distanceCalculator";
+import { checkSensorCollision, roughDistanceCheck } from "../helpers/sensorCollision";
+import { SENSOR_PRESETS, SensorZoneKey } from "@/store/vehicle/arrayMode/sensorPresets";
+import { getBodyLength } from "@/config/vehicleConfig";
+import { getApproachMinSpeed, getBrakeMinSpeed } from "@/config/movementConfig";
 
 /**
  * Check following vehicles collision with front vehicle on same edge
@@ -33,6 +37,10 @@ export function checkFollowingVehicles(params: {
   // Determine edge type
   const isLinearEdge = edge.vos_rail_type === "LINEAR";
 
+  // Cache config values
+  const approachMinSpeed = getApproachMinSpeed();
+  const brakeMinSpeed = getBrakeMinSpeed();
+
   // Loop through following vehicles
   // i=0 is Leader, i=1 follows i=0, i=2 follows i=1 ...
   for (let i = 1; i < count; i++) {
@@ -50,48 +58,135 @@ export function checkFollowingVehicles(params: {
     const ptrFront = frontVehId * VEHICLE_DATA_SIZE;
     const ptrBack = backVehId * VEHICLE_DATA_SIZE;
 
+    // Reset defaults for back vehicle
+    data[ptrBack + SensorData.HIT_ZONE] = HitZone.NONE;
+    data[ptrBack + MovementData.DECELERATION] = 0;
+
     const xFront = data[ptrFront + MovementData.X];
-    const yFront = data[ptrFront + MovementData.Y];
     const xBack = data[ptrBack + MovementData.X];
-    const yBack = data[ptrBack + MovementData.Y];
+    const velocity = data[ptrBack + MovementData.VELOCITY];
 
-    // Calculate distance and effective safe distances based on edge type
-    let distance: number;
+    // --- LINEAR OPTIMIZATION (1D Zone Check) ---
     if (isLinearEdge) {
-      // Linear edge - only use x distance (horizontal line)
-      distance = Math.abs(xFront - xBack);
-    } else {
-      // Curve edge - use Euclidean distance
-      const dx = Math.abs(xFront - xBack);
-      const dy = Math.abs(yFront - yBack);
-      distance = Math.sqrt(dx * dx + dy * dy);
-    }
+      const distance = Math.abs(xFront - xBack);
+      
+      const presetIdx = data[ptrBack + SensorData.PRESET_IDX] | 0;
+      const preset = SENSOR_PRESETS[presetIdx] ?? SENSOR_PRESETS[0];
 
-    // Calculate effective distances based on edge type
-    const dy = Math.abs(yFront - yBack);
-    const { effectiveSafeDistance, effectiveResumeDistance } = calculateSameEdgeDistances(
-      isLinearEdge,
-      dy,
-      sameEdgeSafeDistance,
-      resumeDistance
-    );
+      // Use actual zone lengths for linear check
+      // CORRECTION: distance is center-to-center. 
+      // We need to trigger when (distance - vehicleLength) <= sensorLength
+      // So checks should be: distance <= sensorLength + vehicleLength
+      const vehicleLength = getBodyLength();
+      
+      const stopDist = preset.zones.stop.leftLength + vehicleLength;
+      const brakeDist = preset.zones.brake.leftLength + vehicleLength;
+      const approachDist = preset.zones.approach.leftLength + vehicleLength;
 
-    const statusBack = data[ptrBack + MovementData.MOVING_STATUS];
+      // Check zones from inner to outer
+      if (distance <= stopDist) {
+        // STOP ZONE
+        data[ptrBack + MovementData.MOVING_STATUS] = MovingStatus.STOPPED;
+        data[ptrBack + SensorData.HIT_ZONE] = HitZone.STOP;
+        data[ptrBack + MovementData.VELOCITY] = 0;
+        data[ptrBack + MovementData.DECELERATION] = 0;
+        collisions++;
+      } else if (distance <= brakeDist) {
+        // BRAKE ZONE
+        data[ptrBack + SensorData.HIT_ZONE] = HitZone.BRAKE;
+        if (velocity > brakeMinSpeed) {
+            data[ptrBack + MovementData.DECELERATION] = preset.zones.brake.dec;
+        } else {
+            data[ptrBack + MovementData.DECELERATION] = 0;
+        }
+        
+        if (data[ptrBack + MovementData.MOVING_STATUS] === MovingStatus.STOPPED) {
+             data[ptrBack + MovementData.MOVING_STATUS] = MovingStatus.MOVING;
+        }
+      } else if (distance <= approachDist) {
+        // APPROACH ZONE
+        data[ptrBack + SensorData.HIT_ZONE] = HitZone.APPROACH;
+        if (velocity > approachMinSpeed) {
+            data[ptrBack + MovementData.DECELERATION] = preset.zones.approach.dec;
+        } else {
+            data[ptrBack + MovementData.DECELERATION] = 0;
+        }
 
-    // Control back vehicle based on distance to front vehicle
-    if (distance < effectiveSafeDistance && statusBack !== MovingStatus.STOPPED) {
-      // Too close - stop back vehicle
-      data[ptrBack + MovementData.MOVING_STATUS] = MovingStatus.STOPPED;
-      collisions++;
-      if (shouldLogDetails) {
-        console.log(`[Collision] VEH${backVehId} STOPPED on edge ${edge.edge_name} (dist to VEH${frontVehId}: ${distance.toFixed(2)}m < ${effectiveSafeDistance.toFixed(2)}m)`);
+        if (data[ptrBack + MovementData.MOVING_STATUS] === MovingStatus.STOPPED) {
+             data[ptrBack + MovementData.MOVING_STATUS] = MovingStatus.MOVING;
+        }
+      } else {
+        // NO COLLISION
+        const statusBack = data[ptrBack + MovementData.MOVING_STATUS];
+        if (statusBack === MovingStatus.STOPPED) {
+           data[ptrBack + MovementData.MOVING_STATUS] = MovingStatus.MOVING;
+           resumes++;
+        }
+        data[ptrBack + SensorData.HIT_ZONE] = HitZone.NONE;
+        data[ptrBack + MovementData.DECELERATION] = 0;
       }
-    } else if (distance > effectiveResumeDistance && statusBack === MovingStatus.STOPPED) {
-      // Far enough - resume back vehicle
-      data[ptrBack + MovementData.MOVING_STATUS] = MovingStatus.MOVING;
-      resumes++;
-      if (shouldLogDetails) {
-        console.log(`[Resume] VEH${backVehId} RESUMED on edge ${edge.edge_name} (dist to VEH${frontVehId}: ${distance.toFixed(2)}m > ${effectiveResumeDistance.toFixed(2)}m)`);
+
+    } else {
+      // --- COMPLEX / CURVE LOGIC (SAT SENSORS) ---
+      // 1. Rough distance check
+      if (roughDistanceCheck(backVehId, frontVehId, 8.0)) {
+         // 2. Precise SAT check
+         const zoneHit = checkSensorCollision(backVehId, frontVehId); 
+
+         if (zoneHit >= 0) {
+            const presetIdx = data[ptrBack + SensorData.PRESET_IDX] | 0;
+            const preset = SENSOR_PRESETS[presetIdx] ?? SENSOR_PRESETS[0];
+            const zoneKey: SensorZoneKey = zoneHit === HitZone.STOP ? "stop" : zoneHit === HitZone.BRAKE ? "brake" : "approach";
+            const dec = preset.zones[zoneKey]?.dec ?? 0;
+
+            data[ptrBack + SensorData.HIT_ZONE] = zoneHit;
+            
+            if (zoneKey === "stop" || dec === -Infinity) {
+              // Stop
+              data[ptrBack + MovementData.VELOCITY] = 0;
+              data[ptrBack + MovementData.DECELERATION] = 0;
+              data[ptrBack + MovementData.MOVING_STATUS] = MovingStatus.STOPPED;
+              collisions++;
+            } else {
+              // Decelerate (Approach/Brake)
+              // Logic: Only decelerate if current velocity is above min threshold for that zone
+              let shouldDecel = true;
+              if (zoneKey === "approach" && velocity <= approachMinSpeed) shouldDecel = false;
+              if (zoneKey === "brake" && velocity <= brakeMinSpeed) shouldDecel = false;
+
+              if (shouldDecel) {
+                  data[ptrBack + MovementData.DECELERATION] = dec;
+              } else {
+                  data[ptrBack + MovementData.DECELERATION] = 0;
+              }
+
+              // Ensure we are moving if not stopped
+              if (data[ptrBack + MovementData.MOVING_STATUS] === MovingStatus.STOPPED) {
+                 data[ptrBack + MovementData.MOVING_STATUS] = MovingStatus.MOVING;
+              }
+            }
+         } else {
+            // No collision - Reset / Resume
+             const statusBack = data[ptrBack + MovementData.MOVING_STATUS];
+             if (statusBack === MovingStatus.STOPPED) {
+                // Check simple distance for resume hysteresis ? 
+                // Alternatively simply resume if sensors are clear.
+                // For safety, let's resume.
+                data[ptrBack + MovementData.MOVING_STATUS] = MovingStatus.MOVING;
+                resumes++;
+             }
+             data[ptrBack + SensorData.HIT_ZONE] = HitZone.NONE;
+             data[ptrBack + MovementData.DECELERATION] = 0;
+         }
+      } else {
+         // Far away
+         const statusBack = data[ptrBack + MovementData.MOVING_STATUS];
+         if (statusBack === MovingStatus.STOPPED) {
+             data[ptrBack + MovementData.MOVING_STATUS] = MovingStatus.MOVING;
+             resumes++;
+         }
+         data[ptrBack + SensorData.HIT_ZONE] = HitZone.NONE;
+         data[ptrBack + MovementData.DECELERATION] = 0;
       }
     }
   }
