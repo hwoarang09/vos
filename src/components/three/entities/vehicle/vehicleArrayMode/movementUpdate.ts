@@ -72,6 +72,8 @@ export function updateMovement(params: MovementUpdateParams) {
     const acceleration = data[ptr + MovementData.ACCELERATION];
     const deceleration = data[ptr + MovementData.DECELERATION];
     const edgeRatio = data[ptr + MovementData.EDGE_RATIO];
+    const rawHit = data[ptr + SensorData.HIT_ZONE] | 0; // -1,0,1,2
+    const hitZone = rawHit === 2 ? 2 : (deceleration !== 0 ? rawHit : -1); // treat as contact only when decel is active, except stop zone
     
     // Position fallbacks
     let finalX = data[ptr + MovementData.X];
@@ -83,11 +85,27 @@ export function updateMovement(params: MovementUpdateParams) {
     const currentEdge = edgeArray[currentEdgeIndex];
     if (!currentEdge) continue;
 
-    // 3. Calculate Speed
+    // 3. Calculate Speed (accel OR decel, based on hitZone)
+    let appliedAccel = acceleration;
+    let appliedDecel = 0;
+
+    if (hitZone >= 0) {
+      appliedAccel = 0;
+      appliedDecel = deceleration;
+    }
+
+    // Hard stop for stop-zone contact
+    if (hitZone === 2) {
+      data[ptr + MovementData.VELOCITY] = 0;
+      data[ptr + MovementData.DECELERATION] = 0;
+      data[ptr + MovementData.MOVING_STATUS] = MovingStatus.STOPPED;
+      continue;
+    }
+
     const newVelocity = calculateNextSpeed(
       velocity,
-      acceleration,
-      deceleration,
+      appliedAccel,
+      appliedDecel,
       currentEdge,
       clampedDelta
     );

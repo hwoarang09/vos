@@ -219,6 +219,7 @@ export const useVehicleArrayStore = create<VehicleArrayStore>(
       // Set status data
       vehicle.movement.movingStatus = data.movingStatus ?? 0;
       vehicle.movement.currentEdge = data.edgeIndex;
+      vehicle.sensor.hitZone = -1;
 
       // Add to edge list
       edgeVehicleQueue.addVehicle(data.edgeIndex, vehicleIndex);

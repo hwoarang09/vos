@@ -1,10 +1,7 @@
 import { edgeVehicleQueue } from "@/store/vehicle/arrayMode/edgeVehicleQueue";
-import { VEHICLE_DATA_SIZE, MovementData } from "@/store/vehicle/arrayMode/vehicleDataArray";
+import { VEHICLE_DATA_SIZE, MovementData, MovingStatus } from "@/store/vehicle/arrayMode/vehicleDataArray";
 import { Edge } from "@/types/edge";
-import { VehicleStatus } from "@/types/vehicleStatus";
 import { calculateSameEdgeDistances } from "../helpers/distanceCalculator";
-
-const STATUS_OFFSET = 7;
 
 /**
  * Check following vehicles collision with front vehicle on same edge
@@ -79,19 +76,19 @@ export function checkFollowingVehicles(params: {
       resumeDistance
     );
 
-    const statusBack = data[ptrBack + STATUS_OFFSET];
+    const statusBack = data[ptrBack + MovementData.MOVING_STATUS];
 
     // Control back vehicle based on distance to front vehicle
-    if (distance < effectiveSafeDistance && statusBack !== VehicleStatus.STOPPED) {
+    if (distance < effectiveSafeDistance && statusBack !== MovingStatus.STOPPED) {
       // Too close - stop back vehicle
-      data[ptrBack + STATUS_OFFSET] = VehicleStatus.STOPPED;
+      data[ptrBack + MovementData.MOVING_STATUS] = MovingStatus.STOPPED;
       collisions++;
       if (shouldLogDetails) {
         console.log(`[Collision] VEH${backVehId} STOPPED on edge ${edge.edge_name} (dist to VEH${frontVehId}: ${distance.toFixed(2)}m < ${effectiveSafeDistance.toFixed(2)}m)`);
       }
-    } else if (distance > effectiveResumeDistance && statusBack === VehicleStatus.STOPPED) {
+    } else if (distance > effectiveResumeDistance && statusBack === MovingStatus.STOPPED) {
       // Far enough - resume back vehicle
-      data[ptrBack + STATUS_OFFSET] = VehicleStatus.MOVING;
+      data[ptrBack + MovementData.MOVING_STATUS] = MovingStatus.MOVING;
       resumes++;
       if (shouldLogDetails) {
         console.log(`[Resume] VEH${backVehId} RESUMED on edge ${edge.edge_name} (dist to VEH${frontVehId}: ${distance.toFixed(2)}m > ${effectiveResumeDistance.toFixed(2)}m)`);

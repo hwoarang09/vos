@@ -15,8 +15,13 @@ export function calculateNextSpeed(
   const maxSpeed = isCurve ? curveMax : linearMax;
 
   // deceleration is expected to be <= 0 when braking
-  const totalAccel = acceleration + deceleration;
-  let nextVelocity = currentVelocity + totalAccel * delta;
+  // Rule: acceleration OR deceleration applies, not both.
+  if (deceleration === -Infinity) {
+    return 0; // hard stop
+  }
+
+  const appliedAccel = deceleration < 0 ? deceleration : acceleration;
+  let nextVelocity = currentVelocity + appliedAccel * delta;
 
   // Clamp to physical limits
   if (nextVelocity > maxSpeed) nextVelocity = maxSpeed;

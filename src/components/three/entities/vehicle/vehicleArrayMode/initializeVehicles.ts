@@ -81,6 +81,7 @@ export function initializeVehicles(params: InitializeVehiclesParams): Initializa
       const vehData = vehicleDataArray.getData();
       const ptr = placement.vehicleIndex * VEHICLE_DATA_SIZE;
       vehData[ptr + SensorData.PRESET_IDX] = PresetIndex.STRAIGHT; // Default to straight
+      vehData[ptr + SensorData.HIT_ZONE] = -1; // No contact
 
       // Initialize sensor points with current position and rotation
       updateSensorPoints(

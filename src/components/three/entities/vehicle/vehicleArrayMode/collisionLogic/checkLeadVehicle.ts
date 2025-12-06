@@ -1,7 +1,7 @@
 // vehicleArrayMode/collisionLogic/checkLeadVehicle.ts
 
 import { edgeVehicleQueue } from "@/store/vehicle/arrayMode/edgeVehicleQueue";
-import { VEHICLE_DATA_SIZE, MovementData, SensorData } from "@/store/vehicle/arrayMode/vehicleDataArray";
+import { VEHICLE_DATA_SIZE, MovementData, SensorData, MovingStatus } from "@/store/vehicle/arrayMode/vehicleDataArray";
 import { Edge } from "@/types/edge";
 import { VehicleLoop } from "@/utils/vehicle/loopMaker";
 import { findTargetEdgeIndex } from "../helpers/edgeTargetFinder";
@@ -33,6 +33,9 @@ export function checkLeadVehicle(params: {
 
   const targetEdge = edgeArray[targetEdgeIdx];
   let canProceed = true;
+  // Reset defaults
+  data[leadPtr + SensorData.HIT_ZONE] = -1;
+  data[leadPtr + MovementData.DECELERATION] = 0;
 
   // 3. Collision Check
   const targetRawData = edgeVehicleQueue.getData(targetEdgeIdx);
@@ -96,10 +99,13 @@ export function checkLeadVehicle(params: {
           const zoneKey: SensorZoneKey = zoneHit === 2 ? "stop" : zoneHit === 1 ? "brake" : "approach";
           const dec = preset.zones[zoneKey]?.dec ?? 0;
 
+          data[leadPtr + SensorData.HIT_ZONE] = zoneHit;
+
           if (zoneKey === "stop" || dec === -Infinity) {
             // Immediate stop
             data[leadPtr + MovementData.VELOCITY] = 0;
             data[leadPtr + MovementData.DECELERATION] = 0;
+            data[leadPtr + MovementData.MOVING_STATUS] = MovingStatus.STOPPED;
             return applyVehicleStatus(data, leadPtr, false);
           } else {
             // Apply zone deceleration, keep moving
@@ -109,10 +115,12 @@ export function checkLeadVehicle(params: {
 
           if (shouldLogDetails) console.log(`[Sensor] VEH${leadVehId} hit zone=${zoneKey} -> dec=${dec}`);
         } else {
-          // no collision, reset decel
+          // no collision, reset decel/hit
+          data[leadPtr + SensorData.HIT_ZONE] = -1;
           data[leadPtr + MovementData.DECELERATION] = 0;
         }
       } else {
+        data[leadPtr + SensorData.HIT_ZONE] = -1;
         data[leadPtr + MovementData.DECELERATION] = 0;
       }
     } else {
@@ -129,9 +137,11 @@ export function checkLeadVehicle(params: {
 
       if (distance <= stopDistance) {
         canProceed = false;
+        data[leadPtr + SensorData.HIT_ZONE] = 1; // treat as brake zone
         data[leadPtr + MovementData.DECELERATION] = -3; // straight-line braking
         if (shouldLogDetails) console.log(`[Distance] VEH${leadVehId} blocked (${distance.toFixed(2)}m, sensor: ${sensorLength.toFixed(2)}m, straight)`);
       } else {
+        data[leadPtr + SensorData.HIT_ZONE] = -1;
         data[leadPtr + MovementData.DECELERATION] = 0;
       }
     }

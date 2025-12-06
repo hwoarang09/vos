@@ -21,7 +21,7 @@
 ### **1. Data Structure**
 
 ```typescript
-// Vehicle Movement Data (11 floats per vehicle) - DECELERATION included
+// Vehicle Data (15 floats per vehicle) - DECEL, hitZone, logic state included
 MovementData = {
   X: 0, Y: 1, Z: 2,
   ROTATION: 3,
@@ -29,15 +29,23 @@ MovementData = {
   ACCELERATION: 5,
   DECELERATION: 6,   // braking command (m/s^2, negative to brake)
   EDGE_RATIO: 7,
+  MOVING_STATUS: 8,
+  CURRENT_EDGE: 9,
 }
 
 StatusData = {
-  STATUS: 8,
-  CURRENT_EDGE: 9,
+  // (deprecated; use MovingStatus + CURRENT_EDGE above)
 }
 
 SensorData = {
   PRESET_IDX: 10,  // 0=직진, 1=좌커브, 2=우커브, 3=합류, 4=분기
+  HIT_ZONE: 11,    // -1=none, 0=approach, 1=brake, 2=stop
+}
+
+LogicData = {
+  TRAFFIC_STATE: 12,
+  STOP_REASON: 13,
+  JOB_STATE: 14,
 }
 
 // Sensor Geometry Data (36 floats per vehicle) - 3 zones * 12 floats

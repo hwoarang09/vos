@@ -45,9 +45,9 @@ export const JobState = {
 
 // Data structure layout
 const MOVEMENT_SIZE = 10; // x, y, z, rotation, velocity, acceleration, deceleration, edgeRatio, movingStatus, currentEdge
-const SENSOR_SIZE = 1; // sensor preset index
+const SENSOR_SIZE = 2; // sensor preset index, sensor hit zone
 const LOGIC_SIZE = 3;  // trafficState, stopReason, jobState
-export const VEHICLE_DATA_SIZE = MOVEMENT_SIZE + SENSOR_SIZE + LOGIC_SIZE; // 14
+export const VEHICLE_DATA_SIZE = MOVEMENT_SIZE + SENSOR_SIZE + LOGIC_SIZE; // 15
 
 export const MovementData = {
   X: 0,
@@ -64,12 +64,13 @@ export const MovementData = {
 
 export const SensorData = {
   PRESET_IDX: 10, // 0=STRAIGHT, 1=CURVE_LEFT, 2=CURVE_RIGHT, 3=MERGE, 4=BRANCH
+  HIT_ZONE: 11,   // -1=none, 0=approach, 1=brake, 2=stop
 } as const;
 
 export const LogicData = {
-  TRAFFIC_STATE: 11,
-  STOP_REASON: 12,
-  JOB_STATE: 13,
+  TRAFFIC_STATE: 12,
+  STOP_REASON: 13,
+  JOB_STATE: 14,
 } as const;
 
 /**
@@ -173,6 +174,13 @@ class VehicleDataArray {
         },
         set presetIdx(val: number) {
           data[offset + SensorData.PRESET_IDX] = val;
+        },
+
+        get hitZone() {
+          return data[offset + SensorData.HIT_ZONE];
+        },
+        set hitZone(val: number) {
+          data[offset + SensorData.HIT_ZONE] = val;
         },
       },
 
