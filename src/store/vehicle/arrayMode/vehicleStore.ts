@@ -26,7 +26,7 @@ export interface VehicleArrayStore {
   ) => void;
   setVehicleVelocity: (vehicleIndex: number, velocity: number) => void;
   setVehicleRotation: (vehicleIndex: number, rotation: number) => void;
-  setVehicleStatus: (vehicleIndex: number, status: number) => void;
+  setVehicleMovingStatus: (vehicleIndex: number, status: number) => void;
   setVehicleAcceleration: (vehicleIndex: number, acceleration: number) => void;
   setVehicleDeceleration: (vehicleIndex: number, deceleration: number) => void;
   setVehicleEdgeRatio: (vehicleIndex: number, edgeRatio: number) => void;
@@ -36,7 +36,7 @@ export interface VehicleArrayStore {
   getVehiclePosition: (vehicleIndex: number) => { x: number; y: number; z: number };
   getVehicleVelocity: (vehicleIndex: number) => number;
   getVehicleRotation: (vehicleIndex: number) => number;
-  getVehicleStatus: (vehicleIndex: number) => number;
+  getVehicleMovingStatus: (vehicleIndex: number) => number;
   getVehicleCurrentEdge: (vehicleIndex: number) => number;
   getVehicleEdgeRatio: (vehicleIndex: number) => number;
 
@@ -62,7 +62,7 @@ export interface VehicleArrayStore {
       velocity?: number;
       acceleration?: number;
       deceleration?: number;
-      status?: number;
+      movingStatus?: number;
     }
   ) => void;
 
@@ -115,9 +115,9 @@ export const useVehicleArrayStore = create<VehicleArrayStore>(
     },
 
     // Set vehicle status
-    setVehicleStatus: (vehicleIndex, status) => {
+    setVehicleMovingStatus: (vehicleIndex, status) => {
       const vehicle = vehicleDataArray.get(vehicleIndex);
-      vehicle.status.status = status;
+      vehicle.movement.movingStatus = status;
     },
 
     // Set vehicle acceleration
@@ -141,7 +141,7 @@ export const useVehicleArrayStore = create<VehicleArrayStore>(
     // Set vehicle current edge
     setVehicleCurrentEdge: (vehicleIndex, edgeIndex) => {
       const vehicle = vehicleDataArray.get(vehicleIndex);
-      vehicle.status.currentEdge = edgeIndex;
+      vehicle.movement.currentEdge = edgeIndex;
     },
 
     // Get vehicle position
@@ -160,15 +160,15 @@ export const useVehicleArrayStore = create<VehicleArrayStore>(
     },
 
     // Get vehicle status
-    getVehicleStatus: (vehicleIndex) => {
+    getVehicleMovingStatus: (vehicleIndex) => {
       const vehicle = vehicleDataArray.get(vehicleIndex);
-      return vehicle.status.status;
+      return vehicle.movement.movingStatus;
     },
 
     // Get vehicle current edge
     getVehicleCurrentEdge: (vehicleIndex) => {
       const vehicle = vehicleDataArray.get(vehicleIndex);
-      return vehicle.status.currentEdge;
+      return vehicle.movement.currentEdge;
     },
 
     // Get vehicle edge ratio
@@ -217,8 +217,8 @@ export const useVehicleArrayStore = create<VehicleArrayStore>(
       vehicle.movement.edgeRatio = data.edgeRatio ?? 0;
 
       // Set status data
-      vehicle.status.status = data.status ?? 0;
-      vehicle.status.currentEdge = data.edgeIndex;
+      vehicle.movement.movingStatus = data.movingStatus ?? 0;
+      vehicle.movement.currentEdge = data.edgeIndex;
 
       // Add to edge list
       edgeVehicleQueue.addVehicle(data.edgeIndex, vehicleIndex);
@@ -227,7 +227,7 @@ export const useVehicleArrayStore = create<VehicleArrayStore>(
     // Remove vehicle (integrated)
     removeVehicle: (vehicleIndex) => {
       const store = get();
-      const currentEdge = vehicleDataArray.get(vehicleIndex).status.currentEdge;
+      const currentEdge = vehicleDataArray.get(vehicleIndex).movement.currentEdge;
 
       // Remove from edge list
       if (currentEdge !== -1) {
@@ -242,7 +242,7 @@ export const useVehicleArrayStore = create<VehicleArrayStore>(
     moveVehicleToEdge: (vehicleIndex, newEdgeIndex, edgeRatio = 0) => {
       const store = get();
       const vehicle = vehicleDataArray.get(vehicleIndex);
-      const oldEdge = vehicle.status.currentEdge;
+      const oldEdge = vehicle.movement.currentEdge;
 
       // Remove from old edge
       if (oldEdge !== -1) {
@@ -251,7 +251,7 @@ export const useVehicleArrayStore = create<VehicleArrayStore>(
 
       // Add to new edge
       store.addVehicleToEdgeList(newEdgeIndex, vehicleIndex);
-      vehicle.status.currentEdge = newEdgeIndex;
+      vehicle.movement.currentEdge = newEdgeIndex;
       vehicle.movement.edgeRatio = edgeRatio;
     },
 

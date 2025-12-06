@@ -162,8 +162,21 @@ export const menuLevel2Config: Record<string, MenuLevel2Item[]> = {
   ],
   Vehicle: [
     {
-      id: "vehicle-menu-1",
-      label: "All",
+      id: "vehicle-menu-overall",
+      label: "Overall Status",
+      iconFn: (isActive: boolean) => (
+        <BarChart3
+          size={36}
+          style={{
+            stroke: isActive ? ACTIVE_STROKE_COLOR : INACTIVE_STROKE_COLOR,
+            strokeWidth: 2,
+          }}
+        />
+      ),
+    },
+    {
+      id: "vehicle-menu-individual",
+      label: "Individual",
       iconFn: (isActive: boolean) => (
         <Car
           size={36}
@@ -176,47 +189,7 @@ export const menuLevel2Config: Record<string, MenuLevel2Item[]> = {
       ),
     },
     {
-      id: "vehicle-menu-2",
-      label: "Active",
-      iconFn: (isActive: boolean) => (
-        <Circle
-          size={36}
-          style={{
-            fill: isActive ? "#00ff00" : "#00aa00",
-            stroke: isActive ? ACTIVE_STROKE_COLOR : INACTIVE_STROKE_COLOR,
-            strokeWidth: 2,
-          }}
-        />
-      ),
-    },
-    {
-      id: "vehicle-menu-3",
-      label: "Idle",
-      iconFn: (isActive: boolean) => (
-        <Clock
-          size={36}
-          style={{
-            stroke: isActive ? ACTIVE_STROKE_COLOR : INACTIVE_STROKE_COLOR,
-            strokeWidth: 2,
-          }}
-        />
-      ),
-    },
-    {
-      id: "vehicle-menu-4",
-      label: "Maintenance",
-      iconFn: (isActive: boolean) => (
-        <Wrench
-          size={36}
-          style={{
-            stroke: isActive ? ACTIVE_STROKE_COLOR : INACTIVE_STROKE_COLOR,
-            strokeWidth: 2,
-          }}
-        />
-      ),
-    },
-    {
-      id: "vehicle-menu-5",
+      id: "vehicle-menu-history",
       label: "History",
       iconFn: (isActive: boolean) => (
         <FileText

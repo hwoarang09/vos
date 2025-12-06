@@ -3,10 +3,11 @@
 
 import { getMaxVehicles } from "@/config/vehicleConfig";
 
-// Vehicle status enum (Legacy/Physical State)
-export const VehicleStatus = {
+// Vehicle status enum (Moving State)
+export const MovingStatus = {
   STOPPED: 0,
   MOVING: 1,
+  PAUSED: 2,
 } as const;
 
 // Traffic Regulation State (Intersection/Merge control)
@@ -43,11 +44,10 @@ export const JobState = {
 } as const;
 
 // Data structure layout
-const MOVEMENT_SIZE = 8; // x, y, z, rotation, velocity, acceleration, deceleration, edgeRatio
-const STATUS_SIZE = 2; // status (movingState), currentEdge
+const MOVEMENT_SIZE = 10; // x, y, z, rotation, velocity, acceleration, deceleration, edgeRatio, movingStatus, currentEdge
 const SENSOR_SIZE = 1; // sensor preset index
 const LOGIC_SIZE = 3;  // trafficState, stopReason, jobState
-export const VEHICLE_DATA_SIZE = MOVEMENT_SIZE + STATUS_SIZE + SENSOR_SIZE + LOGIC_SIZE; // 14
+export const VEHICLE_DATA_SIZE = MOVEMENT_SIZE + SENSOR_SIZE + LOGIC_SIZE; // 14
 
 export const MovementData = {
   X: 0,
@@ -58,10 +58,7 @@ export const MovementData = {
   ACCELERATION: 5,
   DECELERATION: 6,
   EDGE_RATIO: 7,
-} as const;
-
-export const StatusData = {
-  STATUS: 8, // 0=STOPPED, 1=MOVING (Equivalent to MovingState)
+  MOVING_STATUS: 8, // 0=STOPPED, 1=MOVING, 2=PAUSED
   CURRENT_EDGE: 9, // Edge index
 } as const;
 
@@ -154,21 +151,19 @@ class VehicleDataArray {
         set edgeRatio(val: number) {
           data[offset + MovementData.EDGE_RATIO] = val;
         },
-      },
 
-      status: {
-        get status() {
-          return data[offset + StatusData.STATUS];
+        get movingStatus() {
+          return data[offset + MovementData.MOVING_STATUS];
         },
-        set status(val: number) {
-          data[offset + StatusData.STATUS] = val;
+        set movingStatus(val: number) {
+          data[offset + MovementData.MOVING_STATUS] = val;
         },
 
         get currentEdge() {
-          return data[offset + StatusData.CURRENT_EDGE];
+          return data[offset + MovementData.CURRENT_EDGE];
         },
         set currentEdge(val: number) {
-          data[offset + StatusData.CURRENT_EDGE] = val;
+          data[offset + MovementData.CURRENT_EDGE] = val;
         },
       },
 
@@ -311,17 +306,17 @@ class VehicleDataArray {
   }
 
   /**
-   * Get status (direct access)
+   * Get moving status (direct access)
    */
-  getStatus(vehicleIndex: number): number {
-    return this.data[vehicleIndex * VEHICLE_DATA_SIZE + StatusData.STATUS];
+  getMovingStatus(vehicleIndex: number): number {
+    return this.data[vehicleIndex * VEHICLE_DATA_SIZE + MovementData.MOVING_STATUS];
   }
 
   /**
-   * Set status (direct access)
+   * Set moving status (direct access)
    */
-  setStatus(vehicleIndex: number, status: number): void {
-    this.data[vehicleIndex * VEHICLE_DATA_SIZE + StatusData.STATUS] = status;
+  setMovingStatus(vehicleIndex: number, status: number): void {
+    this.data[vehicleIndex * VEHICLE_DATA_SIZE + MovementData.MOVING_STATUS] = status;
   }  
   
   /**

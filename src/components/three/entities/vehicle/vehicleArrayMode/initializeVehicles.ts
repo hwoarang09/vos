@@ -6,9 +6,10 @@ import { edgeVehicleQueue } from "@/store/vehicle/arrayMode/edgeVehicleQueue";
 import { getLinearAcceleration, getLinearDeceleration, getCurveMaxSpeed } from "@/config/movementConfig";
 import { calculateVehiclePlacementsOnLoops } from "@/utils/vehicle/vehiclePlacement";
 import { findEdgeLoops, VehicleLoop } from "@/utils/vehicle/loopMaker";
-import { vehicleDataArray, SensorData, VEHICLE_DATA_SIZE } from "@/store/vehicle/arrayMode/vehicleDataArray";
+import { vehicleDataArray, SensorData, VEHICLE_DATA_SIZE, MovementData, MovingStatus } from "@/store/vehicle/arrayMode/vehicleDataArray";
 import { PresetIndex } from "@/store/vehicle/arrayMode/sensorPresets";
 import { updateSensorPoints } from "./helpers/sensorPoints";
+import { useVehicleGeneralStore } from "@/store/vehicle/vehicleGeneralStore";
 
 export interface InitializationResult {
   vehicleLoops: VehicleLoop[];
@@ -73,7 +74,7 @@ export function initializeVehicles(params: InitializeVehiclesParams): Initializa
         velocity: initialVelocity,
         acceleration: getLinearAcceleration(),
         deceleration: getLinearDeceleration(),
-        status: 1,
+        movingStatus: MovingStatus.MOVING,
       });
 
       // Initialize sensor preset based on edge type
@@ -92,6 +93,20 @@ export function initializeVehicles(params: InitializeVehiclesParams): Initializa
 
       // Count vehicles per edge
       edgeVehicleCount.set(edgeIndex, (edgeVehicleCount.get(edgeIndex) || 0) + 1);
+
+      // Add to VehicleGeneralStore (for UI/Metadata)
+      // ID Format must match VehicleTextRenderer: VEH0001, VEH0002...
+      const idNumber = placement.vehicleIndex + 1;
+      const formattedId = `VEH${String(idNumber).padStart(4, '0')}`;
+
+      useVehicleGeneralStore.getState().addVehicle(placement.vehicleIndex, {
+        id: formattedId,
+        name: `Vehicle ${placement.vehicleIndex}`,
+        color: "#ffffff",
+        battery: 100,
+        vehicleType: 0,
+        taskType: 0,
+      });
     }
   }
 
@@ -111,7 +126,7 @@ export function initializeVehicles(params: InitializeVehiclesParams): Initializa
     const edgeIndex = nameToIndex.get(placement.edgeName);
     if (edgeIndex !== undefined) {
       const ptr = i * VEHICLE_DATA_SIZE;
-      const ratio = directData[ptr + 6]; // edgeRatio offset
+      const ratio = directData[ptr + MovementData.EDGE_RATIO]; // edgeRatio offset
       // console.log(
       //   `  VEH${i}: Edge${edgeIndex} (${placement.edgeName}), ` +
       //   `ratio=${ratio.toFixed(3)}, pos=(${placement.x.toFixed(1)}, ${placement.y.toFixed(1)})`
@@ -148,9 +163,9 @@ export function initializeVehicles(params: InitializeVehiclesParams): Initializa
     // console.log(`\n  Edge${edgeIdx} (${edgeName}): ${vehicles.length} vehicles`);
     vehicles.forEach((vehIdx, arrayPos) => {
       const ptr = vehIdx * VEHICLE_DATA_SIZE;
-      const ratio = directData[ptr + 6]; // edgeRatio offset
-      const x = directData[ptr + 0];
-      const y = directData[ptr + 1];
+      const ratio = directData[ptr + MovementData.EDGE_RATIO]; // edgeRatio offset
+      const x = directData[ptr + MovementData.X];
+      const y = directData[ptr + MovementData.Y];
       // console.log(
       //   `    [${arrayPos}] VEH${vehIdx}: ratio=${ratio.toFixed(3)}, pos=(${x.toFixed(1)}, ${y.toFixed(1)})`
       // );

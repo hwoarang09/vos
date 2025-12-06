@@ -1,6 +1,7 @@
 // components/react/menu/RightPanel.tsx
 import React from "react";
 import { useMenuStore } from "../../../store/ui/menuStore";
+import IndividualControlPanel from "./panels/IndividualControlPanel";
 
 const RightPanel: React.FC = () => {
   const { activeMainMenu, activeSubMenu, setRightPanelOpen } = useMenuStore();
@@ -102,6 +103,18 @@ const RightPanel: React.FC = () => {
       );
     }
 
+    // Vehicle Individual Control
+    if (activeSubMenu === "vehicle-menu-individual") {
+      return (
+        <div className="h-full flex flex-col">
+          <h3 className="text-lg font-semibold text-gray-800 mb-4">
+            Individual Control
+          </h3>
+          <IndividualControlPanel />
+        </div>
+      );
+    }
+
     // 다른 메뉴들의 경우
     return (
       <div className="space-y-4">
@@ -150,11 +163,9 @@ const RightPanel: React.FC = () => {
       "stats-menu-4": "Monthly Report",
       "stats-menu-5": "Performance Analysis",
       // Vehicle
-      "vehicle-menu-1": "All Vehicles",
-      "vehicle-menu-2": "Active Vehicles",
-      "vehicle-menu-3": "Idle Vehicles",
-      "vehicle-menu-4": "Maintenance Mode",
-      "vehicle-menu-5": "Vehicle History",
+      "vehicle-menu-overall": "Overall Status",
+      "vehicle-menu-individual": "Individual Control",
+      "vehicle-menu-history": "Vehicle History",
       // Operation
       "operation-menu-1": "Route Management",
       "operation-menu-2": "Schedule Control",

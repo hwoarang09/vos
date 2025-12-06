@@ -8,7 +8,7 @@ import { findTargetEdgeIndex } from "../helpers/edgeTargetFinder";
 import { applyVehicleStatus } from "../helpers/statusApplier";
 import { checkMergeConflict } from "./mergeConflictChecker";
 import { checkSensorCollision, roughDistanceCheck } from "../helpers/sensorCollision";
-import { SENSOR_PRESETS } from "@/store/vehicle/arrayMode/sensorPresets";
+import { SENSOR_PRESETS, SensorZoneKey } from "@/store/vehicle/arrayMode/sensorPresets";
 
 export function checkLeadVehicle(params: {
   edgeIdx: number;
@@ -87,12 +87,33 @@ export function checkLeadVehicle(params: {
     const isComplex = !currentIsLinear || !targetIsLinear || hasMerge || hasBranch;
 
     if (isComplex) {
-      // 센서 기반 정밀 체크 (SAT)
+      // 센서 기반 정밀 체크 (SAT) - multi-zone
       if (roughDistanceCheck(leadVehId, targetLastVehId, 8.0)) {
-        if (checkSensorCollision(leadVehId, targetLastVehId)) {
-          canProceed = false;
-          if (shouldLogDetails) console.log(`[Sensor] VEH${leadVehId} -> VEH${targetLastVehId} (complex)`);
+        const zoneHit = checkSensorCollision(leadVehId, targetLastVehId); // -1 | 0 | 1 | 2
+        if (zoneHit >= 0) {
+          const presetIdx = data[leadPtr + SensorData.PRESET_IDX] | 0;
+          const preset = SENSOR_PRESETS[presetIdx] ?? SENSOR_PRESETS[0];
+          const zoneKey: SensorZoneKey = zoneHit === 2 ? "stop" : zoneHit === 1 ? "brake" : "approach";
+          const dec = preset.zones[zoneKey]?.dec ?? 0;
+
+          if (zoneKey === "stop" || dec === -Infinity) {
+            // Immediate stop
+            data[leadPtr + MovementData.VELOCITY] = 0;
+            data[leadPtr + MovementData.DECELERATION] = 0;
+            return applyVehicleStatus(data, leadPtr, false);
+          } else {
+            // Apply zone deceleration, keep moving
+            data[leadPtr + MovementData.DECELERATION] = dec;
+            canProceed = true;
+          }
+
+          if (shouldLogDetails) console.log(`[Sensor] VEH${leadVehId} hit zone=${zoneKey} -> dec=${dec}`);
+        } else {
+          // no collision, reset decel
+          data[leadPtr + MovementData.DECELERATION] = 0;
         }
+      } else {
+        data[leadPtr + MovementData.DECELERATION] = 0;
       }
     } else {
       // 직선 구간: 센서 길이 기반 거리 체크 (x 좌표만 사용)
@@ -108,7 +129,10 @@ export function checkLeadVehicle(params: {
 
       if (distance <= stopDistance) {
         canProceed = false;
+        data[leadPtr + MovementData.DECELERATION] = -3; // straight-line braking
         if (shouldLogDetails) console.log(`[Distance] VEH${leadVehId} blocked (${distance.toFixed(2)}m, sensor: ${sensorLength.toFixed(2)}m, straight)`);
+      } else {
+        data[leadPtr + MovementData.DECELERATION] = 0;
       }
     }
 

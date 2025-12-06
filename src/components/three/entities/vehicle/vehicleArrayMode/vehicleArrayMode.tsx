@@ -7,6 +7,7 @@ import { useEffect, useRef, useState } from "react";
 import { useFrame } from "@react-three/fiber";
 import { useEdgeStore } from "../../../../../store/map/edgeStore";
 import { useVehicleArrayStore } from "../../../../../store/vehicle/arrayMode/vehicleStore";
+import { useVehicleGeneralStore } from "../../../../../store/vehicle/vehicleGeneralStore";
 import { useVehicleTestStore } from "../../../../../store/vehicle/vehicleTestStore";
 import { getVehicleConfigSync } from "../../../../../config/vehicleConfig";
 import { initializeVehicles } from "./initializeVehicles";
@@ -62,6 +63,7 @@ const VehicleArrayMode: React.FC<VehicleArrayModeProps> = ({
   useEffect(() => {
     return () => {
       store.clearAllVehicles();
+      useVehicleGeneralStore.getState().clearAll();
       initRef.current = false;
     };
   }, []);

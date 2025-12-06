@@ -32,23 +32,25 @@ const BODY_QUAD_IDX = [
 export function checkSensorCollision(
   sensorVehIdx: number,
   targetVehIdx: number
-): boolean {
+): number {
   const data = sensorPointArray.getData();
-  // Use outer (approach) zone for now
-  const sensorBase = sensorVehIdx * SENSOR_DATA_SIZE + 0 * SENSOR_POINT_SIZE;
-  const targetBase = targetVehIdx * SENSOR_DATA_SIZE + 0 * SENSOR_POINT_SIZE;
+  const baseSensor = sensorVehIdx * SENSOR_DATA_SIZE;
+  const baseTarget = targetVehIdx * SENSOR_DATA_SIZE;
 
-  // 센서 사각형 축으로 검사
-  if (!satQuadCheck(data, sensorBase, targetBase, SENSOR_QUAD_IDX, BODY_QUAD_IDX)) {
-    return false;
+  // check inner -> outer to prioritize strongest braking
+  for (let zone = 2; zone >= 0; zone--) {
+    const sensorBase = baseSensor + zone * SENSOR_POINT_SIZE;
+    const targetBase = baseTarget + 0 * SENSOR_POINT_SIZE; // body uses outer zone footprint
+
+    if (
+      satQuadCheck(data, sensorBase, targetBase, SENSOR_QUAD_IDX, BODY_QUAD_IDX) &&
+      satQuadCheck(data, targetBase, sensorBase, BODY_QUAD_IDX, SENSOR_QUAD_IDX)
+    ) {
+      return zone;
+    }
   }
 
-  // 바디 사각형 축으로 검사
-  if (!satQuadCheck(data, targetBase, sensorBase, BODY_QUAD_IDX, SENSOR_QUAD_IDX)) {
-    return false;
-  }
-
-  return true; // 모든 축에서 겹침 = 충돌
+  return -1; // no collision
 }
 
 /**

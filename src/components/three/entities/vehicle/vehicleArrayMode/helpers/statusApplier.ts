@@ -1,6 +1,5 @@
-import { VehicleStatus } from "@/types/vehicleStatus";
-
-const STATUS_OFFSET = 7;
+import { MovementData, MovingStatus, StopReason, LogicData } from "@/store/vehicle/arrayMode/vehicleDataArray";
+import { VEHICLE_DATA_SIZE } from "@/store/vehicle/arrayMode/vehicleDataArray";
 
 /**
  * Apply vehicle status change and return collision/resume statistics
@@ -10,20 +9,30 @@ export function applyVehicleStatus(
   vehiclePtr: number,
   canProceed: boolean
 ): { collisions: number; resumes: number } {
-  const currentStatus = data[vehiclePtr + STATUS_OFFSET];
-
-  if (!canProceed) {
-    if (currentStatus !== VehicleStatus.STOPPED) {
-      data[vehiclePtr + STATUS_OFFSET] = VehicleStatus.STOPPED;
-      return { collisions: 1, resumes: 0 };
+  const currentStatus = data[vehiclePtr + MovementData.MOVING_STATUS];
+  
+  // 1. Check if we need to stop
+  if (!canProceed) { // Assuming shouldStop is !canProceed
+    if (currentStatus === MovingStatus.MOVING) {
+      data[vehiclePtr + MovementData.MOVING_STATUS] = MovingStatus.STOPPED;
+      return { collisions: 1, resumes: 0 }; // Added return based on original logic
     }
-  } else {
-    if (currentStatus === VehicleStatus.STOPPED) {
-      data[vehiclePtr + STATUS_OFFSET] = VehicleStatus.MOVING;
-      return { collisions: 0, resumes: 1 };
+  } 
+  // 2. Check if we can resume
+  else {
+    if (currentStatus === MovingStatus.STOPPED) {
+      // Check if there is a manual stop (E_STOP) or other persistent reason
+      const stopReason = data[vehiclePtr + LogicData.STOP_REASON];
+      
+      // If E_STOP is set, do NOT auto-resume
+      if ((stopReason & StopReason.E_STOP) !== 0) {
+        return { collisions: 0, resumes: 0 };
+      }
+
+      data[vehiclePtr + MovementData.MOVING_STATUS] = MovingStatus.MOVING;
+      return { collisions: 0, resumes: 1 }; // Added return based on original logic
     }
   }
 
   return { collisions: 0, resumes: 0 };
 }
-

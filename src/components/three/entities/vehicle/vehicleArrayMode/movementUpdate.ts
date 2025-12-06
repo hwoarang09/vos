@@ -1,5 +1,5 @@
-import { VEHICLE_DATA_SIZE, MovementData, SensorData, StatusData } from "@/store/vehicle/arrayMode/vehicleDataArray";
-import { VehicleStatus } from "@/types/vehicleStatus";
+import { VEHICLE_DATA_SIZE, MovementData, SensorData } from "@/store/vehicle/arrayMode/vehicleDataArray";
+import { MovingStatus } from "@/store/vehicle/arrayMode/vehicleDataArray";
 import { VehicleArrayStore } from "@/store/vehicle/arrayMode/vehicleStore";
 import { VehicleLoop } from "@/utils/vehicle/loopMaker";
 import { Edge } from "@/types/edge";
@@ -46,17 +46,28 @@ export function updateMovement(params: MovementUpdateParams) {
     const ptr = i * VEHICLE_DATA_SIZE;
 
     // 1. Status Check (Direct Read)
-    const status = data[ptr + StatusData.STATUS];
+    const status = data[ptr + MovementData.MOVING_STATUS];
 
-    // Skip if not moving
-    if (status !== VehicleStatus.MOVING) {
+    // Skip if paused (preserve state - freeze)
+    if (status === MovingStatus.PAUSED) {
+      continue;
+    }
+
+    // Skip if stopped (reset state - hard stop)
+    if (status === MovingStatus.STOPPED) {
       data[ptr + MovementData.VELOCITY] = 0;
       continue;
     }
 
+    // Double check: if explicit MOVING state is missing (safety)
+    if (status !== MovingStatus.MOVING) {
+       data[ptr + MovementData.VELOCITY] = 0;
+       continue;
+    }
+
     // 2. Data Read (Direct Access)
     // No object allocation here. Just reading values to stack variables.
-    const currentEdgeIndex = data[ptr + StatusData.CURRENT_EDGE];
+    const currentEdgeIndex = data[ptr + MovementData.CURRENT_EDGE];
     const velocity = data[ptr + MovementData.VELOCITY];
     const acceleration = data[ptr + MovementData.ACCELERATION];
     const deceleration = data[ptr + MovementData.DECELERATION];
@@ -109,7 +120,7 @@ export function updateMovement(params: MovementUpdateParams) {
     // 7. Write Back (Direct Write)
     data[ptr + MovementData.VELOCITY] = newVelocity;
     data[ptr + MovementData.EDGE_RATIO] = finalRatio;
-    data[ptr + StatusData.CURRENT_EDGE] = finalEdgeIndex;
+    data[ptr + MovementData.CURRENT_EDGE] = finalEdgeIndex;
 
     data[ptr + MovementData.X] = finalX;
     data[ptr + MovementData.Y] = finalY;
