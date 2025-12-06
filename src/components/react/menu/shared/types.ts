@@ -4,12 +4,14 @@ export type MenuLevel1Item = {
   id: MainMenuType;
   label: string;
   iconFn: (isActive: boolean) => JSX.Element;
+  shortcutLabel?: string;
 };
 
 export type MenuLevel2Item = {
   id: string;
   label: string;
   iconFn: (isActive: boolean) => JSX.Element;
+  shortcutLabel?: string;
 };
 
 // Common color constants

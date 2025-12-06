@@ -177,6 +177,7 @@ export const menuLevel2Config: Record<string, MenuLevel2Item[]> = {
     {
       id: "vehicle-menu-individual",
       label: "Individual",
+      shortcutLabel: "i",
       iconFn: (isActive: boolean) => (
         <Car
           size={36}

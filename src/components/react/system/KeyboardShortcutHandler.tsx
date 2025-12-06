@@ -38,6 +38,23 @@ const KeyboardShortcutHandler = () => {
         return;
       }
 
+      // Handle 'v' key for Vehicle Management
+      if (e.key.toLowerCase() === 'v' && !activeMainMenu) {
+        e.preventDefault();
+        setActiveMainMenu('Vehicle');
+        return;
+      }
+
+      // Handle 'i' key for Individual Control
+      // Works even if menu is already open, just switches focus
+      if (e.key.toLowerCase() === 'i') {
+        e.preventDefault();
+        setActiveMainMenu('Vehicle');
+        setActiveSubMenu('vehicle-menu-individual');
+        setRightPanelOpen(true);
+        return;
+      }
+
       // Handle number keys
       if (!/^[1-9]$/.test(e.key)) return;
 

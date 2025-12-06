@@ -3,6 +3,7 @@ import React, { useState, useMemo } from "react";
 import { Search, Play, Pause, Settings, RefreshCw, Octagon } from "lucide-react";
 import { useVehicleGeneralStore } from "@/store/vehicle/vehicleGeneralStore";
 import { vehicleDataArray, MovingStatus, SensorData, StopReason } from "@/store/vehicle/arrayMode/vehicleDataArray";
+import { PresetIndex } from "@/store/vehicle/arrayMode/sensorPresets";
 
 const IndividualControlPanel: React.FC = () => {
     const [searchTerm, setSearchTerm] = useState("");
@@ -57,11 +58,29 @@ const IndividualControlPanel: React.FC = () => {
         }
     };
 
+    const handleSensorChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+        if (foundVehicleIndex !== null) {
+            const newPreset = parseInt(e.target.value, 10);
+            vehicleDataArray.get(foundVehicleIndex).sensor.presetIdx = newPreset;
+            // Force re-render of status or assume UI updates on next frame/interaction
+            // For this simple panel, we might want a local state update to reflect change immediately if we display it
+        }
+    };
+
+    // Helper to get current sensor preset
+    const getCurrentSensorPreset = () => {
+        if (foundVehicleIndex !== null) {
+            return vehicleDataArray.get(foundVehicleIndex).sensor.presetIdx;
+        }
+        return 0;
+    };
+
     const handleChangeSensor = () => {
         if (foundVehicleIndex !== null) {
-            // Cycle through sensor presets 0-4
+            // Cycle through sensor presets
             const vehicleData = vehicleDataArray.get(foundVehicleIndex);
             const currentSensor = vehicleData.sensor.presetIdx;
+            // Assuming 5 presets based on PresetIndex
             vehicleData.sensor.presetIdx = (currentSensor + 1) % 5;
         }
     };
@@ -156,12 +175,15 @@ const IndividualControlPanel: React.FC = () => {
                             <Play size={24} className="mb-1" />
                             <span className="text-xs font-medium">Resume</span>
                         </button>
-                         <button
+                        
+                        <button
                             onClick={handleChangeSensor}
                             className="flex flex-col items-center justify-center p-3 border border-blue-200 bg-blue-50 text-blue-700 rounded hover:bg-blue-100 transition-colors"
                         >
-                            <Settings size={24} className="mb-1" />
-                            <span className="text-xs font-medium">Sensor</span>
+                             <Settings size={24} className="mb-1" />
+                             <span className="text-[10px] font-medium leading-tight text-center px-1">
+                                {Object.keys(PresetIndex).find(key => PresetIndex[key as keyof typeof PresetIndex] === getCurrentSensorPreset()) || "SENSOR"}
+                             </span>
                         </button>
                     </div>
                 </div>

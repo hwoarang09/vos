@@ -115,8 +115,8 @@ export const PerformanceMonitorUI: React.FC = () => {
     <div
       style={{
         position: "fixed",
-        bottom: "140px", // Higher above Perf widget
-        right: "10px",
+        bottom: "10px", // Aligned with bottom
+        right: "360px", // Left of r3f-perf panel (approx width 350px)
         padding: "10px 14px",
         backgroundColor: "rgba(0, 0, 0, 0.75)",
         color: "white",

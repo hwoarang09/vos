@@ -56,6 +56,7 @@ export const menuLevel1Groups: MenuLevel1Item[][] = [
     {
       id: "Vehicle",
       label: "Vehicle",
+      shortcutLabel: "v",
       iconFn: (isActive) => (
         <Car
           size={ICON_SIZE_MEDIUM}
