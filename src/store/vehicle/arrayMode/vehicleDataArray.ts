@@ -1,0 +1,376 @@
+// vehicleDataArray.ts
+// Vehicle state storage using Float32Array (single thread)
+
+import { getMaxVehicles } from "@/config/vehicleConfig";
+
+// Vehicle status enum (Legacy/Physical State)
+export const VehicleStatus = {
+  STOPPED: 0,
+  MOVING: 1,
+} as const;
+
+// Traffic Regulation State (Intersection/Merge control)
+export const TrafficState = {
+  FREE: 0,      // Normal driving
+  WAITING: 1,   // Waiting for lock (Must Stop)
+  ACQUIRED: 2,  // Lock acquired (Can Enter)
+} as const;
+
+// Stop Reason Bitmask (Why are we stopped?)
+// 32-bit compatible, but stored in Float32 (safe up to 2^24 integers)
+export const StopReason = {
+  NONE: 0,
+  OBS_LIDAR: 1 << 0,         // Lidar obstacle
+  OBS_CAMERA: 1 << 1,        // Camera obstacle
+  E_STOP: 1 << 2,            // Emergency Stop Button
+  WAITING_FOR_LOCK: 1 << 3,  // Waiting for Traffic Lock
+  DESTINATION_REACHED: 1 << 4,
+  PATH_BLOCKED: 1 << 5,      // Blocked by vehicle ahead
+  LOAD_ON: 1 << 6,           // Loading action in progress
+  LOAD_OFF: 1 << 7,          // Unloading action in progress
+  NOT_INITIALIZED: 1 << 8,   // System safety start
+} as const;
+
+// High-level Mission Job State
+export const JobState = {
+  INITIALIZING: 0,
+  IDLE: 1,
+  MOVE_TO_LOAD: 2,
+  LOADING: 3,
+  MOVE_TO_UNLOAD: 4,
+  UNLOADING: 5,
+  ERROR: 6,
+} as const;
+
+// Data structure layout
+const MOVEMENT_SIZE = 8; // x, y, z, rotation, velocity, acceleration, deceleration, edgeRatio
+const STATUS_SIZE = 2; // status (movingState), currentEdge
+const SENSOR_SIZE = 1; // sensor preset index
+const LOGIC_SIZE = 3;  // trafficState, stopReason, jobState
+export const VEHICLE_DATA_SIZE = MOVEMENT_SIZE + STATUS_SIZE + SENSOR_SIZE + LOGIC_SIZE; // 14
+
+export const MovementData = {
+  X: 0,
+  Y: 1,
+  Z: 2,
+  ROTATION: 3,
+  VELOCITY: 4,
+  ACCELERATION: 5,
+  DECELERATION: 6,
+  EDGE_RATIO: 7,
+} as const;
+
+export const StatusData = {
+  STATUS: 8, // 0=STOPPED, 1=MOVING (Equivalent to MovingState)
+  CURRENT_EDGE: 9, // Edge index
+} as const;
+
+export const SensorData = {
+  PRESET_IDX: 10, // 0=STRAIGHT, 1=CURVE_LEFT, 2=CURVE_RIGHT, 3=MERGE, 4=BRANCH
+} as const;
+
+export const LogicData = {
+  TRAFFIC_STATE: 11,
+  STOP_REASON: 12,
+  JOB_STATE: 13,
+} as const;
+
+/**
+ * VehicleDataArray - Manages array-based vehicle state data
+ * - Single thread only (no SharedArrayBuffer)
+ * - Direct memory access via Float32Array
+ */
+class VehicleDataArray {
+  private data: Float32Array;
+  private maxVehicles: number;
+
+  constructor(maxVehicles: number = getMaxVehicles()) {
+    this.maxVehicles = maxVehicles;
+    this.data = new Float32Array(maxVehicles * VEHICLE_DATA_SIZE);
+  }
+
+  /**
+   * Get vehicle data accessor (dict-like access)
+   * Usage: vehicleDataArray.get(0).movement.x = 10;
+   */
+  get(vehicleIndex: number) {
+    const offset = vehicleIndex * VEHICLE_DATA_SIZE;
+    const data = this.data;
+
+    return {
+      movement: {
+        get x() {
+          return data[offset + MovementData.X];
+        },
+        set x(val: number) {
+          data[offset + MovementData.X] = val;
+        },
+
+        get y() {
+          return data[offset + MovementData.Y];
+        },
+        set y(val: number) {
+          data[offset + MovementData.Y] = val;
+        },
+
+        get z() {
+          return data[offset + MovementData.Z];
+        },
+        set z(val: number) {
+          data[offset + MovementData.Z] = val;
+        },
+
+        get rotation() {
+          return data[offset + MovementData.ROTATION];
+        },
+        set rotation(val: number) {
+          data[offset + MovementData.ROTATION] = val;
+        },
+
+        get velocity() {
+          return data[offset + MovementData.VELOCITY];
+        },
+        set velocity(val: number) {
+          data[offset + MovementData.VELOCITY] = val;
+        },
+
+        get acceleration() {
+          return data[offset + MovementData.ACCELERATION];
+        },
+        set acceleration(val: number) {
+          data[offset + MovementData.ACCELERATION] = val;
+        },
+
+        get deceleration() {
+          return data[offset + MovementData.DECELERATION];
+        },
+        set deceleration(val: number) {
+          data[offset + MovementData.DECELERATION] = val;
+        },
+
+        get edgeRatio() {
+          return data[offset + MovementData.EDGE_RATIO];
+        },
+        set edgeRatio(val: number) {
+          data[offset + MovementData.EDGE_RATIO] = val;
+        },
+      },
+
+      status: {
+        get status() {
+          return data[offset + StatusData.STATUS];
+        },
+        set status(val: number) {
+          data[offset + StatusData.STATUS] = val;
+        },
+
+        get currentEdge() {
+          return data[offset + StatusData.CURRENT_EDGE];
+        },
+        set currentEdge(val: number) {
+          data[offset + StatusData.CURRENT_EDGE] = val;
+        },
+      },
+
+      sensor: {
+        get presetIdx() {
+          return data[offset + SensorData.PRESET_IDX];
+        },
+        set presetIdx(val: number) {
+          data[offset + SensorData.PRESET_IDX] = val;
+        },
+      },
+
+      logic: {
+        get trafficState() {
+          return data[offset + LogicData.TRAFFIC_STATE];
+        },
+        set trafficState(val: number) {
+          data[offset + LogicData.TRAFFIC_STATE] = val;
+        },
+
+        get stopReason() {
+          return data[offset + LogicData.STOP_REASON];
+        },
+        set stopReason(val: number) {
+          data[offset + LogicData.STOP_REASON] = val;
+        },
+
+        get jobState() {
+          return data[offset + LogicData.JOB_STATE];
+        },
+        set jobState(val: number) {
+          data[offset + LogicData.JOB_STATE] = val;
+        },
+      }
+    };
+  }
+
+  /**
+   * Get position as object
+   */
+  getPosition(vehicleIndex: number): { x: number; y: number; z: number } {
+    const offset = vehicleIndex * VEHICLE_DATA_SIZE;
+    return {
+      x: this.data[offset + MovementData.X],
+      y: this.data[offset + MovementData.Y],
+      z: this.data[offset + MovementData.Z],
+    };
+  }
+
+  /**
+   * Set position
+   */
+  setPosition(
+    vehicleIndex: number,
+    x: number,
+    y: number,
+    z: number
+  ): void {
+    const offset = vehicleIndex * VEHICLE_DATA_SIZE;
+    this.data[offset + MovementData.X] = x;
+    this.data[offset + MovementData.Y] = y;
+    this.data[offset + MovementData.Z] = z;
+  }
+
+  /**
+   * Get rotation
+   */
+  getRotation(vehicleIndex: number): number {
+    const offset = vehicleIndex * VEHICLE_DATA_SIZE;
+    return this.data[offset + MovementData.ROTATION];
+  }
+
+  /**
+   * Set rotation
+   */
+  setRotation(vehicleIndex: number, rotation: number): void {
+    const offset = vehicleIndex * VEHICLE_DATA_SIZE;
+    this.data[offset + MovementData.ROTATION] = rotation;
+  }
+
+  /**
+   * Get velocity
+   */
+  getVelocity(vehicleIndex: number): number {
+    const offset = vehicleIndex * VEHICLE_DATA_SIZE;
+    return this.data[offset + MovementData.VELOCITY];
+  }
+
+  /**
+   * Set velocity
+   */
+  setVelocity(vehicleIndex: number, velocity: number): void {
+    const offset = vehicleIndex * VEHICLE_DATA_SIZE;
+    this.data[offset + MovementData.VELOCITY] = velocity;
+  }
+
+  /**
+   * Get Float32Array (for direct access)
+   */
+  getData(): Float32Array {
+    return this.data;
+  }
+
+  /**
+   * Get max vehicles
+   */
+  getMaxVehicles(): number {
+    return this.maxVehicles;
+  }
+
+  /**
+   * Clear all data
+   */
+  clear(): void {
+    this.data.fill(0);
+  }
+
+  /**
+   * Clear all data (alias for clear)
+   */
+  clearAll(): void {
+    this.clear();
+  }
+
+  /**
+   * Clear specific vehicle data
+   */
+  clearVehicle(vehicleIndex: number): void {
+    const offset = vehicleIndex * VEHICLE_DATA_SIZE;
+    for (let i = 0; i < VEHICLE_DATA_SIZE; i++) {
+      this.data[offset + i] = 0;
+    }
+  }
+
+  /**
+   * Get edge ratio (direct access, no getter overhead)
+   */
+  getEdgeRatio(vehicleIndex: number): number {
+    return this.data[vehicleIndex * VEHICLE_DATA_SIZE + MovementData.EDGE_RATIO];
+  }
+
+  /**
+   * Get status (direct access)
+   */
+  getStatus(vehicleIndex: number): number {
+    return this.data[vehicleIndex * VEHICLE_DATA_SIZE + StatusData.STATUS];
+  }
+
+  /**
+   * Set status (direct access)
+   */
+  setStatus(vehicleIndex: number, status: number): void {
+    this.data[vehicleIndex * VEHICLE_DATA_SIZE + StatusData.STATUS] = status;
+  }  
+  
+  /**
+   * Get deceleration (direct access)
+   */
+  getDeceleration(vehicleIndex: number): number {
+    return this.data[vehicleIndex * VEHICLE_DATA_SIZE + MovementData.DECELERATION];
+  }
+
+  /**
+   * Set deceleration (direct access)
+   */
+  setDeceleration(vehicleIndex: number, deceleration: number): void {
+    this.data[vehicleIndex * VEHICLE_DATA_SIZE + MovementData.DECELERATION] = deceleration;
+  }
+
+  // --- Logic State Accessors ---
+
+  getTrafficState(vehicleIndex: number): number {
+    return this.data[vehicleIndex * VEHICLE_DATA_SIZE + LogicData.TRAFFIC_STATE];
+  }
+
+  setTrafficState(vehicleIndex: number, val: number): void {
+    this.data[vehicleIndex * VEHICLE_DATA_SIZE + LogicData.TRAFFIC_STATE] = val;
+  }
+
+  getStopReason(vehicleIndex: number): number {
+    return this.data[vehicleIndex * VEHICLE_DATA_SIZE + LogicData.STOP_REASON];
+  }
+
+  setStopReason(vehicleIndex: number, val: number): void {
+    this.data[vehicleIndex * VEHICLE_DATA_SIZE + LogicData.STOP_REASON] = val;
+  }
+
+  getJobState(vehicleIndex: number): number {
+    return this.data[vehicleIndex * VEHICLE_DATA_SIZE + LogicData.JOB_STATE];
+  }
+
+  setJobState(vehicleIndex: number, val: number): void {
+    this.data[vehicleIndex * VEHICLE_DATA_SIZE + LogicData.JOB_STATE] = val;
+  }
+}
+
+// Singleton instance (2000 vehicles max)
+export const vehicleDataArray = new VehicleDataArray(getMaxVehicles());
+
+// Expose to window for debugging and external access
+if (typeof window !== 'undefined') {
+  (window as any).vehicleDataArray = vehicleDataArray;
+}
+
+export default VehicleDataArray;

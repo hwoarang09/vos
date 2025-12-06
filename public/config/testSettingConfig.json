@@ -1,0 +1,40 @@
+{
+  "TEST_SETTINGS": [
+    {
+      "id": "SMALL_LOOP",
+      "name": "Small Loop Test",
+      "description": "Small loop with few vehicles for quick testing",
+      "mapName": "straight_short_test",
+      "numVehicles": 5,
+      "camera": {
+        "position": [10, -10, 30],
+        "target": [10, 0, 0]
+      }
+    },
+    {
+      "id": "MEDIUM_LOOP",
+      "name": "Medium Loop Test",
+      "description": "Medium-sized loop with moderate vehicle count",
+      "mapName": "straight_test",
+      "numVehicles": 1200,
+      "camera": {
+        "position": [250, -150, 550],
+        "target": [250, 150, 0]
+      }
+    },
+
+    {
+      "id": "STRESS_TEST",
+      "name": "Stress Test",
+      "description": "Maximum vehicles for performance testing",
+      "mapName": "stress_test",
+      "numVehicles": 2400,
+      "camera": {
+        "position": [250, -150, 550],
+        "target": [250, 150, 0]
+      }
+    }
+  ],
+  "DEFAULT_SETTING": "STRESS_TEST"
+}
+

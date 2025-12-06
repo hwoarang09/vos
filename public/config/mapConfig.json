@@ -1,0 +1,6 @@
+{
+  "RAIL_CONFIG_PATH": "railConfig",
+  "AVAILABLE_MAPS": ["dismantle", "straight_test", "stress_test"],
+  "AUTO_LOAD_MAP": ""
+}
+

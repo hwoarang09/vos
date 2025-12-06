@@ -1,0 +1,201 @@
+import { create } from "zustand";
+
+// Text position data structure
+export interface TextPosition {
+  x: number;
+  y: number;
+  z: number;
+}
+
+// Text item with name and position
+export interface TextItem {
+  name: string;
+  position: TextPosition;
+}
+
+// Text store interface
+interface TextStore {
+  // Mode: dict or array
+  mode:  "rapier-dict" | "array-single" | "shared-memory";
+
+  // Dict mode data
+  nodeTexts: Record<string, TextPosition>;
+  edgeTexts: Record<string, TextPosition>;
+
+  // Array mode data
+  nodeTextsArray: TextItem[];
+  edgeTextsArray: TextItem[];
+
+  // Force update trigger
+  updateTrigger: number;
+
+  // Mode initialization
+  initDictMode: () => void;
+  initArrayMode: () => void;
+
+  // Dict mode actions
+  setNodeTexts: (nodeTexts: Record<string, TextPosition>) => void;
+  setEdgeTexts: (edgeTexts: Record<string, TextPosition>) => void;
+  addNodeText: (nodeName: string, position: TextPosition) => void;
+  addEdgeText: (edgeName: string, position: TextPosition) => void;
+  removeNodeText: (nodeName: string) => void;
+  removeEdgeText: (edgeName: string) => void;
+
+  // Array mode actions
+  setNodeTextsArray: (nodeTexts: TextItem[]) => void;
+  setEdgeTextsArray: (edgeTexts: TextItem[]) => void;
+  addNodeTextArray: (item: TextItem) => void;
+  addEdgeTextArray: (item: TextItem) => void;
+  removeNodeTextArray: (nodeName: string) => void;
+  removeEdgeTextArray: (edgeName: string) => void;
+
+  // Common actions
+  clearAllTexts: () => void;
+  forceUpdate: () => void;
+
+  // Utility functions
+  getAllTexts: () => Record<string, TextPosition>; // Combined node + edge texts (dict mode)
+  getAllTextsArray: () => TextItem[]; // Combined node + edge texts (array mode)
+}
+
+// Create the text store
+export const useTextStore = create<TextStore>((set, get) => ({
+  mode: "array-single",
+  nodeTexts: {},
+  edgeTexts: {},
+  nodeTextsArray: [],
+  edgeTextsArray: [],
+  updateTrigger: 0,
+
+  // Mode initialization
+  initDictMode: () => {
+    set({
+      mode: "rapier-dict",
+      nodeTextsArray: [],
+      edgeTextsArray: [],
+    });
+  },
+
+  initArrayMode: () => {
+    set({
+      mode: "array-single",
+      nodeTexts: {},
+      edgeTexts: {},
+    });
+  },
+
+  // Dict mode actions
+  setNodeTexts: (nodeTexts) =>
+    set((state) => ({
+      nodeTexts,
+      updateTrigger: state.updateTrigger + 1,
+    })),
+
+  setEdgeTexts: (edgeTexts) =>
+    set((state) => ({
+      edgeTexts,
+      updateTrigger: state.updateTrigger + 1,
+    })),
+
+  addNodeText: (nodeName, position) =>
+    set((state) => ({
+      nodeTexts: {
+        ...state.nodeTexts,
+        [nodeName]: position,
+      },
+      updateTrigger: state.updateTrigger + 1,
+    })),
+
+  addEdgeText: (edgeName, position) =>
+    set((state) => ({
+      edgeTexts: {
+        ...state.edgeTexts,
+        [edgeName]: position,
+      },
+      updateTrigger: state.updateTrigger + 1,
+    })),
+
+  removeNodeText: (nodeName) =>
+    set((state) => {
+      const { [nodeName]: removed, ...rest } = state.nodeTexts;
+      return {
+        nodeTexts: rest,
+        updateTrigger: state.updateTrigger + 1,
+      };
+    }),
+
+  removeEdgeText: (edgeName) =>
+    set((state) => {
+      const { [edgeName]: removed, ...rest } = state.edgeTexts;
+      return {
+        edgeTexts: rest,
+        updateTrigger: state.updateTrigger + 1,
+      };
+    }),
+
+  // Array mode actions
+  setNodeTextsArray: (nodeTexts) =>
+    set((state) => ({
+      nodeTextsArray: nodeTexts,
+      updateTrigger: state.updateTrigger + 1,
+    })),
+
+  setEdgeTextsArray: (edgeTexts) =>
+    set((state) => ({
+      edgeTextsArray: edgeTexts,
+      updateTrigger: state.updateTrigger + 1,
+    })),
+
+  addNodeTextArray: (item) =>
+    set((state) => ({
+      nodeTextsArray: [...state.nodeTextsArray, item],
+      updateTrigger: state.updateTrigger + 1,
+    })),
+
+  addEdgeTextArray: (item) =>
+    set((state) => ({
+      edgeTextsArray: [...state.edgeTextsArray, item],
+      updateTrigger: state.updateTrigger + 1,
+    })),
+
+  removeNodeTextArray: (nodeName) =>
+    set((state) => ({
+      nodeTextsArray: state.nodeTextsArray.filter((item) => item.name !== nodeName),
+      updateTrigger: state.updateTrigger + 1,
+    })),
+
+  removeEdgeTextArray: (edgeName) =>
+    set((state) => ({
+      edgeTextsArray: state.edgeTextsArray.filter((item) => item.name !== edgeName),
+      updateTrigger: state.updateTrigger + 1,
+    })),
+
+  // Common actions
+  clearAllTexts: () =>
+    set((state) => ({
+      nodeTexts: {},
+      edgeTexts: {},
+      nodeTextsArray: [],
+      edgeTextsArray: [],
+      updateTrigger: state.updateTrigger + 1,
+    })),
+
+  forceUpdate: () =>
+    set((state) => ({
+      updateTrigger: state.updateTrigger + 1,
+    })),
+
+  // Utility functions
+  getAllTexts: () => {
+    const state = get();
+    return {
+      ...state.nodeTexts,
+      ...state.edgeTexts,
+    };
+  },
+
+  getAllTextsArray: () => {
+    const state = get();
+    return [...state.nodeTextsArray, ...state.edgeTextsArray];
+  },
+}));

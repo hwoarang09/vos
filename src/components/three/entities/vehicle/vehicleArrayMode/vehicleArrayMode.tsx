@@ -1,0 +1,147 @@
+// VehicleArrayMode.tsx
+// Array-based vehicle simulation with Direct Memory Access (No GC overhead)
+// Only handles coordinate calculation and collision detection
+// Rendering is done by VehiclesRenderer
+
+import { useEffect, useRef, useState } from "react";
+import { useFrame } from "@react-three/fiber";
+import { useEdgeStore } from "../../../../../store/map/edgeStore";
+import { useVehicleArrayStore } from "../../../../../store/vehicle/arrayMode/vehicleStore";
+import { useVehicleTestStore } from "../../../../../store/vehicle/vehicleTestStore";
+import { getVehicleConfigSync } from "../../../../../config/vehicleConfig";
+import { initializeVehicles } from "./initializeVehicles";
+import { checkCollisions } from "./collisionCheck";
+import { updateMovement } from "./movementUpdate";
+import { VehicleLoop } from "../../../../../utils/vehicle/loopMaker";
+import { edgeVehicleQueue } from "../../../../../store/vehicle/arrayMode/edgeVehicleQueue";
+
+// Constants
+const MAX_DELTA = 1 / 30;
+
+/**
+ * Log safety configuration on mount
+ */
+function logSafetyConfig(bodyLength: number, sensorLength: number, vehicleSpacing: number, sameEdgeSafeDistance: number, resumeDistance: number) {
+  console.log(`[VehicleArrayMode] Safety Config:`);
+  console.log(`  Body Length: ${bodyLength}m, Sensor Length: ${sensorLength}m, Spacing: ${vehicleSpacing}m`);
+  console.log(`  Safe Distance: ${sameEdgeSafeDistance.toFixed(2)}m   Resume Distance: ${resumeDistance.toFixed(2)}m`);
+}
+
+interface VehicleArrayModeProps {
+  numVehicles?: number;
+}
+
+const VehicleArrayMode: React.FC<VehicleArrayModeProps> = ({
+  numVehicles = 100,
+}) => {
+  const initRef = useRef(false);
+  const [initialized, setInitialized] = useState(false);
+  const edges = useEdgeStore((state) => state.edges);
+  const store = useVehicleArrayStore();
+
+  const loopsRef = useRef<VehicleLoop[]>([]);
+  const vehicleLoopMapRef = useRef<Map<number, VehicleLoop>>(new Map());
+  const edgeNameToIndexRef = useRef<Map<string, number>>(new Map());
+  const edgeArrayRef = useRef<any[]>([]);
+  const actualNumVehiclesRef = useRef(0);
+
+  const config = getVehicleConfigSync();
+  const {
+    BODY: { LENGTH: bodyLength },
+    SENSOR: { LENGTH: sensorLength },
+    VEHICLE_SPACING: vehicleSpacing,
+  } = config;
+
+  const sameEdgeSafeDistance = (bodyLength + sensorLength );
+  const resumeDistance = sameEdgeSafeDistance * 1.0;
+
+  // Log safety configuration on mount
+  logSafetyConfig(bodyLength, sensorLength, vehicleSpacing, sameEdgeSafeDistance, resumeDistance);
+
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      store.clearAllVehicles();
+      initRef.current = false;
+    };
+  }, []);
+
+  // Initialize vehicles once (prevent double execution in React Strict Mode)
+  useEffect(() => {
+    if (!initRef.current) {
+      const result = initializeVehicles({
+        edges,
+        numVehicles,
+        store,
+      });
+
+      // Store results in refs for use in useFrame
+      loopsRef.current = result.vehicleLoops;
+      vehicleLoopMapRef.current = result.vehicleLoopMap;
+      edgeNameToIndexRef.current = result.edgeNameToIndex;
+      edgeArrayRef.current = result.edgeArray;
+      actualNumVehiclesRef.current = result.actualNumVehicles;
+
+      // Store actualNumVehicles in store for renderer access
+      store.setActualNumVehicles(result.actualNumVehicles);
+
+      // Store initial vehicle distribution for UI display
+      const distribution = new Map<number, number[]>();
+      edgeArrayRef.current.forEach((_, edgeIdx) => {
+        const vehicles = edgeVehicleQueue.getVehicles(edgeIdx);
+        if (vehicles.length > 0) {
+          distribution.set(edgeIdx, vehicles);
+        }
+      });
+      useVehicleTestStore.getState().setInitialVehicleDistribution(distribution);
+
+      initRef.current = true;
+      setInitialized(true);
+    }
+  }, [numVehicles, edges, store]);
+
+  // ==================================================================================
+  // Real-time Loop - Coordinate Calculation Only
+  // ==================================================================================
+  useFrame((_state, delta) => {
+    const clampedDelta = Math.min(delta, MAX_DELTA);
+
+    // Check if simulation is paused
+    const isPaused = useVehicleTestStore.getState().isPaused;
+    if (isPaused) return;
+
+    // Early return if not ready
+    if (!initialized || !store.vehicleDataRef || edgeArrayRef.current.length === 0 || actualNumVehiclesRef.current === 0) return;
+
+    const edgeArray = edgeArrayRef.current;
+    const data = store.vehicleDataRef;
+    const actualNumVehicles = actualNumVehiclesRef.current;
+
+    // 1. Collision Check
+    checkCollisions({
+      data,
+      edgeArray,
+      actualNumVehicles,
+      vehicleLoopMap: vehicleLoopMapRef.current,
+      edgeNameToIndex: edgeNameToIndexRef.current,
+      sameEdgeSafeDistance,
+      resumeDistance,
+    });
+
+    // 2. Movement Update
+    updateMovement({
+      data,
+      edgeArray,
+      actualNumVehicles,
+      vehicleLoopMap: vehicleLoopMapRef.current,
+      edgeNameToIndex: edgeNameToIndexRef.current,
+      store,
+      clampedDelta,
+    });
+  });
+
+  // This component doesn't render anything - rendering is done by VehiclesRenderer
+  return null;
+};
+
+export default VehicleArrayMode;

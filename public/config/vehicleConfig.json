@@ -1,0 +1,22 @@
+{
+  "MAX_VEHICLES": 20000,
+  "VEHICLE_COLOR": "#4ecdc4",
+  "EDGE_MARGIN": 0.5,
+  "VEHICLE_SPACING": 0.3,
+  "CROSS_EDGE_SAFE_DISTANCE": 1.0,
+  "BODY": {
+    "LENGTH": 1.2,
+    "WIDTH": 0.6,
+    "HEIGHT": 0.3
+  },
+  "SENSOR": {
+    "LENGTH": 0.6,
+    "WIDTH": 0.5,
+    "HEIGHT": 0.3
+  },
+  "LABEL": {
+    "TEXT_HEIGHT": 0.6,
+    "Z_OFFSET": 0.9
+  }
+}
+

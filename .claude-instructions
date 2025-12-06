@@ -1,0 +1,5 @@
+## Project Documentation
+Reference ./doc/ folder for all architecture and implementation details.
+Each .md file documents specific components.
+
+If instructions conflict with doc, state the conflict clearly.

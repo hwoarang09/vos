@@ -1,0 +1,11 @@
+{
+  "DEFAULT_CAMERA": {
+    "position": [-10, 10, 50],
+    "target": [0, 0, 0]
+  },
+  "BAY_BUILDER_CAMERA": {
+    "position": [0, 0, 100],
+    "target": [0, 0, 0]
+  }
+}
+
