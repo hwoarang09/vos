@@ -75,8 +75,8 @@ const VehicleTextRenderer: React.FC<Props> = ({
       return;
     }
 
-    // VEH0001 ~ VEH{n} 각 7글자
-    const totalCharacters = numVehicles * 7;
+    // VEH00001 ~ VEH{n} each 8 characters
+    const totalCharacters = numVehicles * 8;
     const counts = new Array(13).fill(0);
     const slotDigit = new Int8Array(totalCharacters);
     const slotVehicle = new Int32Array(totalCharacters);
@@ -84,7 +84,7 @@ const VehicleTextRenderer: React.FC<Props> = ({
 
     let charIndex = 0;
     for (let v = 0; v < numVehicles; v++) {
-      const label = `VEH${String(v + 1).padStart(4, '0')}`;
+      const label = `VEH${String(v + 1).padStart(5, '0')}`;
       
       for (let i = 0; i < label.length; i++) {
         const digit = CHAR_MAP[label[i]];
@@ -232,8 +232,9 @@ const VehicleTextRenderer: React.FC<Props> = ({
 
       const { q, right } = vehicleRotation.get(v)!;
 
-      // 문자 위치 계산 (7글자 중앙정렬)
-      const offsetX = (posIdx - 3) * charSpacing;
+      // Character position calculation (8 chars, center align)
+      // Center of 0~7 is 3.5
+      const offsetX = (posIdx - 3.5) * charSpacing;
       const offsetVector = right.clone().multiplyScalar(offsetX);
 
       const finalPos = new THREE.Vector3(vx, vy, vz).add(offsetVector);

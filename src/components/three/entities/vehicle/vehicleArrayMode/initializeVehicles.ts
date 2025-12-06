@@ -95,9 +95,9 @@ export function initializeVehicles(params: InitializeVehiclesParams): Initializa
       edgeVehicleCount.set(edgeIndex, (edgeVehicleCount.get(edgeIndex) || 0) + 1);
 
       // Add to VehicleGeneralStore (for UI/Metadata)
-      // ID Format must match VehicleTextRenderer: VEH0001, VEH0002...
+      // ID Format must match VehicleTextRenderer: VEH00001, VEH00002...
       const idNumber = placement.vehicleIndex + 1;
-      const formattedId = `VEH${String(idNumber).padStart(4, '0')}`;
+      const formattedId = `VEH${String(idNumber).padStart(5, '0')}`;
 
       useVehicleGeneralStore.getState().addVehicle(placement.vehicleIndex, {
         id: formattedId,

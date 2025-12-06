@@ -114,7 +114,7 @@ const IndividualControlPanel: React.FC = () => {
                 <div className="relative">
                     <input
                         type="text"
-                        placeholder="Vehicle ID (e.g. VEH0001)"
+                        placeholder="Vehicle ID (e.g. VEH00001)"
                         className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
