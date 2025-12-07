@@ -3,7 +3,7 @@ import { useMenuStore } from "@store/ui/menuStore";
 import { useVehicleTestStore } from "@store/vehicle/vehicleTestStore";
 import { useVehicleRapierStore } from "@store/vehicle/rapierMode/vehicleStore";
 import VehicleTestRunner from "./VehicleTestRunner";
-import { VehicleSystemMode } from "../../three/entities/vehicle/VehicleSystem";
+import { VehicleSystemType } from "../../../types/vehicle";
 import { getTestSettings, getDefaultSetting } from "../../../config/testSettingConfig";
 import { Play, Pause } from "lucide-react";
 
@@ -54,17 +54,17 @@ const VehicleTest: React.FC = () => {
   }
 
   // Route to appropriate test based on submenu
-  let mode: VehicleSystemMode | null = null;
+  let mode: VehicleSystemType | null = null;
 
   switch (activeSubMenu) {
     case "test-rapier-array":
-      mode = "rapier-dict";
+      mode = VehicleSystemType.RapierDict;
       break;
     case "test-rapier-dict":
-      mode = "array-single";
+      mode = VehicleSystemType.ArraySingle;
       break;
     case "test-shared-memory":
-      mode = "shared-memory";
+      mode = VehicleSystemType.SharedMemory;
       break;
     default:
       return null;

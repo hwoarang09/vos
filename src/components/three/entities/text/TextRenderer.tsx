@@ -1,5 +1,6 @@
 import React from "react";
 import { useTextStore } from "@store/map/textStore";
+import { VehicleSystemType } from "../../../../types/vehicle";
 import { useVehicleTestStore } from "@store/vehicle/vehicleTestStore";
 import MapTextRenderer from "./instanced/MapTextRenderer";
 import VehicleTextRenderer from "./instanced/VehicleTextRenderer";
@@ -20,13 +21,13 @@ const TextRenderer: React.FC<Props> = ({
   const { mode } = useTextStore();
   const {  numVehicles } = useVehicleTestStore();
 
-  const isArrayMode = mode === "array-single";
+  const isArrayMode = mode === VehicleSystemType.ArraySingle;
   
   return (
     <group name="text-renderer">
       {/* Map texts (Node/Edge) */}
       <MapTextRenderer
-        mode={isArrayMode ? "array-single" : "rapier-dict"}
+        mode={isArrayMode ? VehicleSystemType.ArraySingle : VehicleSystemType.RapierDict}
         scale={scale}
         nodeColor={nodeColor}
         edgeColor={edgeColor}

@@ -2,7 +2,7 @@
 import React, { useMemo } from "react";
 import { useTextStore } from "@store/map/textStore";
 import InstancedText, { TextGroup } from "./InstancedText";
-import { VehicleSystemMode } from "../../vehicle/VehicleSystem";
+import { VehicleSystemType } from "../../../../../types/vehicle";
 
 const CHAR_MAP: Record<string, number> = {
   "0":0,"1":1,"2":2,"3":3,"4":4,"5":5,"6":6,"7":7,"8":8,"9":9,"N":10,"E":11,
@@ -12,7 +12,7 @@ const textToIndices = (text: string): number[] =>
   text.split("").map(c => CHAR_MAP[c.toUpperCase()] ?? 0);
 
 interface Props {
-  mode: VehicleSystemMode;
+  mode: VehicleSystemType;
   scale?: number;
   nodeColor?: string;
   edgeColor?: string;
@@ -32,7 +32,7 @@ const MapTextRenderer: React.FC<Props> = ({
 
   // Node groups
   const nodeGroups = useMemo((): TextGroup[] => {
-    if (mode === "array-single") {
+    if (mode === VehicleSystemType.ArraySingle) {
       return nodeTextsArray.map(item => ({
         x: item.position.x,
         y: item.position.y,
@@ -48,7 +48,7 @@ const MapTextRenderer: React.FC<Props> = ({
 
   // Edge groups
   const edgeGroups = useMemo((): TextGroup[] => {
-    if (mode === "array-single") {
+    if (mode === VehicleSystemType.ArraySingle) {
       return edgeTextsArray.map(item => ({
         x: item.position.x,
         y: item.position.y,

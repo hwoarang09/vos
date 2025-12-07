@@ -3,6 +3,7 @@ import VehicleRapierMode from "./vehicleRapierMode/VehicleRapierMode";
 import VehicleArrayMode from "./vehicleArrayMode/vehicleArrayMode";
 import VehicleSharedMemoryMode from "./VehicleSharedMemoryMode";
 import VehiclesRenderer from "../../renderers/VehiclesRenderer/VehiclesRenderer";
+import { VehicleSystemType } from '../../../../types/vehicle';
 import { getMaxVehicles } from "../../../../config/vehicleConfig";
 import { getRapierModeConfig } from "../../../../config/visualizationConfig";
 
@@ -13,10 +14,8 @@ import { getRapierModeConfig } from "../../../../config/visualizationConfig";
  * - Easy mode switching for performance comparison
  */
 
-export type VehicleSystemMode = "rapier-dict" | "array-single" | "shared-memory";
-
 interface VehicleSystemProps {
-  mode: VehicleSystemMode;
+  mode: VehicleSystemType;
   numVehicles?: number;
   maxVehicles?: number;
 }
@@ -26,13 +25,13 @@ const VehicleSystem: React.FC<VehicleSystemProps> = ({
   numVehicles = 100,
   maxVehicles = getMaxVehicles(),
 }) => {
-  const needsPhysics = mode === "rapier-dict";
+  const needsPhysics = mode === VehicleSystemType.RapierDict;
   const rapierConfig = getRapierModeConfig();
 
   const content = (
     <>
       {/* Rapier Dict mode: logic + rendering separated */}
-      {mode === "rapier-dict" && (
+      {mode === VehicleSystemType.RapierDict && (
         <>
           <VehicleRapierMode
             numVehicles={numVehicles}
@@ -46,7 +45,7 @@ const VehicleSystem: React.FC<VehicleSystemProps> = ({
       )}
 
       {/* Array Single mode: logic + rendering separated */}
-      {mode === "array-single" && (
+      {mode === VehicleSystemType.ArraySingle && (
         <>
           <VehicleArrayMode numVehicles={numVehicles} />
           <VehiclesRenderer
@@ -57,7 +56,7 @@ const VehicleSystem: React.FC<VehicleSystemProps> = ({
       )}
 
       {/* Shared Memory mode: logic + rendering separated */}
-      {mode === "shared-memory" && (
+      {mode === VehicleSystemType.SharedMemory && (
         <>
           <VehicleSharedMemoryMode numVehicles={numVehicles} />
           <VehiclesRenderer

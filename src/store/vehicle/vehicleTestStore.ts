@@ -1,5 +1,5 @@
 import { create } from "zustand";
-import { VehicleSystemMode } from "@components/three/entities/vehicle/VehicleSystem";
+import { VehicleSystemType } from "../../types/vehicle";
 
 /**
  * Vehicle Test Store
@@ -10,14 +10,14 @@ import { VehicleSystemMode } from "@components/three/entities/vehicle/VehicleSys
 
 interface VehicleTestState {
   isTestActive: boolean;
-  testMode: VehicleSystemMode | null;
+  testMode: VehicleSystemType | null;
   numVehicles: number;
   isPanelVisible: boolean;
   isPaused: boolean; // Simulation pause state
   initialVehicleDistribution: Map<number, number[]> | null; // Edge index -> vehicle indices
 
   // Actions
-  startTest: (mode: VehicleSystemMode, numVehicles?: number) => void;
+  startTest: (mode: VehicleSystemType, numVehicles?: number) => void;
   stopTest: () => void;
   setNumVehicles: (num: number) => void;
   setPanelVisible: (visible: boolean) => void;
@@ -33,7 +33,7 @@ export const useVehicleTestStore = create<VehicleTestState>((set) => ({
   isPaused: true, // Start paused by default
   initialVehicleDistribution: null,
 
-  startTest: (mode: VehicleSystemMode, numVehicles = 50) => {
+  startTest: (mode: VehicleSystemType, numVehicles = 50) => {
     console.log(`[VehicleTestStore] Starting test: ${mode} with ${numVehicles} vehicles`);
     set({ isTestActive: true, testMode: mode, numVehicles, isPanelVisible: true, isPaused: true });
   },

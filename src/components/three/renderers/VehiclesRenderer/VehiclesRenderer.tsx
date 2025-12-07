@@ -2,6 +2,7 @@ import { useVehicleRapierStore } from "../../../../store/vehicle/rapierMode/vehi
 import VehicleRapierRenderer from "./VehicleRapierRenderer";
 import VehicleArrayRenderer from "./VehicleArrayRenderer";
 import VehicleSharedRenderer from "./VehicleSharedRenderer";
+import { VehicleSystemType } from "../../../../types/vehicle";
 
 /**
  * VehiclesRenderer
@@ -11,7 +12,7 @@ import VehicleSharedRenderer from "./VehicleSharedRenderer";
  */
 
 interface VehiclesRendererProps {
-  mode: "rapier-dict" | "array-single" | "shared-memory";
+  mode: VehicleSystemType;
   numVehicles: number;
   actualNumVehicles?: number; // For array-single mode
 }
@@ -27,12 +28,12 @@ const VehiclesRenderer: React.FC<VehiclesRendererProps> = ({
   console.log(`[VehiclesRenderer] mode: ${mode}, numVehicles: ${numVehicles}, propActualNumVehicles: ${propActualNumVehicles}, rapierActualNumVehicles: ${rapierActualNumVehicles}`);
 
   // Route to appropriate renderer based on mode
-  if (mode === "rapier-dict") {
+  if (mode === VehicleSystemType.RapierDict) {
     return <VehicleRapierRenderer actualNumVehicles={rapierActualNumVehicles} />;
-  } else if (mode === "array-single") {
+  } else if (mode === VehicleSystemType.ArraySingle) {
     // VehicleArrayRenderer will read actualNumVehicles from store
     return <VehicleArrayRenderer />;
-  } else if (mode === "shared-memory") {
+  } else if (mode === VehicleSystemType.SharedMemory) {
     return <VehicleSharedRenderer numVehicles={numVehicles} />;
   }
 

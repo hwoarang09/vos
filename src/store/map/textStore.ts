@@ -1,4 +1,5 @@
 import { create } from "zustand";
+import { VehicleSystemType } from "../../types/vehicle";
 
 // Text position data structure
 export interface TextPosition {
@@ -16,7 +17,7 @@ export interface TextItem {
 // Text store interface
 interface TextStore {
   // Mode: dict or array
-  mode:  "rapier-dict" | "array-single" | "shared-memory";
+  mode: VehicleSystemType;
 
   // Dict mode data
   nodeTexts: Record<string, TextPosition>;
@@ -60,7 +61,7 @@ interface TextStore {
 
 // Create the text store
 export const useTextStore = create<TextStore>((set, get) => ({
-  mode: "array-single",
+  mode: VehicleSystemType.ArraySingle,
   nodeTexts: {},
   edgeTexts: {},
   nodeTextsArray: [],
@@ -70,7 +71,7 @@ export const useTextStore = create<TextStore>((set, get) => ({
   // Mode initialization
   initDictMode: () => {
     set({
-      mode: "rapier-dict",
+      mode: VehicleSystemType.RapierDict,
       nodeTextsArray: [],
       edgeTextsArray: [],
     });
@@ -78,7 +79,7 @@ export const useTextStore = create<TextStore>((set, get) => ({
 
   initArrayMode: () => {
     set({
-      mode: "array-single",
+      mode: VehicleSystemType.ArraySingle,
       nodeTexts: {},
       edgeTexts: {},
     });

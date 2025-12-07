@@ -1,5 +1,5 @@
 import React from "react";
-import { VehicleSystemMode } from "../../three/entities/vehicle/VehicleSystem";
+import { VehicleSystemType } from "../../../types/vehicle";
 import { useVehicleTestStore } from "../../../store/vehicle/vehicleTestStore";
 
 /**
@@ -11,7 +11,7 @@ import { useVehicleTestStore } from "../../../store/vehicle/vehicleTestStore";
 
 interface VehicleTestUIProps {
   testState: "loading-map" | "initializing" | "running" | "error";
-  mode: VehicleSystemMode;
+  mode: VehicleSystemType;
   mapName: string;
   numVehicles: number;
   isPanelVisible: boolean;

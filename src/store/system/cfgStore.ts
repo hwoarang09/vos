@@ -6,6 +6,7 @@ import { Node, Edge } from "../../types";
 import { getNodeColor } from "../../utils/colors/nodeColors";
 import { getEdgeColor } from "../../utils/colors/edgeColors";
 import { PointsCalculator } from "../../components/three/entities/edge/points_calculator";
+import { VehicleSystemType } from "../../types/vehicle";
 import * as THREE from "three";
 
 interface CFGStore {

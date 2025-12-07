@@ -3,7 +3,7 @@ import { useMenuStore } from "@store/ui/menuStore";
 import { useCFGStore } from "@store/system/cfgStore";
 import { useVehicleTestStore } from "@store/vehicle/vehicleTestStore";
 import { useCameraStore } from "@store/ui/cameraStore";
-import { VehicleSystemMode } from "../../three/entities/vehicle/VehicleSystem";
+import { VehicleSystemType } from "../../../types/vehicle";
 import VehicleTestUI from "./VehicleTestUI";
 
 /**
@@ -14,7 +14,7 @@ import VehicleTestUI from "./VehicleTestUI";
  */
 
 interface VehicleTestRunnerProps {
-  mode: VehicleSystemMode;
+  mode: VehicleSystemType;
   mapName: string;
   numVehicles: number;
   cameraConfig?: {
