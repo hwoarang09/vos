@@ -1,16 +1,15 @@
-// vehicleArrayMode/collisionLogic/checkLeadVehicle.ts
-
+// checkLeadVehicle.ts
 import { edgeVehicleQueue } from "@/store/vehicle/arrayMode/edgeVehicleQueue";
 import { VEHICLE_DATA_SIZE, MovementData, SensorData, MovingStatus, HitZone } from "@/store/vehicle/arrayMode/vehicleDataArray";
 import { Edge } from "@/types/edge";
 import { VehicleLoop } from "@/utils/vehicle/loopMaker";
-import { findTargetEdgeIndex } from "../helpers/edgeTargetFinder";
+import { findCollisionTargetEdges } from "../helpers/edgeTargetFinder";
 import { applyVehicleStatus } from "../helpers/statusApplier";
-import { checkMergeConflict } from "./mergeConflictChecker";
+import { isMergeConflict } from "./mergeConflictChecker";
 import { checkSensorCollision, roughDistanceCheck } from "../helpers/sensorCollision";
 import { SENSOR_PRESETS, SensorZoneKey } from "@/store/vehicle/arrayMode/sensorPresets";
-import { getBodyLength } from "@/config/vehicleConfig";
 import { getApproachMinSpeed, getBrakeMinSpeed } from "@/config/movementConfig";
+import { getBodyLength } from "@/config/vehicleConfig";
 
 export function checkLeadVehicle(params: {
   edgeIdx: number;
@@ -22,190 +21,125 @@ export function checkLeadVehicle(params: {
   resumeDistance: number;
   shouldLogDetails: boolean;
 }) {
-  const { edgeIdx, edge, data, edgeArray, vehicleLoopMap, edgeNameToIndex, resumeDistance, shouldLogDetails } = params;
+  const { edgeIdx, edge, data, edgeArray, shouldLogDetails } = params;
 
   const rawData = edgeVehicleQueue.getData(edgeIdx);
+  // rawData[0] = count, rawData[1] = first vehicle index
   if (!rawData || rawData[0] === 0) return { collisions: 0, resumes: 0 };
 
   const leadVehId = rawData[1];
   const leadPtr = leadVehId * VEHICLE_DATA_SIZE;
 
-  const targetEdgeIdx = findTargetEdgeIndex(edge, leadVehId, vehicleLoopMap, edgeNameToIndex);
-  if (targetEdgeIdx === -1) return applyVehicleStatus(data, leadPtr, false);
+  // 1. Get Targets (Merge + Next)
+  const { mergeTargetIndices, nextTargetIndices } = findCollisionTargetEdges(edge, edgeArray);
 
-  const targetEdge = edgeArray[targetEdgeIdx];
+  // Aggregated state for this vehicle across all potential paths
   let canProceed = true;
-  // Reset defaults
-  data[leadPtr + SensorData.HIT_ZONE] = HitZone.NONE;
-  data[leadPtr + MovementData.DECELERATION] = 0;
-
-  // 3. Collision Check
-  const targetRawData = edgeVehicleQueue.getData(targetEdgeIdx);
-  const targetCount = targetRawData ? targetRawData[0] : 0;
-
-  if (shouldLogDetails) {
-    console.log(`[CollisionCheck] VEH${leadVehId}: currentEdge=${edge.edge_name}(idx:${edgeIdx}), targetEdge=${targetEdge.edge_name}(idx:${targetEdgeIdx}), targetCount=${targetCount}`);
-  }
+  let maxDeceleration = 0;
+  let mostSevereHit: number = HitZone.NONE;
 
   // Cache config values
   const approachMinSpeed = getApproachMinSpeed();
   const brakeMinSpeed = getBrakeMinSpeed();
+  const velocity = data[leadPtr + MovementData.VELOCITY];
 
-  // If target edge is same as current edge, check if there are other vehicles ahead
-  if (targetEdgeIdx === edgeIdx) {
-    // Same edge - check if there are vehicles ahead of lead vehicle
-    if (targetCount <= 1) {
-      // Only lead vehicle on this edge, no collision
-      if (shouldLogDetails) console.log(`[SameEdge] VEH${leadVehId} is alone on edge, can proceed`);
-      return applyVehicleStatus(data, leadPtr, true);
-    }
-    // If there are multiple vehicles, we need to check the one ahead (not implemented yet)
-    // For now, just allow proceeding
-    if (shouldLogDetails) console.log(`[SameEdge] VEH${leadVehId} has ${targetCount} vehicles on same edge, allowing proceed for now`);
-    return applyVehicleStatus(data, leadPtr, true);
+  if (shouldLogDetails && (mergeTargetIndices.length > 0 || nextTargetIndices.length > 1)) {
+    console.log(`[CheckLead] VEH${leadVehId} @ ${edge.edge_name}: MergeTargets=[${mergeTargetIndices}], NextTargets=[${nextTargetIndices}]`);
   }
 
-  // If no vehicles on target edge, can proceed
-  if (targetCount === 0) {
-    if (shouldLogDetails) console.log(`[NoTarget] VEH${leadVehId} -> ${targetEdge.edge_name} is empty, can proceed`);
-    return applyVehicleStatus(data, leadPtr, true);
-  }
+  // =========================================================================================
+  // [A] CHECK MERGE CONFLICTS (Competitors entering same node)
+  // Target: HEAD vehicle of competitor edge
+  // =========================================================================================
+  for (const targetIdx of mergeTargetIndices) {
+    if (!canProceed) break; // Optimization: Stop if already blocked
 
-  if (targetCount > 0) {
-    const targetLastVehId = targetRawData![1 + (targetCount - 1)];
+    const targetRaw = edgeVehicleQueue.getData(targetIdx);
+    if (!targetRaw || targetRaw[0] === 0) continue;
 
-    // Skip if checking against self (shouldn't happen after same-edge check above)
-    if (targetLastVehId === leadVehId) {
-      if (shouldLogDetails) console.log(`[Skip] VEH${leadVehId} skipping self-check (unexpected)`);
-      return applyVehicleStatus(data, leadPtr, true); // Can proceed
-    }
+    const targetHeadVehId = targetRaw[1]; // HEAD vehicle (index 0)
+    const targetEdge = edgeArray[targetIdx];
 
-    const targetLastPtr = targetLastVehId * VEHICLE_DATA_SIZE;
-
-    const xLead = data[leadPtr + MovementData.X];
-    const yLead = data[leadPtr + MovementData.Y];
-    const xTarget = data[targetLastPtr + MovementData.X];
-    const yTarget = data[targetLastPtr + MovementData.Y];
-    const velocity = data[leadPtr + MovementData.VELOCITY];
-
-    const currentIsLinear = edge.vos_rail_type === "LINEAR";
-    const targetIsLinear = targetEdge.vos_rail_type === "LINEAR";
-
-    // 복잡 상황: 커브, 합류, 분기
-    const hasMerge = targetEdge.prevEdgeIndices && targetEdge.prevEdgeIndices.length > 1;
-    const hasBranch = edge.toNodeIsDiverge;
-    const isComplex = !currentIsLinear || !targetIsLinear || hasMerge || hasBranch;
-
-    if (isComplex) {
-      // 센서 기반 정밀 체크 (SAT) - multi-zone
-      if (roughDistanceCheck(leadVehId, targetLastVehId, 8.0)) {
-        const zoneHit = checkSensorCollision(leadVehId, targetLastVehId); // -1 | 0 | 1 | 2
-        if (zoneHit >= 0) {
-          const presetIdx = data[leadPtr + SensorData.PRESET_IDX] | 0;
-          const preset = SENSOR_PRESETS[presetIdx] ?? SENSOR_PRESETS[0];
-          const zoneKey: SensorZoneKey = zoneHit === HitZone.STOP ? "stop" : zoneHit === HitZone.BRAKE ? "brake" : "approach";
-          const dec = preset.zones[zoneKey]?.dec ?? 0;
-
-          data[leadPtr + SensorData.HIT_ZONE] = zoneHit;
-
-          if (zoneKey === "stop" || dec === -Infinity) {
-            // Immediate stop
-            data[leadPtr + MovementData.VELOCITY] = 0;
-            data[leadPtr + MovementData.DECELERATION] = 0;
-            data[leadPtr + MovementData.MOVING_STATUS] = MovingStatus.STOPPED;
-            return applyVehicleStatus(data, leadPtr, false);
-          } else {
-            // Apply zone deceleration, keep moving
-            let shouldDecel = true;
-            if (zoneKey === "approach" && velocity <= approachMinSpeed) shouldDecel = false;
-            if (zoneKey === "brake" && velocity <= brakeMinSpeed) shouldDecel = false;
-
-            if (shouldDecel) {
-                data[leadPtr + MovementData.DECELERATION] = dec;
-            } else {
-                data[leadPtr + MovementData.DECELERATION] = 0;
-            }
-            canProceed = true;
-          }
-
-          if (shouldLogDetails) console.log(`[Sensor] VEH${leadVehId} hit zone=${zoneKey} -> dec=${dec}`);
-        } else {
-          // no collision, reset decel/hit
-          data[leadPtr + SensorData.HIT_ZONE] = HitZone.NONE;
-          data[leadPtr + MovementData.DECELERATION] = 0;
-        }
-      } else {
-        data[leadPtr + SensorData.HIT_ZONE] = HitZone.NONE;
-        data[leadPtr + MovementData.DECELERATION] = 0;
-      }
-    } else {
-      // 직선 구간: 센서 길이 기반 1D 존 체크 (x 좌표만 사용)
-      const distance = Math.abs(xTarget - xLead);
-
-      const presetIdx = data[leadPtr + SensorData.PRESET_IDX] | 0;
-      const preset = SENSOR_PRESETS[presetIdx] ?? SENSOR_PRESETS[0];
-
-      // Use actual zone lengths
-      // CORRECTION: distance is center-to-center. 
-      // We need to trigger when (distance - vehicleLength) <= sensorLength
-      // So checks should be: distance <= sensorLength + vehicleLength
-      const vehicleLength = getBodyLength();
-
-      const stopDist = preset.zones.stop.leftLength + vehicleLength;
-      const brakeDist = preset.zones.brake.leftLength + vehicleLength;
-      const approachDist = preset.zones.approach.leftLength + vehicleLength;
-
-      // Check zones from inner to outer
-      if (distance <= stopDist) {
-        // STOP ZONE
-        data[leadPtr + MovementData.VELOCITY] = 0;
-        data[leadPtr + MovementData.DECELERATION] = 0;
-        data[leadPtr + MovementData.MOVING_STATUS] = MovingStatus.STOPPED;
-        data[leadPtr + SensorData.HIT_ZONE] = HitZone.STOP; // Stop
+    // Check Merge Conflict
+    const hasConflict = isMergeConflict(leadVehId, targetIdx, shouldLogDetails);
+    
+    if (hasConflict) {
         canProceed = false;
-        if (shouldLogDetails) console.log(`[Linear] VEH${leadVehId} STOP zone (${distance.toFixed(2)}m <= ${stopDist})`);
-      } else if (distance <= brakeDist) {
-        // BRAKE ZONE
-        data[leadPtr + SensorData.HIT_ZONE] = HitZone.BRAKE; // Brake
-        // Check minimum speed
-        if (velocity > brakeMinSpeed) {
-             data[leadPtr + MovementData.DECELERATION] = preset.zones.brake.dec;
-        } else {
-             data[leadPtr + MovementData.DECELERATION] = 0;
-        }
-        
-        canProceed = true;
-        if (shouldLogDetails) console.log(`[Linear] VEH${leadVehId} BRAKE zone (${distance.toFixed(2)}m <= ${brakeDist})`);
-      } else if (distance <= approachDist) {
-        // APPROACH ZONE
-        data[leadPtr + SensorData.HIT_ZONE] = HitZone.APPROACH; // Approach
-        // Check minimum speed
-        if (velocity > approachMinSpeed) {
-             data[leadPtr + MovementData.DECELERATION] = preset.zones.approach.dec;
-        } else {
-             data[leadPtr + MovementData.DECELERATION] = 0;
-        }
+        mostSevereHit = HitZone.STOP;
+        if (shouldLogDetails) console.log(`[MergeBlock] VEH${leadVehId} blocked by VEH${targetHeadVehId} from ${targetEdge.edge_name}`);
+    }
+  }
 
-        canProceed = true;
-        if (shouldLogDetails) console.log(`[Linear] VEH${leadVehId} APPROACH zone (${distance.toFixed(2)}m <= ${approachDist})`);
-      } else {
-        // NO COLLISION
-        data[leadPtr + SensorData.HIT_ZONE] = HitZone.NONE;
-        data[leadPtr + MovementData.DECELERATION] = 0;
-        canProceed = true;
+  // =========================================================================================
+  // [B] CHECK NEXT PATHS (Following Logic)
+  // Target: TAIL vehicle of next edge
+  // =========================================================================================
+  
+  // If no next paths available, stop.
+  if (nextTargetIndices.length === 0) {
+     canProceed = false;
+     mostSevereHit = HitZone.STOP;
+  }
+
+  for (const targetIdx of nextTargetIndices) {
+    if (!canProceed && mostSevereHit === HitZone.STOP) break; 
+
+      const targetRaw = edgeVehicleQueue.getData(targetIdx);
+      const targetCount = targetRaw ? targetRaw[0] : 0;
+      const targetEdge = edgeArray[targetIdx];
+      
+      if (targetCount === 0) continue; // Path is clear
+
+      // Check TAIL Vehicle (Last one entered)
+      const targetTailVehIndex = 1 + (targetCount - 1);
+      const targetTailId = targetRaw![targetTailVehIndex];
+
+      // Prevent self-check
+      if (targetTailId === leadVehId) continue;
+
+      // SENSOR CHECK (SAT)
+      const roughCheck = roughDistanceCheck(leadVehId, targetTailId, 12.0); 
+      if (roughCheck) {
+          const zoneHit = checkSensorCollision(leadVehId, targetTailId);
+          
+          if (zoneHit >= 0) {
+            const presetIdx = data[leadPtr + SensorData.PRESET_IDX] | 0;
+            const preset = SENSOR_PRESETS[presetIdx] ?? SENSOR_PRESETS[0];
+            const zoneKey: SensorZoneKey = zoneHit === HitZone.STOP ? SensorZoneKey.STOP : zoneHit === HitZone.BRAKE ? SensorZoneKey.BRAKE : SensorZoneKey.APPROACH;
+            const dec = preset.zones[zoneKey]?.dec ?? 0;
+
+            if (zoneKey === SensorZoneKey.STOP || dec === -Infinity) {
+               canProceed = false;
+               mostSevereHit = HitZone.STOP;
+            } else {
+               // Conditional Deceleration
+               let shouldDecel = true;
+               if (zoneKey === SensorZoneKey.APPROACH && velocity <= approachMinSpeed) shouldDecel = false;
+               if (zoneKey === SensorZoneKey.BRAKE && velocity <= brakeMinSpeed) shouldDecel = false;
+               
+               if (shouldDecel) {
+                   if (dec > maxDeceleration) maxDeceleration = dec;
+                   // Severity: higher HitZone value is more severe
+                   if (zoneHit > mostSevereHit) mostSevereHit = zoneHit;
+               }
+            }
+
+            if (shouldLogDetails) console.log(`[NextPath] VEH${leadVehId} hit VEH${targetTailId} (${zoneKey}) on ${targetEdge.edge_name}`);
+          }
       }
     }
 
-    // Debug: Log edge transition
-    if (shouldLogDetails && edgeIdx !== targetEdgeIdx) {
-      console.log(`[EdgeTransition] VEH${leadVehId}: ${edge.vos_rail_type}(${edge.edge_name}) -> ${targetEdge.vos_rail_type}(${targetEdge.edge_name}), canProceed: ${canProceed}`);
-    }
+
+  // Apply Final State
+  data[leadPtr + SensorData.HIT_ZONE] = mostSevereHit;
+  data[leadPtr + MovementData.DECELERATION] = maxDeceleration;
+
+  if (mostSevereHit === HitZone.STOP || !canProceed) {
+    data[leadPtr + MovementData.VELOCITY] = 0;
+    data[leadPtr + MovementData.DECELERATION] = 0;
+    data[leadPtr + MovementData.MOVING_STATUS] = MovingStatus.STOPPED;
+    return applyVehicleStatus(data, leadPtr, false);
   }
 
-  // 4. Merge Conflict
-  if (canProceed) {
-    canProceed = checkMergeConflict(data, edgeIdx, edge, targetEdge, leadVehId, leadPtr, edgeArray, shouldLogDetails);
-  }
-
-  return applyVehicleStatus(data, leadPtr, canProceed);
+  return applyVehicleStatus(data, leadPtr, true);
 }

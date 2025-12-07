@@ -97,7 +97,8 @@ export function initializeVehicles(params: InitializeVehiclesParams): Initializa
 
       // Add to VehicleGeneralStore (for UI/Metadata)
       // ID Format must match VehicleTextRenderer: VEH00001, VEH00002...
-      const idNumber = placement.vehicleIndex + 1;
+      // ID Format must match VehicleTextRenderer: VEH00001, VEH00002...
+      const idNumber = placement.vehicleIndex;
       const formattedId = `VEH${String(idNumber).padStart(5, '0')}`;
 
       useVehicleGeneralStore.getState().addVehicle(placement.vehicleIndex, {

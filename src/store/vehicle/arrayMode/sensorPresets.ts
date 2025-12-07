@@ -1,6 +1,11 @@
 // store/vehicle/arrayMode/sensorPresets.ts
 
-export type SensorZoneKey = "approach" | "brake" | "stop";
+export const SensorZoneKey = {
+  APPROACH: "approach",
+  BRAKE: "brake",
+  STOP: "stop",
+} as const;
+export type SensorZoneKey = typeof SensorZoneKey[keyof typeof SensorZoneKey];
 
 export interface SensorZone {
   leftAngle: number;   // degree

@@ -33,8 +33,19 @@
         "position": [250, -150, 550],
         "target": [250, 150, 0]
       }
-    }
+    },
+    {
+      "id": "simple_connected",
+      "name": "simple_connected",
+      "description": "simple_connected",
+      "mapName": "simple_connected",
+      "numVehicles": 10,
+      "camera": {
+        "position": [10, -10, 30],
+        "target": [10, 0, 0]
+      }
+    }    
   ],
-  "DEFAULT_SETTING": "STRESS_TEST"
+  "DEFAULT_SETTING": "simple_connected"
 }
 

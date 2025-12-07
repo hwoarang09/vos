@@ -1,6 +1,6 @@
 {
   "RAIL_CONFIG_PATH": "railConfig",
-  "AVAILABLE_MAPS": ["dismantle", "straight_test", "stress_test"],
+  "AVAILABLE_MAPS": ["dismantle", "straight_test", "stress_test", "simple_connected"],
   "AUTO_LOAD_MAP": ""
 }
 

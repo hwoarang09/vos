@@ -84,7 +84,7 @@ const VehicleTextRenderer: React.FC<Props> = ({
 
     let charIndex = 0;
     for (let v = 0; v < numVehicles; v++) {
-      const label = `VEH${String(v + 1).padStart(5, '0')}`;
+      const label = `VEH${String(v).padStart(5, '0')}`;
       
       for (let i = 0; i < label.length; i++) {
         const digit = CHAR_MAP[label[i]];
