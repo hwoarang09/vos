@@ -4,7 +4,6 @@ import { useFrame } from "@react-three/fiber";
 import { RENDER_ORDER_TEXT } from "@/utils/renderOrder";
 import { useDigitMaterials, CHAR_COUNT } from "./useDigitMaterials";
 import {
-  TextGroup,
   SlotData,
   HIDE_MATRIX,
   buildSlotData,
@@ -13,7 +12,8 @@ import {
   distanceSquared,
 } from "./instancedTextUtils";
 
-export type { TextGroup };
+import type { TextGroup } from "./instancedTextUtils";
+export type { TextGroup } from "./instancedTextUtils";
 
 interface Props {
   readonly groups?: TextGroup[];

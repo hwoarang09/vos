@@ -25,32 +25,23 @@ export function handleEdgeTransition(
   let currentEdge = edgeArray[currentEdgeIdx];
 
   // 엣지 끝을 넘어섰는지 확인 (while loop)
-  while (currentEdge && currentRatio >= 1.0) {
-    const overflowDist = (currentRatio - 1.0) * currentEdge.distance;
+  while (currentEdge && currentRatio >= 1) {
+    const overflowDist = (currentRatio - 1) * currentEdge.distance;
     
     // [Topology Optimization]
     // 1. Diverge(분기)가 아니면 nextEdgeIndices[0]으로 바로 이동
     // 2. Diverge면 LoopMap 확인
     let nextEdgeIndex = -1;
 
-    if (!currentEdge.toNodeIsDiverge && currentEdge.nextEdgeIndices?.length) {
-       nextEdgeIndex = currentEdge.nextEdgeIndices[0];
+    if (canDirectlyTransition(currentEdge)) {
+       nextEdgeIndex = currentEdge.nextEdgeIndices![0];
     } else {
-       const loop = vehicleLoopMap.get(vehicleIndex);
-       if (loop) {
-         const nextName = getNextEdgeInLoop(currentEdge.edge_name, loop.edgeSequence);
-         const found = edgeNameToIndex.get(nextName);
-         if (found !== undefined) nextEdgeIndex = found;
-       }
-       // Fallback
-       if (nextEdgeIndex === -1 && currentEdge.nextEdgeIndices?.length) {
-         nextEdgeIndex = currentEdge.nextEdgeIndices[0];
-       }
+       nextEdgeIndex = getNextEdgeFromLoop(currentEdge, vehicleIndex, vehicleLoopMap, edgeNameToIndex);
     }
 
     // 갈 곳이 없거나 끊김
     if (nextEdgeIndex === -1 || !edgeArray[nextEdgeIndex]) {
-      currentRatio = 1.0; // 끝에 멈춤
+      currentRatio = 1; // 끝에 멈춤
       break;
     }
 
@@ -90,4 +81,37 @@ function updateSensorPresetForEdge(vehicleIndex: number, edge: Edge): void {
   }
 
   data[ptr + SensorData.PRESET_IDX] = presetIdx;
+}
+
+/**
+ * Helper: Check if simple transition is possible
+ */
+function canDirectlyTransition(currentEdge: Edge): boolean {
+  return !currentEdge.toNodeIsDiverge && (currentEdge.nextEdgeIndices?.length ?? 0) > 0;
+}
+
+/**
+ * Helper: Get next edge from loop map or fallback
+ */
+function getNextEdgeFromLoop(
+  currentEdge: Edge,
+  vehicleIndex: number,
+  vehicleLoopMap: Map<number, VehicleLoop>,
+  edgeNameToIndex: Map<string, number>
+): number {
+  let nextEdgeIndex = -1;
+  const loop = vehicleLoopMap.get(vehicleIndex);
+
+  if (loop) {
+     const nextName = getNextEdgeInLoop(currentEdge.edge_name, loop.edgeSequence);
+     const found = edgeNameToIndex.get(nextName);
+     if (found !== undefined) nextEdgeIndex = found;
+  }
+
+  // Fallback: If no loop or not found in loop, take the first available path
+  if (nextEdgeIndex === -1 && currentEdge.nextEdgeIndices?.length) {
+    nextEdgeIndex = currentEdge.nextEdgeIndices[0];
+  }
+
+  return nextEdgeIndex;
 }

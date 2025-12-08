@@ -229,17 +229,19 @@ const IndividualControlPanel: React.FC = () => {
         // Direct Index Mapping
         const match = searchTerm.match(/(\d+)/);
         if (match) {
-            const idNum = parseInt(match[0], 10);
-            const targetIdx = idNum - 1; // logical index
+            const idNum = Number.parseInt(match[0], 10);
+            const targetIdx = idNum; // ID corresponds to index directly (VEH00001 -> Index 1)
 
             const v = vehiclesRef.current.get(targetIdx);
-            // Verify if the ID actually matches (just in case)
-            if (v && v.id === searchTerm) {
+            
+            // If the vehicle exists at that index, we consider it found.
+            // We relaxed the check so "1" finds "VEH00001"
+            if (v) {
                 found = targetIdx;
             }
         }
 
-        if (found !== -1) {
+        if (found >= 0) {
             setFoundVehicleIndex(found);
         } else {
             setFoundVehicleIndex(null);
