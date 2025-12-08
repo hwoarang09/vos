@@ -73,7 +73,7 @@ export function updateMovement(params: MovementUpdateParams) {
     const acceleration = data[ptr + MovementData.ACCELERATION];
     const deceleration = data[ptr + MovementData.DECELERATION];
     const edgeRatio = data[ptr + MovementData.EDGE_RATIO];
-    const rawHit = data[ptr + SensorData.HIT_ZONE] | 0; // -1,0,1,2
+    const rawHit = Math.trunc(data[ptr + SensorData.HIT_ZONE]); // -1,0,1,2
     const hitZone = rawHit === 2 ? 2 : (deceleration !== 0 ? rawHit : -1); // treat as contact only when decel is active, except stop zone
     
     // Position fallbacks
@@ -152,7 +152,7 @@ export function updateMovement(params: MovementUpdateParams) {
     data[ptr + MovementData.ROTATION] = finalRotation;
 
     // 8. Update Sensor Points (Zero-GC)
-    const presetIdx = data[ptr + SensorData.PRESET_IDX] | 0; // float -> int
+    const presetIdx = Math.trunc(data[ptr + SensorData.PRESET_IDX]); // float -> int
     updateSensorPoints(i, finalX, finalY, finalRotation, presetIdx);
   }
 

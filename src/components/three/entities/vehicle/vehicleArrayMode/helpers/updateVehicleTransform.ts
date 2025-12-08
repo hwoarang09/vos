@@ -23,7 +23,7 @@ export function updateVehicleTransform(
   vData[base + MovementData.ROTATION] = rot;
 
   // 2) 현재 프리셋 인덱스 읽기
-  const presetIdx = vData[base + SensorData.PRESET_IDX] | 0;  // float -> int
+  const presetIdx = Math.trunc(vData[base + SensorData.PRESET_IDX]);  // float -> int
 
   // 3) 센서 점 6개 업데이트
   updateSensorPoints(vehIdx, x, y, rot, presetIdx);
@@ -44,5 +44,5 @@ export function setSensorPreset(vehIdx: number, presetIdx: number): void {
 export function getSensorPreset(vehIdx: number): number {
   const vData = vehicleDataArray.getData();
   const base = vehIdx * VEHICLE_DATA_SIZE;
-  return vData[base + SensorData.PRESET_IDX] | 0;
+  return Math.trunc(vData[base + SensorData.PRESET_IDX]);
 }

@@ -1,4 +1,3 @@
-import { Node } from "../../../../../types";
 import { EdgePointsCalculator } from "./EdgePointsCalculator";
 import * as THREE from "three";
 

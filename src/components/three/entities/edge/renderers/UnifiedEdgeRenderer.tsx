@@ -1,12 +1,13 @@
-// Curve90EdgeRenderer.tsx - InstancedMesh 버전
 import React, { useRef, useEffect, useMemo } from "react";
 import { useFrame } from "@react-three/fiber";
 import * as THREE from "three";
 import edgeVertexShader from "../shaders/edgeVertex.glsl?raw";
 import edgeFragmentShader from "../shaders/edgeFragment.glsl?raw";
+import { useRenderCheck } from "@/utils/renderDebug";
 
-interface Curve90EdgeRendererProps {
+export interface UnifiedEdgeRendererProps {
   renderingPoints: THREE.Vector3[];
+  edgeType?: "LINEAR" | "CURVE"; // Default to CURVE if not specified, or infer?
   color?: string;
   opacity?: number;
   width?: number;
@@ -14,29 +15,37 @@ interface Curve90EdgeRendererProps {
   renderOrder?: number;
 }
 
-export const Curve90EdgeRenderer: React.FC<Curve90EdgeRendererProps> = ({
+export const UnifiedEdgeRenderer: React.FC<UnifiedEdgeRendererProps> = ({
   renderingPoints = [],
-  color = "#ff69b4",
+  edgeType = "CURVE",
+  color = "#ff0000",
   opacity = 1,
   width = 0.5,
   isPreview = false,
-  renderOrder = 2,
+  renderOrder = 3,
 }) => {
   const instancedMeshRef = useRef<THREE.InstancedMesh>(null);
-  const segmentCount = Math.max(0, renderingPoints.length - 1);
+  useRenderCheck("UnifiedEdgeRenderer");
 
-  // 기본 geometry (한 번만 생성)
+  // Determine instance count
+  const instanceCount = useMemo(() => {
+    if (renderingPoints.length < 2) return 0;
+    if (edgeType === "LINEAR") return 1;
+    return renderingPoints.length - 1;
+  }, [renderingPoints.length, edgeType]);
+
+  // Geometry
   const geometry = useMemo(() => new THREE.PlaneGeometry(1, 1), []);
 
-  // 셰이더 머티리얼 (한 번만 생성)
+  // Material
   const shaderMaterial = useMemo(() => {
     return new THREE.ShaderMaterial({
       uniforms: {
         uTime: { value: 0 },
         uColor: { value: new THREE.Color(color) },
         uOpacity: { value: opacity },
-        uIsPreview: { value: isPreview ? 1.0 : 0.0 },
-        uLength: { value: 1.0 },
+        uIsPreview: { value: isPreview ? 1 : 0 },
+        uLength: { value: 1 },
       },
       vertexShader: edgeVertexShader,
       fragmentShader: edgeFragmentShader,
@@ -48,75 +57,93 @@ export const Curve90EdgeRenderer: React.FC<Curve90EdgeRendererProps> = ({
     });
   }, [color, opacity, isPreview]);
 
-  // 인스턴스 행렬 계산 및 적용
+  // Update effect
   useEffect(() => {
     const mesh = instancedMeshRef.current;
     if (!mesh) return;
 
-    // // renderOrder 설정
-    // mesh.renderOrder = renderOrder;
-
-    // 점이 충분하지 않으면 숨기기
-    if (segmentCount <= 0) {
+    if (instanceCount <= 0) {
       mesh.visible = false;
       return;
     }
 
-    // 변환 행렬 계산용 임시 변수들
     const matrix = new THREE.Matrix4();
     const position = new THREE.Vector3();
     const quaternion = new THREE.Quaternion();
     const scale = new THREE.Vector3();
     const euler = new THREE.Euler();
 
-    // 각 세그먼트에 대한 변환 행렬 계산
-    for (let i = 0; i < segmentCount; i++) {
-      const start = renderingPoints[i];
-      const end = renderingPoints[i + 1];
+    if (edgeType === "LINEAR") {
+      // Linear: One segment from start to end
+      const start = renderingPoints[0];
+      const end = renderingPoints.at(-1)!;
 
-      // 중심점 계산
       const centerX = (start.x + end.x) / 2;
       const centerY = (start.y + end.y) / 2;
       const centerZ = (start.z + end.z) / 2;
 
-      // 길이와 각도 계산
       const length = start.distanceTo(end);
       const angle = Math.atan2(end.y - start.y, end.x - start.x);
 
-      // 변환 설정 (기존 코드와 동일하게 length * 2 사용)
+      if (length < 0.01) {
+        mesh.visible = false;
+        return;
+      }
+
       position.set(centerX, centerY, centerZ);
       euler.set(0, 0, angle);
       quaternion.setFromEuler(euler);
-      scale.set(length * 2, width, 1);
+      scale.set(length, width, 1);
 
-      // 행렬 생성 및 인스턴스에 적용
       matrix.compose(position, quaternion, scale);
-      mesh.setMatrixAt(i, matrix);
+      mesh.setMatrixAt(0, matrix);
+    } else {
+      // Curve: Multiple segments
+      for (let i = 0; i < instanceCount; i++) {
+        const start = renderingPoints[i];
+        const end = renderingPoints[i + 1];
+
+        const centerX = (start.x + end.x) / 2;
+        const centerY = (start.y + end.y) / 2;
+        const centerZ = (start.z + end.z) / 2;
+
+        const length = start.distanceTo(end);
+        const angle = Math.atan2(end.y - start.y, end.x - start.x);
+
+        position.set(centerX, centerY, centerZ);
+        euler.set(0, 0, angle);
+        quaternion.setFromEuler(euler);
+        // Note: Curve renderers used length * 2 for some reason (overlap?)
+        // Preserving that behavior
+        scale.set(length * 2, width, 1);
+
+        matrix.compose(position, quaternion, scale);
+        mesh.setMatrixAt(i, matrix);
+      }
     }
 
-    // GPU에 인스턴스 행렬 업데이트 알림
     mesh.instanceMatrix.needsUpdate = true;
     mesh.visible = true;
-  }, [renderingPoints, width, segmentCount, renderOrder]);
+  }, [renderingPoints, width, instanceCount, edgeType]);
 
-  // 셰이더 애니메이션 업데이트 (모든 인스턴스에 공통 적용)
+  // Uniform update
   useFrame((state) => {
     if (shaderMaterial.uniforms.uTime) {
       shaderMaterial.uniforms.uTime.value = state.clock.elapsedTime;
     }
   });
 
-  // segmentCount가 0이면 아무것도 렌더링하지 않음
-  if (segmentCount <= 0) {
+  if (instanceCount <= 0) {
     return null;
   }
 
   return (
     <instancedMesh
-      key={segmentCount} // segmentCount 변경 시 재생성
+      key={`${instanceCount}-${edgeType}`}
       ref={instancedMeshRef}
-      args={[geometry, shaderMaterial, segmentCount]}
-      frustumCulled={false} // 성능을 위해 frustum culling 비활성화
+      args={[geometry, shaderMaterial, instanceCount]}
+      frustumCulled={false}
+      renderOrder={renderOrder}
     />
   );
 };

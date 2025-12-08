@@ -1,19 +1,11 @@
-import React, { useState } from "react";
+import React from "react";
 import { Canvas } from "@react-three/fiber";
 import {
   OrbitControls,
-  PerspectiveCamera,
-  OrthographicCamera,
-  CameraControls,
-  // MapControls,
-  // FlyControls,
-  // FirstPersonControls
 } from "@react-three/drei";
 import { Perf } from "r3f-perf";
 import * as THREE from "three";
-// import CameraController from "./scene/Camera/cameraController"; // Replaced with drei controls
-import MapBuilder from "./builders/MapBuilder/MapBuilder";
-import LayoutBuilder from "./builders/LayoutBuilder/LayoutBuilder";
+
 import MapRenderer from "./renderers/MapRenderer";
 import Floor from "./scene/Floor";
 import AxisHelper from "./scene/AxisHelper";
@@ -21,18 +13,10 @@ import TextRenderer from "./entities/text/TextRenderer";
 import VehicleSystem from "./entities/vehicle/VehicleSystem";
 
 import CameraController from "./scene/Camera/cameraController";
-import { GridSquares } from "./TestExample/GridSquares";
 import { useVehicleTestStore } from "@store/vehicle/vehicleTestStore";
 import { PerformanceMonitorUI } from "./performance/PerformanceMonitor";
 
 const ThreeScene: React.FC = () => {
-  // Camera type state
-  const [cameraType, setCameraType] = useState<"perspective" | "orthographic">(
-    "perspective"
-  );
-  const [controlType, setControlType] = useState<"orbit" | "camera" | "map">(
-    "orbit"
-  );
 
   return (
     <>
@@ -59,12 +43,6 @@ const ThreeScene: React.FC = () => {
         {/* Coordinate axes for orientation */}
         <AxisHelper />
 
-        {/* Map management - handles data operations */}
-        <MapBuilder />
-
-        {/* Layout management - handles bay, station, equipment creation */}
-        <LayoutBuilder />
-
         {/* Map rendering - displays the actual 3D objects */}
         <MapRenderer />
 
@@ -77,18 +55,6 @@ const ThreeScene: React.FC = () => {
         {/* Development tools */}
         <Perf position="bottom-right" />
 
-        {/* instnacedMesh color Test */}
-        {/* <GridSquares
-          rows={10}
-          cols={10}
-          highlighted={[0, 5, 10, 14, 15]} // 빨간색으로 하이라이트
-          colorChanges={[
-            // 특정 인덱스 색상 변경
-            { index: 25, color: "#00ff00" }, // 25번째를 초록색
-            { index: 50, color: "#0000ff" }, // 50번째를 파란색
-            { index: 75, color: "#ffff00" }, // 75번째를 노란색
-          ]}
-        /> */}
       </Canvas>
 
       {/* Performance Monitor - 5-second average CPU usage */}

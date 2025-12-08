@@ -23,7 +23,7 @@ export function interpolatePosition(edge: Edge, ratio: number) {
   // ==================================================================================
   if (edge.vos_rail_type === "LINEAR") {
     const pStart = points[0];
-    const pEnd = points[points.length - 1];
+    const pEnd = points.at(-1)!;
 
     // Position Interpolation (Lerp)
     // 직선은 중간 점 무시하고 시작/끝 점만으로 보간

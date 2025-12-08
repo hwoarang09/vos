@@ -125,8 +125,9 @@ export class CurveCSCEdgePointsCalculator {
         },
       ];
 
-      const longestSection = lengths.reduce((max, current) =>
-        current.ratio > max.ratio ? current : max
+      const longestSection = lengths.reduce(
+        (max, current) => (current.ratio > max.ratio ? current : max),
+        lengths[2]
       );
 
       // 가장 긴 구간에서 차이 조정

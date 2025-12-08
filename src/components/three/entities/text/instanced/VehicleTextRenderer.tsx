@@ -117,7 +117,7 @@ const VehicleTextRenderer: React.FC<Props> = ({
   }, [numVehicles]);
 
   /** ---------------- InstancedMesh 생성 ---------------- */
-  const instRefs = useRef<(THREE.InstancedMesh | null)[]>(Array(13).fill(null));
+  const instRefs = useRef<(THREE.InstancedMesh | null)[]>(new Array(13).fill(null));
 
   const meshes = useMemo(() => {
     const data = dataRef.current;
@@ -177,7 +177,9 @@ const VehicleTextRenderer: React.FC<Props> = ({
         const mesh = instRefs.current[d];
         if (mesh) mesh.setMatrixAt(slot, HIDE_MATRIX);
       }
-      instRefs.current.forEach(msh => msh && (msh.instanceMatrix.needsUpdate = true));
+    for (const msh of instRefs.current) {
+      if (msh) msh.instanceMatrix.needsUpdate = true;
+    }
       return;
     }
 

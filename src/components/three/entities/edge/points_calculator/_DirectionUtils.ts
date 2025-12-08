@@ -34,46 +34,25 @@ export class DirectionUtils {
    * @param fromDirection from쪽 직선의 방향
    * @param radius 곡선 반지름
    */
-  static calculateArcCenter(
+ static calculateArcCenter(
     bNode: Node,
     cNode: Node,
     fromDirection: Direction,
     radius: number
   ): [number, number, number] {
-    // b노드 기준으로 호의 중심을 계산
-    let centerX = bNode.editor_x;
-    let centerY = bNode.editor_y;
-    const centerZ = bNode.editor_z; // Z는 그대로
+    let { editor_x: centerX, editor_y: centerY, editor_z: centerZ } = bNode;
 
-    // from 방향과 c노드 위치에 따라 호의 중심 결정
-    if (fromDirection === "+x") {
-      // +x 직선에서 c노드의 y가 b노드보다 크면 위쪽에 중심
-      if (cNode.editor_y > bNode.editor_y) {
-        centerY += radius; // 위쪽(+y)으로 radius만큼
-      } else {
-        centerY -= radius; // 아래쪽(-y)으로 radius만큼
-      }
-    } else if (fromDirection === "-x") {
-      // -x 직선
-      if (cNode.editor_y > bNode.editor_y) {
-        centerY += radius;
-      } else {
-        centerY -= radius;
-      }
-    } else if (fromDirection === "+y") {
-      // +y 직선
-      if (cNode.editor_x > bNode.editor_x) {
-        centerX += radius; // 오른쪽(+x)으로 radius만큼
-      } else {
-        centerX -= radius; // 왼쪽(-x)으로 radius만큼
-      }
-    } else if (fromDirection === "-y") {
-      // -y 직선
-      if (cNode.editor_x > bNode.editor_x) {
-        centerX += radius;
-      } else {
-        centerX -= radius;
-      }
+    // Check if the direction is horizontal (+x or -x)
+    const isHorizontal = fromDirection === "+x" || fromDirection === "-x";
+
+    if (isHorizontal) {
+      // Logic for both +x and -x is identical: modify centerY based on cNode's Y
+      const sign = cNode.editor_y > bNode.editor_y ? 1 : -1;
+      centerY += sign * radius;
+    } else {
+      // Logic for both +y and -y is identical: modify centerX based on cNode's X
+      const sign = cNode.editor_x > bNode.editor_x ? 1 : -1;
+      centerX += sign * radius;
     }
 
     return [centerX, centerY, centerZ];

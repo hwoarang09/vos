@@ -70,7 +70,7 @@ export function checkFollowingVehicles(params: {
     if (isLinearEdge) {
       const distance = Math.abs(xFront - xBack);
       
-      const presetIdx = data[ptrBack + SensorData.PRESET_IDX] | 0;
+      const presetIdx = Math.trunc(data[ptrBack + SensorData.PRESET_IDX]);
       const preset = SENSOR_PRESETS[presetIdx] ?? SENSOR_PRESETS[0];
 
       // Use actual zone lengths for linear check
@@ -134,7 +134,7 @@ export function checkFollowingVehicles(params: {
          const zoneHit = checkSensorCollision(backVehId, frontVehId); 
 
          if (zoneHit >= 0) {
-            const presetIdx = data[ptrBack + SensorData.PRESET_IDX] | 0;
+            const presetIdx = Math.trunc(data[ptrBack + SensorData.PRESET_IDX]);
             const preset = SENSOR_PRESETS[presetIdx] ?? SENSOR_PRESETS[0];
             const zoneKey: SensorZoneKey = zoneHit === HitZone.STOP ? "stop" : zoneHit === HitZone.BRAKE ? "brake" : "approach";
             const dec = preset.zones[zoneKey]?.dec ?? 0;

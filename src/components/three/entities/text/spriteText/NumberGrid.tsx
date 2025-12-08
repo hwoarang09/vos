@@ -5,23 +5,23 @@ import SpriteText from "three-spritetext";
 
 type Props = {
   /** 사각형 가로/세로(World 단위) */
-  width?: number;
-  height?: number;
+  readonly width?: number;
+  readonly height?: number;
   /** 행/열 (기본 100x100 = 10,000개) */
-  rows?: number;
-  cols?: number;
+  readonly rows?: number;
+  readonly cols?: number;
   /** 라벨 색상 & 배경 */
-  color?: string;
-  backgroundColor?: string; // "transparent" 유지 가능
+  readonly color?: string;
+  readonly backgroundColor?: string; // "transparent" 유지 가능
   /** 텍스트 높이(셀 높이 * scale) */
-  textHeightScale?: number; // 0~1, 기본 0.7
+  readonly textHeightScale?: number; // 0~1, 기본 0.7
   /** z 고정 높이 */
-  z?: number; // 기본 1.0
+  readonly z?: number; // 기본 1.0
   /** 한 프레임에 생성할 개수(너무 크면 멈칫할 수 있음) */
-  batchSize?: number; // 기본 500
+  readonly batchSize?: number; // 기본 500
   /** 테두리 프레임 표시 여부 */
-  showFrame?: boolean;
-  frameColor?: string;
+  readonly showFrame?: boolean;
+  readonly frameColor?: string;
 };
 
 export default function NumberGrid({
@@ -32,7 +32,7 @@ export default function NumberGrid({
   color = "#ffffff",
   backgroundColor = "transparent",
   textHeightScale = 0.7,
-  z = 1.0,
+  z = 1,
   batchSize = 500,
   showFrame = true,
   frameColor = "#888",
@@ -69,8 +69,8 @@ export default function NumberGrid({
     g.geometry.dispose();
     g.geometry = geo;
     g.position.set(0, 0, 0);
-    // frameRef.current = g;
     groupRef.current?.add(g);
+
     return () => {
       groupRef.current?.remove(g);
       g.geometry.dispose();
@@ -119,8 +119,6 @@ export default function NumberGrid({
         spr.color = color;
         spr.textHeight = textHeight; // 월드 단위 높이
         spr.backgroundColor = backgroundColor; // 'transparent' 유지 가능
-        // spr.padding = 0; spr.borderWidth = 0; 등 필요시 옵션
-
         spr.position.set(x, y, z);
         group.add(spr);
         created.push(spr);

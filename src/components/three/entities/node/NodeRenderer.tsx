@@ -23,24 +23,9 @@ const NodeRenderer: React.FC<NodeRendererProps> = ({ nodes }) => {
     [nodes]
   );
 
-  // Preview node instances - always rendered but handle their own visibility
-  const previewNodeInstances = useMemo(
-    () => [
-      <NodeInstance
-        key="preview_start"
-        nodeId="preview_start"
-        isPreview={true}
-      />,
-      <NodeInstance key="preview_end" nodeId="preview_end" isPreview={true} />,
-    ],
-    []
-  );
-
   return (
     <group>
       {nodeInstances}
-      {/* Preview nodes - they handle their own visibility based on activeMenu */}
-      {/* {previewNodeInstances} */}
     </group>
   );
 };

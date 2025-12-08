@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useRef } from "react";
 import * as THREE from "three";
-import { useFrame, useThree } from "@react-three/fiber";
+import { useFrame } from "@react-three/fiber";
 import { RENDER_ORDER_TEXT } from "@/utils/renderOrder";
 
 export interface TextGroup {
@@ -11,15 +11,15 @@ export interface TextGroup {
 }
 
 type Props = {
-  groups?: TextGroup[];
-  scale?: number;
-  font?: string;
-  color?: string;
-  bgColor?: string;
-  zOffset?: number;
+  readonly groups?: TextGroup[];
+  readonly scale?: number;
+  readonly font?: string;
+  readonly color?: string;
+  readonly bgColor?: string;
+  readonly zOffset?: number;
   // LOD 설정
-  lodDistance?: number;
-  camHeightCutoff?: number;
+  readonly lodDistance?: number;
+  readonly camHeightCutoff?: number;
 };
 
 // LOD 상수
@@ -27,7 +27,7 @@ const HIDE_MATRIX = new THREE.Matrix4().makeScale(0, 0, 0);
 
 export default function NumberGridInstanced({
   groups = [],
-  scale = 1.0,
+  scale = 1,
   font = "bold 96px system-ui, Roboto, Arial",
   color = "#ffffff",
   bgColor = "transparent",
@@ -91,7 +91,9 @@ export default function NumberGridInstanced({
     }
 
     let totalCharacters = 0;
-    groups.forEach(group => totalCharacters += group.digits.length);
+    for (const group of groups) {
+      totalCharacters += group.digits.length;
+    }
 
     const counts = new Array(12).fill(0);
     const slotDigit = new Int8Array(totalCharacters);
@@ -99,16 +101,19 @@ export default function NumberGridInstanced({
     const slotPosition = new Int32Array(totalCharacters);
 
     let charIndex = 0;
-    groups.forEach((group, groupIndex) => {
-      group.digits.forEach((digit, positionIndex) => {
+    for (let groupIndex = 0; groupIndex < groups.length; groupIndex++) {
+      const group = groups[groupIndex];
+      const digits = group.digits;
+      for (let positionIndex = 0; positionIndex < digits.length; positionIndex++) {
+        const digit = digits[positionIndex];
         const validDigit = Math.max(0, Math.min(11, digit));
         slotDigit[charIndex] = validDigit;
         slotGroup[charIndex] = groupIndex;
         slotPosition[charIndex] = positionIndex;
         counts[validDigit]++;
         charIndex++;
-      });
-    });
+      }
+    }
 
     const slotIndex = new Int32Array(totalCharacters);
     const currentSlot = new Array(12).fill(0);
@@ -130,7 +135,7 @@ export default function NumberGridInstanced({
   }, [groups]);
 
   /** ---------------- InstancedMesh 생성 ---------------- */
-  const instRefs = useRef<(THREE.InstancedMesh | null)[]>(Array(12).fill(null));
+  const instRefs = useRef<(THREE.InstancedMesh | null)[]>(new Array(12).fill(null));
 
   const meshes = useMemo(() => {
     const data = dataRef.current;
@@ -189,7 +194,9 @@ export default function NumberGridInstanced({
         const mesh = instRefs.current[d];
         if (mesh) mesh.setMatrixAt(slot, HIDE_MATRIX);
       }
-      instRefs.current.forEach(msh => msh && (msh.instanceMatrix.needsUpdate = true));
+      for (const msh of instRefs.current) {
+        if (msh) msh.instanceMatrix.needsUpdate = true;
+      }
       return;
     }
 
@@ -254,7 +261,9 @@ export default function NumberGridInstanced({
       mesh.setMatrixAt(slot, m);
     }
 
-    instRefs.current.forEach(msh => msh && (msh.instanceMatrix.needsUpdate = true));
+    for (const msh of instRefs.current) {
+      if (msh) msh.instanceMatrix.needsUpdate = true;
+    }
   });
 
   return <group>{meshes}</group>;

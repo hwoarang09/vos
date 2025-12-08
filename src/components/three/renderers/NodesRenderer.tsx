@@ -32,9 +32,9 @@ const NodesRenderer: React.FC<NodesRendererProps> = ({ nodeIds }) => {
         uniforms: {
           uTime: { value: 0 },
           uColor: { value: new THREE.Color("#ff6b6b") },
-          uOpacity: { value: 1.0 },
+          uOpacity: { value: 1 },
           uSize: { value: 0.1 },
-          uIsPreview: { value: 0.0 },
+          uIsPreview: { value: 0 },
         },
         transparent: true,
         side: THREE.FrontSide,
@@ -47,9 +47,9 @@ const NodesRenderer: React.FC<NodesRendererProps> = ({ nodeIds }) => {
   // Build nodeId -> instanceIndex mapping
   useEffect(() => {
     const newMap = new Map<string, number>();
-    nodeIds.forEach((nodeId, index) => {
-      newMap.set(nodeId, index);
-    });
+    for (let index = 0; index < nodeIds.length; index++) {
+      newMap.set(nodeIds[index], index);
+    }
     nodeDataRef.current = newMap;
   }, [nodeIds]);
 
@@ -65,9 +65,10 @@ const NodesRenderer: React.FC<NodesRendererProps> = ({ nodeIds }) => {
 
     const getNodeByName = useNodeStore.getState().getNodeByName;
 
-    nodeIds.forEach((nodeId, index) => {
+    for (let index = 0; index < nodeIds.length; index++) {
+      const nodeId = nodeIds[index];
       const node = getNodeByName(nodeId);
-      if (!node) return;
+      if (!node) continue;
 
       position.set(node.editor_x, node.editor_y, node.editor_z);
       const size = node.size ?? 1;
@@ -78,7 +79,7 @@ const NodesRenderer: React.FC<NodesRendererProps> = ({ nodeIds }) => {
 
       // Set color using instance color attribute (if needed)
       // For now, we'll use a single color for all nodes
-    });
+    }
 
     mesh.instanceMatrix.needsUpdate = true;
   }, [nodeIds, instanceCount]);
@@ -96,11 +97,11 @@ const NodesRenderer: React.FC<NodesRendererProps> = ({ nodeIds }) => {
     const unsub = useNodeStore.subscribe((state) => {
       let needsUpdate = false;
 
-      nodeIds.forEach((nodeId) => {
+      for (const nodeId of nodeIds) {
         const node = state.getNodeByName(nodeId);
         const instanceIndex = nodeDataRef.current.get(nodeId);
         
-        if (!node || instanceIndex === undefined) return;
+        if (!node || instanceIndex === undefined) continue;
 
         position.set(node.editor_x, node.editor_y, node.editor_z);
         const size = node.size ?? 1;
@@ -109,7 +110,7 @@ const NodesRenderer: React.FC<NodesRendererProps> = ({ nodeIds }) => {
         matrix.compose(position, quaternion, scale);
         mesh.setMatrixAt(instanceIndex, matrix);
         needsUpdate = true;
-      });
+      }
 
       if (needsUpdate) {
         mesh.instanceMatrix.needsUpdate = true;

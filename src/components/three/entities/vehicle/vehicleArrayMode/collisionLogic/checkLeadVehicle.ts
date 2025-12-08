@@ -103,7 +103,7 @@ export function checkLeadVehicle(params: {
           const zoneHit = checkSensorCollision(leadVehId, targetTailId);
           
           if (zoneHit >= 0) {
-            const presetIdx = data[leadPtr + SensorData.PRESET_IDX] | 0;
+            const presetIdx = Math.trunc(data[leadPtr + SensorData.PRESET_IDX]);
             const preset = SENSOR_PRESETS[presetIdx] ?? SENSOR_PRESETS[0];
             const zoneKey: SensorZoneKey = zoneHit === HitZone.STOP ? SensorZoneKey.STOP : zoneHit === HitZone.BRAKE ? SensorZoneKey.BRAKE : SensorZoneKey.APPROACH;
             const dec = preset.zones[zoneKey]?.dec ?? 0;

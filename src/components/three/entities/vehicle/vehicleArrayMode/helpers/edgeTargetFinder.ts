@@ -30,12 +30,12 @@ export function findCollisionTargetEdges(
     
     // Safety: Retrieve current edge index from edgeArray? 
     // Optimization: Just pass edgeIdx from caller if possible, but for now filtering by object identity or name
-    currentEdge.prevEdgeIndices.forEach(idx => {
+    for (const idx of currentEdge.prevEdgeIndices) {
        const otherEdge = edgeArray[idx];
        if (otherEdge && otherEdge.edge_name !== currentEdge.edge_name) {
           mergeTargetIndices.push(idx);
        }
-    });
+    }
   }
 
   // [2] Next Targets (Paths leaving the node)

@@ -232,7 +232,7 @@ export const useCFGStore = create<CFGStore>((set) => ({
       const textStore = useTextStore.getState();
       textStore.clearAllTexts();
 
-      if (textStore.mode === "dict") {
+      if (textStore.mode === VehicleSystemType.RapierDict) {
         // Dict mode: { 'N001': [x, y, z], ... } (TMP_ 제외)
         const nodeTexts: Record<string, TextPosition> = {};
         nodes.forEach((node) => {
@@ -264,7 +264,7 @@ export const useCFGStore = create<CFGStore>((set) => ({
       }
 
       // 엣지 텍스트 생성 (TMP_ 제외)
-      if (textStore.mode === "dict") {
+      if (textStore.mode === VehicleSystemType.RapierDict) {
         // Dict mode: { 'E001': [midpoint_x, midpoint_y, midpoint_z], ... }
         const edgeTexts: Record<string, TextPosition> = {};
         edges.forEach((edge) => {

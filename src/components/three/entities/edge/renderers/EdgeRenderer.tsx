@@ -1,7 +1,7 @@
 // EdgeRenderer.tsx - InstancedMesh 통합 버전
 import React, { useRef, useEffect, useMemo } from "react";
 import { useFrame } from "@react-three/fiber";
-import { Edge } from "../../../../../types";
+import { Edge } from "@/types";
 import { colors } from "./colors";
 import * as THREE from "three";
 import edgeVertexShader from "../shaders/edgeVertex.glsl?raw";
@@ -29,16 +29,16 @@ const EdgeRenderer: React.FC<EdgeRendererProps> = ({
       CURVE_CSC: [],
     };
 
-    edges
-      .filter((edge) => edge.rendering_mode !== "preview")
-      .forEach((edge) => {
-        if (edge.renderingPoints && edge.renderingPoints.length > 0) {
-          const type = edge.vos_rail_type || "LINEAR";
-          if (grouped[type]) {
-            grouped[type].push(edge);
-          }
+    for (const edge of edges) {
+      if (edge.rendering_mode === "preview") continue;
+
+      if (edge.renderingPoints && edge.renderingPoints.length > 0) {
+        const type = edge.vos_rail_type || "LINEAR";
+        if (grouped[type]) {
+          grouped[type].push(edge);
         }
-      });
+      }
+    }
 
     return grouped;
   }, [edges]);
@@ -108,9 +108,9 @@ const EdgeTypeRenderer: React.FC<EdgeTypeRendererProps> = ({
       uniforms: {
         uTime: { value: 0 },
         uColor: { value: new THREE.Color(color) },
-        uOpacity: { value: 1.0 },
-        uIsPreview: { value: 0.0 },
-        uLength: { value: 1.0 },
+        uOpacity: { value: 1 },
+        uIsPreview: { value: 0 },
+        uLength: { value: 1 },
       },
       vertexShader: edgeVertexShader,
       fragmentShader: edgeFragmentShader,
@@ -135,14 +135,14 @@ const EdgeTypeRenderer: React.FC<EdgeTypeRendererProps> = ({
 
     let instanceIndex = 0;
 
-    edges.forEach((edge) => {
+    for (const edge of edges) {
       const points = edge.renderingPoints;
-      if (!points || points.length === 0) return;
+      if (!points || points.length === 0) continue;
 
       if (edgeType === "LINEAR") {
         // Straight edge: single instance from first to last point
         const startPos = points[0];
-        const endPos = points[points.length - 1];
+        const endPos = points.at(-1)!;
 
         const centerX = (startPos.x + endPos.x) / 2;
         const centerY = (startPos.y + endPos.y) / 2;
@@ -151,7 +151,7 @@ const EdgeTypeRenderer: React.FC<EdgeTypeRendererProps> = ({
         const length = startPos.distanceTo(endPos);
         const angle = Math.atan2(endPos.y - startPos.y, endPos.x - startPos.x);
 
-        if (length < 0.01) return;
+        if (length < 1) continue;
 
         position.set(centerX, centerY, centerZ);
         euler.set(0, 0, angle);
@@ -183,7 +183,7 @@ const EdgeTypeRenderer: React.FC<EdgeTypeRendererProps> = ({
           mesh.setMatrixAt(instanceIndex++, matrix);
         }
       }
-    });
+    }
 
     mesh.instanceMatrix.needsUpdate = true;
   }, [edges, edgeType, instanceCount]);

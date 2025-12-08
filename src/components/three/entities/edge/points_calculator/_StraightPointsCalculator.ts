@@ -12,7 +12,7 @@ export class StraightPointsCalculator {
    * @returns 3D 렌더링 포인트 배열
    */
   static calculate(edgeRowData: any, nodes: Node[]): THREE.Vector3[] {
-    const { edge_name, from_node, to_node } = edgeRowData;
+    const { from_node, to_node } = edgeRowData;
 
     const fromNode = nodes.find((n: Node) => n.node_name === from_node);
     const toNode = nodes.find((n: Node) => n.node_name === to_node);

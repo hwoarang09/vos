@@ -2,8 +2,8 @@ import { useEffect, useRef, useCallback, useMemo } from "react";
 import { RigidBody, CuboidCollider } from "@react-three/rapier";
 import type { RapierRigidBody } from "@react-three/rapier";
 import SpriteText from "three-spritetext";
-import { useVehicleRapierStore } from "../../../../../store/vehicle/rapierMode/vehicleStore";
-import { getVehicleConfigSync } from "../../../../../config/vehicleConfig";
+import { useVehicleRapierStore } from "@/store/vehicle/rapierMode/vehicleStore";
+import { getVehicleConfigSync } from "@/config/vehicleConfig";
 
 export interface VehicleRapierModeVehicleProps {
   vehicleIndex: number;
@@ -19,7 +19,6 @@ const VehicleRapierModeVehicle: React.FC<VehicleRapierModeVehicleProps> = ({
   const position: [number, number, number] = initialPosition
     ? [initialPosition.x, initialPosition.y, initialPosition.z]
     : [0, 0, 0];
-  // console.log(`[VehicleRapierModeVehicle] vehicleIndex: ${vehicleIndex}, position: ${position}`);
 
   // Get vehicle config
   const config = getVehicleConfigSync();
@@ -101,7 +100,7 @@ const VehicleRapierModeVehicle: React.FC<VehicleRapierModeVehicleProps> = ({
         name={`sensor-${vehicleIndex}`}
       />
 
-      <primitive object={spriteText} />
+      <primitive object={spriteText} /> 
     </RigidBody>
   );
 };

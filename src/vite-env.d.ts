@@ -1,4 +1,5 @@
 /// <reference types="vite/client" />
+/// <reference types="@react-three/fiber" />
 declare module "*.svg" {
   import * as React from "react";
   export const ReactComponent: React.FC<React.SVGProps<SVGSVGElement>>;

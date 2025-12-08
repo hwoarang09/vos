@@ -46,9 +46,9 @@ const NodeInstance: React.FC<NodeInstanceProps> = ({
         uniforms: {
           uTime: { value: 0 },
           uColor: { value: colorRef.current.clone() },
-          uOpacity: { value: 1.0 },
+          uOpacity: { value: 1 },
           uSize: { value: 0.1 },
-          uIsPreview: { value: isPreview ? 1.0 : 0.0 },
+          uIsPreview: { value: isPreview ? 1 : 0 },
         },
         transparent: true,
         side: THREE.FrontSide,
