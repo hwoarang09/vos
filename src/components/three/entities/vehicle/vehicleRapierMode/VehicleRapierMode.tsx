@@ -46,11 +46,9 @@ const VehicleRapierMode: React.FC<VehicleRapierModeProps> = ({
 
     // Check if simulation is paused
     const isPaused = useVehicleTestStore.getState().isPaused;
-    if (isPaused || !initialized) return;
-
     const store = useVehicleRapierStore.getState();
     const edgeArray = Array.from(edges.values());
-    if (edgeArray.length === 0 || actualNumVehicles === 0) return;
+    if (edgeArray.length === 0 || actualNumVehicles === 0 || isPaused || !initialized) return;
 
     for (let i = 0; i < actualNumVehicles; i++) {
       const status = store.getVehicleStatus(i);
@@ -75,48 +73,29 @@ const VehicleRapierMode: React.FC<VehicleRapierModeProps> = ({
       if (!edge?.renderingPoints?.length) continue;
 
       const isCurve = edge.vos_rail_type !== "LINEAR";
-      const linearMaxSpeed = getLinearMaxSpeed();
-      const linearAccel = getLinearAcceleration();
-      const curveMaxSpeed = getCurveMaxSpeed();
-
-      let currentSpeed, acceleration;
-
-      if (isCurve) {
-        currentSpeed = curveMaxSpeed;
-        acceleration = 0;
-      } else {
-        const targetSpeed = linearMaxSpeed;
-        acceleration = linearAccel;
-        currentSpeed = Math.min(targetSpeed, velocity + acceleration * clampedDelta);
-      }
+      const { currentSpeed } = calculateMovementParameters(
+        isCurve,
+        velocity,
+        clampedDelta
+      );
 
       store.setVehicleVelocity(i, currentSpeed);
 
       let newRatio = edgeRatio + (currentSpeed * clampedDelta) / edge.distance;
 
-      while (newRatio >= 1) {
-        const overflow = (newRatio - 1) * edge.distance;
-        const vehicleLoop = loopsRef.current.find(vl => vl.vehicleIndex === i);
-        if (!vehicleLoop) {
-          console.warn(`[Vehicle ${i}] No loop found, stopping`);
-          break;
-        }
+      const transitionResult = processEdgeTransitions(
+        newRatio,
+        edge,
+        currentEdgeIndex,
+        i,
+        loopsRef.current,
+        edgeNameToIndexRef.current,
+        edgeArray
+      );
 
-        const currentEdgeName = edge.edge_name;
-        const nextEdgeName = getNextEdgeInLoop(currentEdgeName, vehicleLoop.edgeSequence);
-        const nextEdgeIndex = edgeNameToIndexRef.current.get(nextEdgeName);
-        if (nextEdgeIndex === undefined) {
-          console.warn(`[Vehicle ${i}] Next edge ${nextEdgeName} not found in map`);
-          break;
-        }
-
-        const nextEdge = edgeArray[nextEdgeIndex];
-        if (!nextEdge?.distance) break;
-
-        currentEdgeIndex = nextEdgeIndex;
-        edge = nextEdge;
-        newRatio = overflow / edge.distance;
-      }
+      newRatio = transitionResult.ratio;
+      edge = transitionResult.edge;
+      currentEdgeIndex = transitionResult.edgeIndex;
 
       store.setCurrentEdge(i, currentEdgeIndex);
       store.setEdgeRatio(i, newRatio);
@@ -187,5 +166,73 @@ const RapierVehiclesRenderer = ({ count }: { count: number }) => {
     </>
   );
 };
+
+
+
+function calculateMovementParameters(
+  isCurve: boolean,
+  velocity: number,
+  delta: number
+) {
+  if (isCurve) {
+    return {
+      currentSpeed: getCurveMaxSpeed(),
+      acceleration: 0,
+    };
+  }
+
+  const linearMaxSpeed = getLinearMaxSpeed();
+  const linearAccel = getLinearAcceleration();
+  const currentSpeed = Math.min(linearMaxSpeed, velocity + linearAccel * delta);
+
+  return {
+    currentSpeed,
+  };
+}
+
+function processEdgeTransitions(
+  startRatio: number,
+  startEdge: any,
+  startEdgeIndex: number,
+  vehicleIndex: number,
+  loops: VehicleLoop[],
+  edgeNameToIndex: Map<string, number>,
+  edgeArray: any[]
+) {
+  let ratio = startRatio;
+  let edge = startEdge;
+  let edgeIndex = startEdgeIndex;
+
+  while (ratio >= 1) {
+    const overflow = (ratio - 1) * edge.distance;
+    const vehicleLoop = loops.find((vl) => vl.vehicleIndex === vehicleIndex);
+    if (!vehicleLoop) {
+      console.warn(`[Vehicle ${vehicleIndex}] No loop found, stopping`);
+      break;
+    }
+
+    const currentEdgeName = edge.edge_name;
+    const nextEdgeName = getNextEdgeInLoop(
+      currentEdgeName,
+      vehicleLoop.edgeSequence
+    );
+    const nextEdgeIndex = edgeNameToIndex.get(nextEdgeName);
+    if (nextEdgeIndex === undefined) {
+      console.warn(
+        `[Vehicle ${vehicleIndex}] Next edge ${nextEdgeName} not found in map`
+      );
+      break;
+    }
+
+    const nextEdge = edgeArray[nextEdgeIndex];
+    if (!nextEdge?.distance) break;
+
+    edgeIndex = nextEdgeIndex;
+    edge = nextEdge;
+    ratio = overflow / edge.distance;
+  }
+
+  return { edge, edgeIndex, ratio };
+}
 
 export default VehicleRapierMode;

@@ -2,30 +2,31 @@ import React, { useEffect, useMemo, useRef } from "react";
 import * as THREE from "three";
 import { useFrame } from "@react-three/fiber";
 import { RENDER_ORDER_TEXT } from "@/utils/renderOrder";
+import { useDigitMaterials, CHAR_COUNT } from "./useDigitMaterials";
+import {
+  TextGroup,
+  SlotData,
+  HIDE_MATRIX,
+  buildSlotData,
+  applyHighAltitudeCulling,
+  computeBillboardRotation,
+  distanceSquared,
+} from "./instancedTextUtils";
 
-export interface TextGroup {
-  x: number;
-  y: number;
-  z: number;
-  digits: number[];
-}
+export type { TextGroup };
 
-type Props = {
+interface Props {
   readonly groups?: TextGroup[];
   readonly scale?: number;
   readonly font?: string;
   readonly color?: string;
   readonly bgColor?: string;
   readonly zOffset?: number;
-  // LOD 설정
   readonly lodDistance?: number;
   readonly camHeightCutoff?: number;
-};
+}
 
-// LOD 상수
-const HIDE_MATRIX = new THREE.Matrix4().makeScale(0, 0, 0);
-
-export default function NumberGridInstanced({
+export default function InstancedText({
   groups = [],
   scale = 1,
   font = "bold 96px system-ui, Roboto, Arial",
@@ -37,114 +38,22 @@ export default function NumberGridInstanced({
 }: Props) {
   const LOD_DIST_SQ = lodDistance * lodDistance;
 
-  // 0~9, N, E 텍스처 12개
-  const digitMaterials = useMemo(() => {
-    const characters = ["0","1","2","3","4","5","6","7","8","9","N","E"];
-
-    return characters.map(char => {
-      const S = 256;
-      const c = document.createElement("canvas");
-      c.width = c.height = S;
-      const ctx = c.getContext("2d")!;
-      ctx.clearRect(0, 0, S, S);
-      if (bgColor !== "transparent") {
-        ctx.fillStyle = bgColor;
-        ctx.fillRect(0, 0, S, S);
-      }
-      ctx.fillStyle = color;
-      ctx.font = font;
-      ctx.textAlign = "center";
-      ctx.textBaseline = "middle";
-      ctx.fillText(char, S / 2, S / 2, S * 0.9);
-
-      const tex = new THREE.Texture(c);
-      tex.minFilter = THREE.LinearFilter;
-      tex.magFilter = THREE.LinearFilter;
-      tex.generateMipmaps = false;
-      tex.needsUpdate = true;
-
-      return new THREE.MeshBasicMaterial({
-        map: tex,
-        transparent: true,
-        depthTest: true,
-        depthWrite: false,
-      });
-    });
-  }, [font, color, bgColor]);
-
+  const digitMaterials = useDigitMaterials({ color, bgColor, font });
   const quad = useMemo(() => new THREE.PlaneGeometry(1, 1), []);
 
-  /** ---------------- 데이터 구성 ---------------- */
-  const dataRef = useRef<{
-    totalCharacters: number;
-    counts: number[];
-    slotIndex: Int32Array;
-    slotDigit: Int8Array;
-    slotGroup: Int32Array;
-    slotPosition: Int32Array;
-  } | null>(null);
+  const dataRef = useRef<SlotData | null>(null);
+  const instRefs = useRef<(THREE.InstancedMesh | null)[]>(new Array(CHAR_COUNT).fill(null));
 
   useEffect(() => {
-    if (!groups || groups.length === 0) {
-      dataRef.current = null;
-      return;
-    }
-
-    let totalCharacters = 0;
-    for (const group of groups) {
-      totalCharacters += group.digits.length;
-    }
-
-    const counts = new Array(12).fill(0);
-    const slotDigit = new Int8Array(totalCharacters);
-    const slotGroup = new Int32Array(totalCharacters);
-    const slotPosition = new Int32Array(totalCharacters);
-
-    let charIndex = 0;
-    for (let groupIndex = 0; groupIndex < groups.length; groupIndex++) {
-      const group = groups[groupIndex];
-      const digits = group.digits;
-      for (let positionIndex = 0; positionIndex < digits.length; positionIndex++) {
-        const digit = digits[positionIndex];
-        const validDigit = Math.max(0, Math.min(11, digit));
-        slotDigit[charIndex] = validDigit;
-        slotGroup[charIndex] = groupIndex;
-        slotPosition[charIndex] = positionIndex;
-        counts[validDigit]++;
-        charIndex++;
-      }
-    }
-
-    const slotIndex = new Int32Array(totalCharacters);
-    const currentSlot = new Array(12).fill(0);
-
-    for (let i = 0; i < totalCharacters; i++) {
-      const digit = slotDigit[i];
-      slotIndex[i] = currentSlot[digit];
-      currentSlot[digit]++;
-    }
-
-    dataRef.current = {
-      totalCharacters,
-      counts,
-      slotIndex,
-      slotDigit,
-      slotGroup,
-      slotPosition,
-    };
+    dataRef.current = buildSlotData(groups);
   }, [groups]);
-
-  /** ---------------- InstancedMesh 생성 ---------------- */
-  const instRefs = useRef<(THREE.InstancedMesh | null)[]>(new Array(12).fill(null));
 
   const meshes = useMemo(() => {
     const data = dataRef.current;
-    if (!data || !groups || groups.length === 0) return [];
-
-    const { counts } = data;
+    if (!data || groups.length === 0) return [];
 
     return digitMaterials.map((mat, d) => {
-      const cnt = Math.max(1, counts[d]);
+      const cnt = Math.max(1, data.counts[d]);
       return (
         <instancedMesh
           key={`digit-${d}-${cnt}`}
@@ -161,48 +70,32 @@ export default function NumberGridInstanced({
     const data = dataRef.current;
     if (!data) return;
 
-    const { counts } = data;
-    for (let d = 0; d < 12; d++) {
+    for (let d = 0; d < CHAR_COUNT; d++) {
       const mesh = instRefs.current[d];
-      if (mesh && counts[d] > 0) {
-        mesh.count = counts[d];
+      if (mesh && data.counts[d] > 0) {
+        mesh.count = data.counts[d];
         mesh.instanceMatrix.needsUpdate = true;
       }
     }
   }, [dataRef.current?.counts]);
 
-  /** ---------------- 빌보드 렌더링 + LOD ---------------- */
   useFrame(({ camera }) => {
     const D = dataRef.current;
-    if (!D || !groups || groups.length === 0) return;
+    if (!D || groups.length === 0) return;
 
     const { slotDigit, slotIndex, slotGroup, slotPosition, totalCharacters } = D;
+    const { x: cx, y: cy, z: cz } = camera.position;
+
+    if (applyHighAltitudeCulling(cz, camHeightCutoff, D, instRefs.current)) {
+      return;
+    }
 
     const m = new THREE.Matrix4();
     const s = new THREE.Vector3(scale, scale, 1);
     const charSpacing = 0.2 * scale;
 
-    const cx = camera.position.x;
-    const cy = camera.position.y;
-    const cz = camera.position.z;
-
-    // 카메라 높이 기반 전체 컬링
-    if (cz > camHeightCutoff) {
-      for (let i = 0; i < totalCharacters; i++) {
-        const d = slotDigit[i];
-        const slot = slotIndex[i];
-        const mesh = instRefs.current[d];
-        if (mesh) mesh.setMatrixAt(slot, HIDE_MATRIX);
-      }
-      for (const msh of instRefs.current) {
-        if (msh) msh.instanceMatrix.needsUpdate = true;
-      }
-      return;
-    }
-
-    // 그룹별 LOD 캐시
     const groupLOD = new Map<number, boolean>();
-    const groupRotation = new Map<number, { q: THREE.Quaternion; right: THREE.Vector3 }>();
+    const groupRotation = new Map<number, { quaternion: THREE.Quaternion; right: THREE.Vector3 }>();
 
     for (let i = 0; i < totalCharacters; i++) {
       const d = slotDigit[i];
@@ -219,8 +112,7 @@ export default function NumberGridInstanced({
 
       // LOD 체크 (그룹당 한번만)
       if (!groupLOD.has(groupIdx)) {
-        const dx = cx - gx, dy = cy - gy, dz = cz - gz;
-        const distSq = dx*dx + dy*dy + dz*dz;
+        const distSq = distanceSquared(cx, cy, cz, gx, gy, gz);
         groupLOD.set(groupIdx, distSq > LOD_DIST_SQ);
       }
 
@@ -231,33 +123,18 @@ export default function NumberGridInstanced({
 
       // 빌보드 회전 (그룹당 한번만)
       if (!groupRotation.has(groupIdx)) {
-        const groupCenter = new THREE.Vector3(gx, gy, gz);
-        const lookDirection = new THREE.Vector3()
-          .subVectors(camera.position, groupCenter)
-          .normalize();
-
-        const upVector = new THREE.Vector3(0, 0, 1);
-        const matrix = new THREE.Matrix4().lookAt(
-          new THREE.Vector3(0, 0, 0),
-          lookDirection.clone().negate(),
-          upVector
-        );
-
-        const q = new THREE.Quaternion().setFromRotationMatrix(matrix);
-        const right = new THREE.Vector3(1, 0, 0).applyQuaternion(q);
-        groupRotation.set(groupIdx, { q, right });
+        const pos = new THREE.Vector3(gx, gy, gz);
+        groupRotation.set(groupIdx, computeBillboardRotation(pos, camera.position));
       }
 
-      const { q, right } = groupRotation.get(groupIdx)!;
+      const { quaternion, right } = groupRotation.get(groupIdx)!;
 
-      // 문자 위치 계산
       const halfLen = (group.digits.length - 1) / 2;
       const offsetX = (posIdx - halfLen) * charSpacing;
       const offsetVector = right.clone().multiplyScalar(offsetX);
-
       const finalPos = new THREE.Vector3(gx, gy, gz).add(offsetVector);
 
-      m.compose(finalPos, q, s);
+      m.compose(finalPos, quaternion, s);
       mesh.setMatrixAt(slot, m);
     }
 
