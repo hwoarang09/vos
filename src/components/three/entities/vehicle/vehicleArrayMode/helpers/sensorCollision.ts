@@ -84,26 +84,22 @@ function satQuadCheck(
     if (axisLenSq < 1e-10) continue;
 
     // Poly A 투영 범위
-    let minA = Infinity;
-    let maxA = -Infinity;
-    for (let j = 0; j < 4; j++) {
-      const px = data[baseA + idxA[j]];
-      const py = data[baseA + idxA[j] + 1];
-      const proj = px * axisX + py * axisY;
-      if (proj < minA) minA = proj;
-      if (proj > maxA) maxA = proj;
-    }
+    const { min: minA, max: maxA } = getProjectedRange(
+      data,
+      baseA,
+      idxA,
+      axisX,
+      axisY
+    );
 
     // Poly B 투영 범위
-    let minB = Infinity;
-    let maxB = -Infinity;
-    for (let j = 0; j < 4; j++) {
-      const px = data[baseB + idxB[j]];
-      const py = data[baseB + idxB[j] + 1];
-      const proj = px * axisX + py * axisY;
-      if (proj < minB) minB = proj;
-      if (proj > maxB) maxB = proj;
-    }
+    const { min: minB, max: maxB } = getProjectedRange(
+      data,
+      baseB,
+      idxB,
+      axisX,
+      axisY
+    );
 
     // 분리축 발견 = 충돌 아님
     if (maxA < minB || maxB < minA) {
@@ -132,4 +128,27 @@ export function roughDistanceCheck(
   const dy = data[base1 + SensorPoint.FL_Y] - data[base2 + SensorPoint.FL_Y];
 
   return (dx * dx + dy * dy) <= (threshold * threshold);
+}
+
+const tempRange = { min: 0, max: 0 };
+
+function getProjectedRange(
+  data: Float32Array,
+  base: number,
+  indices: readonly number[],
+  axisX: number,
+  axisY: number
+): { min: number; max: number } {
+  let min = Infinity;
+  let max = -Infinity;
+  for (let j = 0; j < 4; j++) {
+    const px = data[base + indices[j]];
+    const py = data[base + indices[j] + 1];
+    const proj = px * axisX + py * axisY;
+    if (proj < min) min = proj;
+    if (proj > max) max = proj;
+  }
+  tempRange.min = min;
+  tempRange.max = max;
+  return tempRange;
 }

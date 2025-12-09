@@ -46,24 +46,9 @@ export function updateMovement(params: MovementUpdateParams) {
   for (let i = 0; i < actualNumVehicles; i++) {
     const ptr = i * VEHICLE_DATA_SIZE;
 
-    // 1. Status Check (Direct Read)
-    const status = data[ptr + MovementData.MOVING_STATUS];
-
-    // Skip if paused (preserve state - freeze)
-    if (status === MovingStatus.PAUSED) {
+    // 1. Status Check (Early Return)
+    if (shouldSkipUpdate(data, ptr)) {
       continue;
-    }
-
-    // Skip if stopped (reset state - hard stop)
-    if (status === MovingStatus.STOPPED) {
-      data[ptr + MovementData.VELOCITY] = 0;
-      continue;
-    }
-
-    // Double check: if explicit MOVING state is missing (safety)
-    if (status !== MovingStatus.MOVING) {
-       data[ptr + MovementData.VELOCITY] = 0;
-       continue;
     }
 
     // 2. Data Read (Direct Access)
@@ -74,7 +59,12 @@ export function updateMovement(params: MovementUpdateParams) {
     const deceleration = data[ptr + MovementData.DECELERATION];
     const edgeRatio = data[ptr + MovementData.EDGE_RATIO];
     const rawHit = Math.trunc(data[ptr + SensorData.HIT_ZONE]); // -1,0,1,2
-    const hitZone = rawHit === 2 ? 2 : (deceleration !== 0 ? rawHit : -1); // treat as contact only when decel is active, except stop zone
+    let hitZone = -1;
+    if (rawHit === 2) {
+      hitZone = 2;
+    } else if (deceleration !== 0) {
+      hitZone = rawHit;
+    }
     
     // Position fallbacks
     let finalX = data[ptr + MovementData.X];
@@ -87,18 +77,12 @@ export function updateMovement(params: MovementUpdateParams) {
     if (!currentEdge) continue;
 
     // 3. Calculate Speed (accel OR decel, based on hitZone)
-    let appliedAccel = acceleration;
-    let appliedDecel = 0;
-
-    // Override acceleration for curves if not braking
-    if (currentEdge.vos_rail_type !== "LINEAR") {
-       appliedAccel = getCurveAcceleration();
-    }
-
-    if (hitZone >= 0) {
-      appliedAccel = 0;
-      appliedDecel = deceleration;
-    }
+    const { appliedAccel, appliedDecel } = calculateAccDec(
+       acceleration,
+       deceleration,
+       hitZone,
+       currentEdge
+    );
 
     // Hard stop for stop-zone contact
     if (hitZone === 2) {
@@ -160,4 +144,56 @@ export function updateMovement(params: MovementUpdateParams) {
   if (frameCount % DEBUG_INTERVAL === 0) {
     logSensorSummary(actualNumVehicles);
   }
+}
+
+/**
+ * Checks vehicle status for early exit conditions.
+ * Returns true if the update should be skipped.
+ */
+function shouldSkipUpdate(data: Float32Array, ptr: number): boolean {
+  const status = data[ptr + MovementData.MOVING_STATUS];
+
+  // Skip if paused (preserve state - freeze)
+  if (status === MovingStatus.PAUSED) {
+    return true;
+  }
+
+  // Skip if stopped (reset state - hard stop)
+  if (status === MovingStatus.STOPPED) {
+    data[ptr + MovementData.VELOCITY] = 0;
+    return true;
+  }
+
+  // Double check: if explicit MOVING state is missing (safety)
+  if (status !== MovingStatus.MOVING) {
+    data[ptr + MovementData.VELOCITY] = 0;
+    return true;
+  }
+
+  return false;
+}
+
+/**
+ * Determines the applied acceleration and deceleration based on edge type and sensor hit status.
+ */
+function calculateAccDec(
+  baseAccel: number,
+  baseDecel: number,
+  hitZone: number,
+  currentEdge: Edge
+): { appliedAccel: number; appliedDecel: number } {
+  let appliedAccel = baseAccel;
+  let appliedDecel = 0;
+
+  // Override acceleration for curves if not braking
+  if (currentEdge.vos_rail_type !== "LINEAR") {
+    appliedAccel = getCurveAcceleration();
+  }
+
+  if (hitZone >= 0) {
+    appliedAccel = 0;
+    appliedDecel = baseDecel;
+  }
+
+  return { appliedAccel, appliedDecel };
 }
