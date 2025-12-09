@@ -49,36 +49,4 @@ export function calculateEffectiveResumeDistance(
   }
 }
 
-/**
- * Calculate effective safe/resume distances for same-edge collision
- */
-export function calculateSameEdgeDistances(
-  isLinearEdge: boolean,
-  dy: number,
-  baseSafeDistance: number,
-  baseResumeDistance: number
-): {
-  effectiveSafeDistance: number;
-  effectiveResumeDistance: number;
-} {
-  if (isLinearEdge) {
-    return {
-      effectiveSafeDistance: baseSafeDistance,
-      effectiveResumeDistance: baseResumeDistance,
-    };
-  } else {
-    // Curve edge - adjust based on y-axis difference
-    if (dy < 0.7) {
-      return {
-        effectiveSafeDistance: baseSafeDistance * 0.9, // 10% shorter
-        effectiveResumeDistance: baseResumeDistance * 0.9,
-      };
-    } else {
-      return {
-        effectiveSafeDistance: baseSafeDistance * 0.1, // 90% shorter for large y-diff
-        effectiveResumeDistance: baseResumeDistance * 0.1,
-      };
-    }
-  }
-}
 
