@@ -25,14 +25,12 @@ export interface Edge {
   curve_direction?: "right" | "left";
   start_direction?: number;  // 0, 90, 180, 270
 
-  /**
-   * Edge direction axis (calculated from start to end point)
-   * - 0°: X-axis right (East)
-   * - 90°: Y-axis up (North)
-   * - 180°: X-axis left (West)
-   * - 270°: Y-axis down (South)
+  /*
+   * Edge direction axis
+   * 'x': East/West
+   * 'y': North/South
    */
-  axis?: number;
+  axis?: 'x' | 'y';
 
   // ============================================================================
   // [3] UI & RENDERING (Optional)

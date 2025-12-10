@@ -11,7 +11,7 @@ import { useVehicleGeneralStore } from "../../../../../store/vehicle/vehicleGene
 import { useVehicleTestStore } from "../../../../../store/vehicle/vehicleTestStore";
 import { getVehicleConfigSync } from "../../../../../config/vehicleConfig";
 import { initializeVehicles } from "./initializeVehicles";
-import { checkCollisions } from "./collisionCheck";
+import { checkCollisions } from "./collisionLogic/collisionCheck";
 import { updateMovement } from "./movementUpdate";
 import { VehicleLoop } from "../../../../../utils/vehicle/loopMaker";
 import { edgeVehicleQueue } from "../../../../../store/vehicle/arrayMode/edgeVehicleQueue";
@@ -54,7 +54,7 @@ const VehicleArrayMode: React.FC<VehicleArrayModeProps> = ({
   } = config;
 
   const sameEdgeSafeDistance = (bodyLength + sensorLength );
-  const resumeDistance = sameEdgeSafeDistance * 1.0;
+  const resumeDistance = sameEdgeSafeDistance * 1;
 
   // Log safety configuration on mount
   logSafetyConfig(bodyLength, sensorLength, vehicleSpacing, sameEdgeSafeDistance, resumeDistance);
@@ -116,27 +116,20 @@ const VehicleArrayMode: React.FC<VehicleArrayModeProps> = ({
     if (!initialized || !store.vehicleDataRef || edgeArrayRef.current.length === 0 || actualNumVehiclesRef.current === 0) return;
 
     const edgeArray = edgeArrayRef.current;
-    const data = store.vehicleDataRef;
+    const vehicleArrayData = store.vehicleDataRef;
     const actualNumVehicles = actualNumVehiclesRef.current;
 
     // 1. Collision Check
     checkCollisions({
-      data,
-      edgeArray,
-      actualNumVehicles,
-      vehicleLoopMap: vehicleLoopMapRef.current,
-      edgeNameToIndex: edgeNameToIndexRef.current,
-      sameEdgeSafeDistance,
-      resumeDistance,
+      vehicleArrayData,
+      edgeArray
     });
 
     // 2. Movement Update
     updateMovement({
-      data,
+      vehicleArrayData,
       edgeArray,
       actualNumVehicles,
-      vehicleLoopMap: vehicleLoopMapRef.current,
-      edgeNameToIndex: edgeNameToIndexRef.current,
       store,
       clampedDelta,
     });
