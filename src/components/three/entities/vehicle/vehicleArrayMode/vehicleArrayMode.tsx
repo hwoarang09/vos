@@ -5,16 +5,16 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useFrame } from "@react-three/fiber";
-import { useEdgeStore } from "../../../../../store/map/edgeStore";
-import { useVehicleArrayStore } from "../../../../../store/vehicle/arrayMode/vehicleStore";
-import { useVehicleGeneralStore } from "../../../../../store/vehicle/vehicleGeneralStore";
-import { useVehicleTestStore } from "../../../../../store/vehicle/vehicleTestStore";
-import { getVehicleConfigSync } from "../../../../../config/vehicleConfig";
+import { useEdgeStore } from "@/store/map/edgeStore";
+import { useVehicleArrayStore } from "@/store/vehicle/arrayMode/vehicleStore";
+import { useVehicleGeneralStore } from "@/store/vehicle/vehicleGeneralStore";
+import { useVehicleTestStore } from "@/store/vehicle/vehicleTestStore";
+import { getVehicleConfigSync } from "@/config/vehicleConfig";
 import { initializeVehicles } from "./initializeVehicles";
 import { checkCollisions } from "./collisionLogic/collisionCheck";
-import { updateMovement } from "./movementUpdate";
-import { VehicleLoop } from "../../../../../utils/vehicle/loopMaker";
-import { edgeVehicleQueue } from "../../../../../store/vehicle/arrayMode/edgeVehicleQueue";
+import { updateMovement } from "./movementLogic/movementUpdate";
+import { VehicleLoop } from "@/utils/vehicle/loopMaker";
+import { edgeVehicleQueue } from "@/store/vehicle/arrayMode/edgeVehicleQueue";
 
 // Constants
 const MAX_DELTA = 1 / 30;
@@ -89,12 +89,12 @@ const VehicleArrayMode: React.FC<VehicleArrayModeProps> = ({
 
       // Store initial vehicle distribution for UI display
       const distribution = new Map<number, number[]>();
-      edgeArrayRef.current.forEach((_, edgeIdx) => {
+      for (let edgeIdx = 0; edgeIdx < edgeArrayRef.current.length; edgeIdx++) {
         const vehicles = edgeVehicleQueue.getVehicles(edgeIdx);
         if (vehicles.length > 0) {
           distribution.set(edgeIdx, vehicles);
         }
-      });
+      }
       useVehicleTestStore.getState().setInitialVehicleDistribution(distribution);
 
       initRef.current = true;
@@ -127,9 +127,11 @@ const VehicleArrayMode: React.FC<VehicleArrayModeProps> = ({
 
     // 2. Movement Update
     updateMovement({
-      vehicleArrayData,
+      data: vehicleArrayData,
       edgeArray,
       actualNumVehicles,
+      vehicleLoopMap: vehicleLoopMapRef.current,
+      edgeNameToIndex: edgeNameToIndexRef.current,
       store,
       clampedDelta,
     });

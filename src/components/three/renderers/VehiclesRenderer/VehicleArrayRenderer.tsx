@@ -117,7 +117,7 @@ const VehicleArrayRenderer: React.FC<VehicleArrayRendererProps> = ({
       />
 
       {/* Sensor Debug Wireframes - Red wireframe */}
-      <SensorDebugRenderer numVehicles={actualNumVehicles} color="#ff0000" />
+      <SensorDebugRenderer numVehicles={actualNumVehicles} />
 
       {/* Vehicle ID labels */}
       {/* <VehicleTextRenderer numVehicles={actualNumVehicles} /> */}

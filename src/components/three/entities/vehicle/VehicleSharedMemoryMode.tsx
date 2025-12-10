@@ -65,13 +65,7 @@ const VehicleSharedMemoryMode: React.FC<VehicleSharedMemoryModeProps> = ({
         }
 
         console.log(`\n[VehicleSharedMemoryMode] ========== EDGE-BASED VEHICLE ARRAYS ==========`);
-        Array.from(distribution.entries())
-          .sort((a, b) => a[0] - b[0])
-          .forEach(([edgeIdx, vehicles]) => {
-            const edgeName = edgeArray[edgeIdx]?.edge_name || `Edge${edgeIdx}`;
-            console.log(`\n  Edge${edgeIdx} (${edgeName}): ${vehicles.length} vehicles`);
-            console.log(`    Vehicles: [${vehicles.join(", ")}]`);
-          });
+
         console.log(`[VehicleSharedMemoryMode] ================================================================\n`);
 
         console.log(`[VehicleSharedMemoryMode] Initialized ${numVehicles} vehicles`);

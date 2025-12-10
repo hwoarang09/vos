@@ -20,8 +20,10 @@ export function updateSensorPoints(vehIdx: number, x: number, y: number, rot: nu
   const bx = x - HALF_L * cos, by = y - HALF_L * sin;
 
   // 3 zones: approach(outer, yellow), brake(middle, orange), stop(inner, red)
-  ["approach", "brake", "stop"].forEach((zoneKey, zoneIndex) => {
-    const zone = getSensorZone(preset, zoneKey as any);
+  const zones = ["approach", "brake", "stop"] as const;
+  for (let zoneIndex = 0; zoneIndex < zones.length; zoneIndex++) {
+    const zoneKey = zones[zoneIndex];
+    const zone = getSensorZone(preset, zoneKey);
     const widthScale = 1; 
     const wx = HALF_W * widthScale * sin;
     const wy = HALF_W * widthScale * cos;
@@ -52,5 +54,5 @@ export function updateSensorPoints(vehIdx: number, x: number, y: number, rot: nu
     d[o + SensorPoint.SL_Y] = d[o + SensorPoint.FL_Y] + leftWorldY;
     d[o + SensorPoint.SR_X] = d[o + SensorPoint.FR_X] + rightWorldX;
     d[o + SensorPoint.SR_Y] = d[o + SensorPoint.FR_Y] + rightWorldY;
-  });
+  }
 }

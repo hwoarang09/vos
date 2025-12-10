@@ -1,53 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { useFrame } from "@react-three/fiber";
 
-/**
- * PerformanceMonitor
- * - Displays 5-second average CPU usage
- * - Updates every 5 seconds
- * - Positioned above Perf widget in bottom-right
- */
-const PerformanceMonitor: React.FC = () => {
-  const [setAvgCpu] = useState<number>(0);
-  const frameTimesRef = useRef<number[]>([]);
-  const lastUpdateTimeRef = useRef<number>(0);
-  const UPDATE_INTERVAL = 5; // seconds
-
-  useFrame((state) => {
-    const currentTime = state.clock.elapsedTime;
-    const delta = state.clock.getDelta();
-
-    // Collect frame time (in milliseconds)
-    const frameTime = delta * 1000;
-    frameTimesRef.current.push(frameTime);
-
-    // Update every 5 seconds
-    if (currentTime - lastUpdateTimeRef.current >= UPDATE_INTERVAL) {
-      const frameTimes = frameTimesRef.current;
-
-      if (frameTimes.length > 0) {
-        // Calculate average frame time
-        const avgFrameTime = frameTimes.reduce((sum, time) => sum + time, 0) / frameTimes.length;
-
-        // Calculate FPS from average frame time
-        const avgFps = 1000 / avgFrameTime;
-
-        // Estimate CPU usage (rough approximation)
-        // Assuming 60 FPS is 0% CPU overhead, lower FPS = higher CPU usage
-        const targetFps = 60;
-        const cpuUsage = Math.max(0, Math.min(100, ((targetFps - avgFps) / targetFps) * 100 + 20));
-
-        setAvgCpu(cpuUsage);
-      }
-
-      // Reset for next interval
-      frameTimesRef.current = [];
-      lastUpdateTimeRef.current = currentTime;
-    }
-  });
-
-  return null;
-};
 
 /**
  * PerformanceMonitorUI
@@ -147,6 +99,3 @@ export const PerformanceMonitorUI: React.FC = () => {
     </div>
   );
 };
-
-export default PerformanceMonitor;
-

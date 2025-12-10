@@ -1,5 +1,4 @@
-import { vehicleDataArray } from "@/store/vehicle/arrayMode/vehicleDataArray";
-import { VEHICLE_DATA_SIZE, MovementData, SensorData } from "@/store/vehicle/arrayMode/vehicleDataArray";
+import { VEHICLE_DATA_SIZE, MovementData, SensorData, vehicleDataArray } from "@/store/vehicle/arrayMode/vehicleDataArray";
 import { updateSensorPoints } from "./sensorPoints";
 
 /**

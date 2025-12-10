@@ -60,7 +60,7 @@ export const useEdgeStore = create<EdgeState>((set, get) => ({
     const nameToIndex = new Map<string, number>();
 
     // 1차 순회: 인덱싱 및 노드 연결 관계 수집
-    rawEdges.forEach((edge, idx) => {
+    for (const [idx, edge] of rawEdges.entries()) {
       nameToIndex.set(edge.edge_name, idx);
 
       // From Node (Outgoing)
@@ -70,7 +70,7 @@ export const useEdgeStore = create<EdgeState>((set, get) => ({
       // To Node (Incoming)
       if (!nodeIncoming.has(edge.to_node)) nodeIncoming.set(edge.to_node, []);
       nodeIncoming.get(edge.to_node)!.push(idx);
-    });
+    }
 
     // 2차 순회: Edge 데이터에 토폴로지 정보 주입 (불변성 유지)
     const connectedEdges = rawEdges.map((edge) => {
@@ -81,8 +81,10 @@ export const useEdgeStore = create<EdgeState>((set, get) => ({
       const outgoingFromEnd = nodeOutgoing.get(edge.to_node) || [];
 
       // Calculate axis direction
-      const axis = calculateEdgeAxis(edge.from_node, edge.to_node);
-
+      const angle = calculateEdgeAxis(edge.from_node, edge.to_node);
+      const isHorizontal = Math.abs(Math.cos(angle * Math.PI / 180)) > 0.5;
+      const axis: "x" | "y" = isHorizontal ? "x" : "y";
+      
       return {
         ...edge,
         // [Topology Flags] - 4-Way State
@@ -96,7 +98,8 @@ export const useEdgeStore = create<EdgeState>((set, get) => ({
         prevEdgeIndices: incomingToEnd,   // 나와 합류 경쟁하는 엣지들
 
         // [Geometry]
-        axis: axis, // Edge direction (0°=East, 90°=North, 180°=West, 270°=South)
+        axis: axis, 
+        start_direction: angle, // Store the actual angle in start_direction if needed
       };
     });
 

@@ -1,6 +1,5 @@
 import React, { useEffect, useMemo, useRef } from "react";
 import * as THREE from "three";
-import { useThree } from "@react-three/fiber";
 import SpriteText from "three-spritetext";
 
 type Props = {
@@ -133,7 +132,9 @@ export default function NumberGrid({
 
     return () => {
       cancelled = true;
-      created.forEach(disposeChild);
+      for (const child of created) {
+        disposeChild(child);
+      }
       created = [];
     };
   }, [total, cols, layout, color, backgroundColor, z, batchSize]);
