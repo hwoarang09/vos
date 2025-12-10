@@ -1,6 +1,6 @@
 import React, { useMemo, useEffect } from "react";
 import * as THREE from "three";
-import { useDigitMaterials, CHAR_COUNT } from "./useDigitMaterials";
+import { useDigitMaterials, CHAR_COUNT, ALL_CHARS } from "./useDigitMaterials";
 import { SlotData } from "./instancedTextUtils";
 
 export interface BaseInstancedTextProps {
@@ -28,9 +28,10 @@ export const BaseInstancedText = React.memo(({
     if (!data) return null;
     return digitMaterials.map((mat, d) => {
       const cnt = Math.max(1, data.counts[d]);
+      const char = ALL_CHARS[d]; // Use character for key
       return (
         <instancedMesh
-          key={`base-digit-${d}`}
+          key={`base-digit-${char}`}
           ref={(el) => (instRefs.current[d] = el)}
           args={[quad, mat, cnt]}
           frustumCulled={false}
