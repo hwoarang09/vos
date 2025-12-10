@@ -21,7 +21,7 @@ export const TrafficState = {
 // 32-bit compatible, but stored in Float32 (safe up to 2^24 integers)
 export const StopReason = {
   NONE: 0,
-  OBS_LIDAR: 1 << 0,         // Lidar obstacle
+  OBS_LIDAR: 1,         // Lidar obstacle
   OBS_CAMERA: 1 << 1,        // Camera obstacle
   E_STOP: 1 << 2,            // Emergency Stop Button
   WAITING_FOR_LOCK: 1 << 3,  // Waiting for Traffic Lock
@@ -44,10 +44,11 @@ export const JobState = {
 } as const;
 
 // Data structure layout
-const MOVEMENT_SIZE = 10; // x, y, z, rotation, velocity, acceleration, deceleration, edgeRatio, movingStatus, currentEdge
+// Data structure layout
+const MOVEMENT_SIZE = 11; // x, y, z, rotation, velocity, acceleration, deceleration, edgeRatio, movingStatus, currentEdge, offset
 const SENSOR_SIZE = 2; // sensor preset index, sensor hit zone
 const LOGIC_SIZE = 3;  // trafficState, stopReason, jobState
-export const VEHICLE_DATA_SIZE = MOVEMENT_SIZE + SENSOR_SIZE + LOGIC_SIZE; // 15
+export const VEHICLE_DATA_SIZE = MOVEMENT_SIZE + SENSOR_SIZE + LOGIC_SIZE; // 16
 
 export const MovementData = {
   X: 0,
@@ -60,11 +61,12 @@ export const MovementData = {
   EDGE_RATIO: 7,
   MOVING_STATUS: 8, // 0=STOPPED, 1=MOVING, 2=PAUSED
   CURRENT_EDGE: 9, // Edge index
+  OFFSET: 10,      // Distance from edge start (accumulated or current segment)
 } as const;
 
 export const SensorData = {
-  PRESET_IDX: 10, // 0=STRAIGHT, 1=CURVE_LEFT, 2=CURVE_RIGHT, 3=MERGE, 4=BRANCH
-  HIT_ZONE: 11,   // -1=none, 0=approach, 1=brake, 2=stop
+  PRESET_IDX: 11, // 0=STRAIGHT, 1=CURVE_LEFT, 2=CURVE_RIGHT, 3=MERGE, 4=BRANCH
+  HIT_ZONE: 12,   // -1=none, 0=approach, 1=brake, 2=stop
 } as const;
 
 export const HitZone = {
@@ -75,9 +77,9 @@ export const HitZone = {
 } as const;
 
 export const LogicData = {
-  TRAFFIC_STATE: 12,
-  STOP_REASON: 13,
-  JOB_STATE: 14,
+  TRAFFIC_STATE: 13,
+  STOP_REASON: 14,
+  JOB_STATE: 15,
 } as const;
 
 /**
@@ -87,7 +89,7 @@ export const LogicData = {
  */
 class VehicleDataArray {
   private data: Float32Array;
-  private maxVehicles: number;
+  private readonly maxVehicles: number;
 
   constructor(maxVehicles: number = getMaxVehicles()) {
     this.maxVehicles = maxVehicles;
@@ -172,6 +174,13 @@ class VehicleDataArray {
         },
         set currentEdge(val: number) {
           data[offset + MovementData.CURRENT_EDGE] = val;
+        },
+
+        get offset() {
+          return data[offset + MovementData.OFFSET];
+        },
+        set offset(val: number) {
+          data[offset + MovementData.OFFSET] = val;
         },
       },
 
@@ -379,8 +388,8 @@ class VehicleDataArray {
 export const vehicleDataArray = new VehicleDataArray(getMaxVehicles());
 
 // Expose to window for debugging and external access
-if (typeof window !== 'undefined') {
-  (window as any).vehicleDataArray = vehicleDataArray;
+if (typeof globalThis !== 'undefined') {
+  (globalThis as any).vehicleDataArray = vehicleDataArray;
 }
 
 export default VehicleDataArray;
