@@ -1,14 +1,15 @@
-import React, { useEffect, useMemo, useRef } from "react";
+import React, { useEffect, useRef } from "react";
 import * as THREE from "three";
 import { useFrame } from "@react-three/fiber";
 import { vehicleDataArray, VEHICLE_DATA_SIZE, MovementData } from "@/store/vehicle/arrayMode/vehicleDataArray";
-import { useDigitMaterials, CHAR_COUNT } from "./useDigitMaterials";
+import { CHAR_COUNT } from "./useDigitMaterials";
 import {
   applyHighAltitudeCulling,
   updateVehicleTextTransforms,
   buildVehicleSlotData,
   SlotData
 } from "./instancedTextUtils";
+import { BaseInstancedText } from "./BaseInstancedText";
 
 const LOD_DIST_SQ = 400 * 400;
 const CAM_HEIGHT_CUTOFF = 50;
@@ -27,9 +28,6 @@ const VehicleTextRenderer: React.FC<Props> = ({
   color = "#ffffff",
   zOffset = 1,
 }) => {
-  const digitMaterials = useDigitMaterials({ color });
-  const quad = useMemo(() => new THREE.PlaneGeometry(1, 1), []);
-
   const dataRef = useRef<SlotData | null>(null);
   const instRefs = useRef<(THREE.InstancedMesh | null)[]>(new Array(CHAR_COUNT).fill(null));
 
@@ -37,38 +35,6 @@ const VehicleTextRenderer: React.FC<Props> = ({
   useEffect(() => {
     dataRef.current = buildVehicleSlotData(numVehicles, LABEL_LENGTH);
   }, [numVehicles]);
-
-  // InstancedMesh 생성
-  const meshes = useMemo(() => {
-    const data = dataRef.current;
-    if (!data || numVehicles === 0) return [];
-
-    return digitMaterials.map((mat, d) => {
-      const cnt = Math.max(1, data.counts[d]);
-      return (
-        <instancedMesh
-          key={`veh-digit-${d}-${cnt}`}
-          ref={(el) => (instRefs.current[d] = el)}
-          args={[quad, mat, cnt]}
-          frustumCulled={false}
-        />
-      );
-    });
-  }, [digitMaterials, quad, dataRef.current?.counts, numVehicles]);
-
-  // 카운트 업데이트
-  useEffect(() => {
-    const data = dataRef.current;
-    if (!data) return;
-
-    for (let d = 0; d < CHAR_COUNT; d++) {
-      const mesh = instRefs.current[d];
-      if (mesh && data.counts[d] > 0) {
-        mesh.count = data.counts[d];
-        mesh.instanceMatrix.needsUpdate = true;
-      }
-    }
-  }, [dataRef.current?.counts]);
 
   // 렌더링 루프
   useFrame(({ camera }) => {
@@ -107,7 +73,13 @@ const VehicleTextRenderer: React.FC<Props> = ({
     );
   });
 
-  return <group>{meshes}</group>;
+  return (
+    <BaseInstancedText
+      data={dataRef.current}
+      instRefs={instRefs}
+      color={color}
+    />
+  );
 };
 
 export default VehicleTextRenderer;

@@ -1,8 +1,8 @@
-import React, { useEffect, useMemo, useRef } from "react";
+import React, { useEffect, useRef } from "react";
 import * as THREE from "three";
 import { useFrame } from "@react-three/fiber";
 import { RENDER_ORDER_TEXT } from "@/utils/renderOrder";
-import { useDigitMaterials, CHAR_COUNT } from "./useDigitMaterials";
+import { CHAR_COUNT } from "./useDigitMaterials";
 import {
   SlotData,
   HIDE_MATRIX,
@@ -11,6 +11,7 @@ import {
   computeBillboardRotation,
   distanceSquared,
 } from "./instancedTextUtils";
+import { BaseInstancedText } from "./BaseInstancedText";
 
 import type { TextGroup } from "./instancedTextUtils";
 export type { TextGroup } from "./instancedTextUtils";
@@ -38,9 +39,6 @@ export default function InstancedText({
 }: Props) {
   const LOD_DIST_SQ = lodDistance * lodDistance;
 
-  const digitMaterials = useDigitMaterials({ color, bgColor, font });
-  const quad = useMemo(() => new THREE.PlaneGeometry(1, 1), []);
-
   const dataRef = useRef<SlotData | null>(null);
   const instRefs = useRef<(THREE.InstancedMesh | null)[]>(new Array(CHAR_COUNT).fill(null));
 
@@ -48,43 +46,14 @@ export default function InstancedText({
     dataRef.current = buildSlotData(groups);
   }, [groups]);
 
-  const meshes = useMemo(() => {
-    const data = dataRef.current;
-    if (!data || groups.length === 0) return [];
-
-    return digitMaterials.map((mat, d) => {
-      const cnt = Math.max(1, data.counts[d]);
-      return (
-        <instancedMesh
-          key={`digit-${d}-${cnt}`}
-          ref={(el) => (instRefs.current[d] = el)}
-          args={[quad, mat, cnt]}
-          frustumCulled={false}
-          renderOrder={RENDER_ORDER_TEXT}
-        />
-      );
-    });
-  }, [digitMaterials, quad, dataRef.current?.counts, groups]);
-
-  useEffect(() => {
-    const data = dataRef.current;
-    if (!data) return;
-
-    for (let d = 0; d < CHAR_COUNT; d++) {
-      const mesh = instRefs.current[d];
-      if (mesh && data.counts[d] > 0) {
-        mesh.count = data.counts[d];
-        mesh.instanceMatrix.needsUpdate = true;
-      }
-    }
-  }, [dataRef.current?.counts]);
-
   useFrame(({ camera }) => {
     const D = dataRef.current;
     if (!D || groups.length === 0) return;
 
     const { slotDigit, slotIndex, slotGroup, slotPosition, totalCharacters } = D;
     const { x: cx, y: cy, z: cz } = camera.position;
+
+    if (!slotGroup) return; // 필수 데이터 체크
 
     if (applyHighAltitudeCulling(cz, camHeightCutoff, D, instRefs.current)) {
       return;
@@ -143,5 +112,14 @@ export default function InstancedText({
     }
   });
 
-  return <group>{meshes}</group>;
+  return (
+    <BaseInstancedText
+      data={dataRef.current}
+      instRefs={instRefs}
+      color={color}
+      bgColor={bgColor}
+      font={font}
+      renderOrder={RENDER_ORDER_TEXT}
+    />
+  );
 }
