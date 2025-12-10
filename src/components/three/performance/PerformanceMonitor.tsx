@@ -8,7 +8,7 @@ import { useFrame } from "@react-three/fiber";
  * - Positioned above Perf widget in bottom-right
  */
 const PerformanceMonitor: React.FC = () => {
-  const [avgCpu, setAvgCpu] = useState<number>(0);
+  const [setAvgCpu] = useState<number>(0);
   const frameTimesRef = useRef<number[]>([]);
   const lastUpdateTimeRef = useRef<number>(0);
   const UPDATE_INTERVAL = 5; // seconds

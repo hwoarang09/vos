@@ -43,7 +43,7 @@ export function interpolatePosition(edge: Edge, ratio: number) {
   // 곡선은 위치마다 각도가 계속 변하므로 벡터 계산 필요
   // ==================================================================================
   
-  const safeRatio = ratio < 0 ? 0 : (ratio > 1 ? 1 : ratio);
+  const safeRatio = ratio < 0 ? 0 : (Math.min(ratio, 1));
   
   const maxIndex = points.length - 1;
   const floatIndex = safeRatio * maxIndex;

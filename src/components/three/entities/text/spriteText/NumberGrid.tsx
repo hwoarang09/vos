@@ -142,10 +142,10 @@ export default function NumberGrid({
 }
 
 function disposeChild(obj: THREE.Object3D) {
-  if ((obj as any).map && (obj as any).map.dispose) (obj as any).map.dispose();
-  if ((obj as any).material) {
+  if ((obj as any).map?.dispose) (obj as any).map.dispose();
+  if ((obj as any).material?.dispose) {
     const m = (obj as any).material as THREE.Material;
-    if ((m as any).map) (m as any).map.dispose?.();
-    m.dispose?.();
+    if ((m as any).map?.dispose) (m as any).map.dispose();
+    m.dispose();
   }
 }

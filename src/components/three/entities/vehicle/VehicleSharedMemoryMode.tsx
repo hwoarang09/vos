@@ -45,15 +45,15 @@ const VehicleSharedMemoryMode: React.FC<VehicleSharedMemoryModeProps> = ({
             vehicle.movement.x = startPoint.x;
             vehicle.movement.y = startPoint.y;
             vehicle.movement.z = startPoint.z;
-            vehicle.movement.velocity = 2.0 + Math.random() * 3.0; // 2~5 m/s
+            vehicle.movement.velocity = 2 + Math.random() * 3; // 2~5 m/s
             vehicle.movement.rotation = 0;
-            vehicle.movement.edgeRatio = 0.0;
+            vehicle.movement.edgeRatio = 0;
             vehicle.status.currentEdge = edgeIndex;
             vehicle.status.status = 1; // MOVING
 
             console.log(
               `  VEH${i}: Edge${edgeIndex} (${edge.edge_name}), ` +
-              `ratio=0.000, pos=(${startPoint.x.toFixed(1)}, ${startPoint.y.toFixed(1)})`
+              `ratio=000, pos=(${startPoint.x.toFixed(1)}, ${startPoint.y.toFixed(1)})`
             );
 
             // Track distribution
@@ -101,17 +101,17 @@ const VehicleSharedMemoryMode: React.FC<VehicleSharedMemoryModeProps> = ({
       const currentEdgeIndex = vehicle.status.currentEdge;
 
       const edge = edgeArray[currentEdgeIndex];
-      if (!edge || !edge.renderingPoints || edge.renderingPoints.length === 0) continue;
+      if (!edge?.renderingPoints || edge.renderingPoints.length === 0) continue;
 
       const points = edge.renderingPoints;
-      const edgeLength = edge.distance || 1.0;
+      const edgeLength = edge.distance || 1;
 
       // Update edge ratio based on velocity
       let newRatio = edgeRatio + (velocity * delta) / edgeLength;
 
       // If reached end of edge, move to next edge
-      if (newRatio >= 1.0) {
-        newRatio = 0.0;
+      if (newRatio >= 1) {
+        newRatio = 0;
         const nextEdgeIndex = (currentEdgeIndex + 1) % edgeArray.length;
         vehicle.status.currentEdge = nextEdgeIndex;
       }

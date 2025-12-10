@@ -5,7 +5,6 @@ import { useVehicleArrayStore } from "@/store/vehicle/arrayMode/vehicleStore";
 import { vehicleDataArray, VEHICLE_DATA_SIZE, MovementData } from "@/store/vehicle/arrayMode/vehicleDataArray";
 import { getVehicleConfigSync } from "@/config/vehicleConfig";
 import { SensorDebugRenderer } from "./SensorDebugRenderer";
-import VehicleTextRenderer from "./VehicleTextRenderer";
 
 /**
  * VehicleArrayRenderer

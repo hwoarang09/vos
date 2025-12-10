@@ -13,6 +13,8 @@ function getCurveTailLength(): number {
   return 0.5;
 }
 
+import { useEdgeStore } from "@/store/map/edgeStore";
+
 /**
  * Helper to check collision against all vehicles on a competitor edge.
  * Returns the updated max HitZone.
@@ -20,14 +22,37 @@ function getCurveTailLength(): number {
 function checkCompetitorVehicles(
   myVehId: number,
   compQueue: Int32Array,
-  currentMaxHitZone: number
+  currentMaxHitZone: number,
+  data: Float32Array,
+  compThreshold: number,
+  compEdgeLen: number
 ): number {
   const compCount = compQueue[0];
   let maxHitZone = currentMaxHitZone;
 
   for (let j = 0; j < compCount; j++) {
     const compVehId = compQueue[1 + j];
+    const compPtr = compVehId * VEHICLE_DATA_SIZE;
+
+    // Filter by Competitor Position
+    // We need competitor's offset. 
+    // If curveType is set, OFFSET is reliable.
+    // If straight, verifyLinearCollision updates OFFSET? 
+    // Wait, verifyLinearCollision logic still uses Ratio * Length.
+    // To be safe, let's use OFFSET if available, else derive from Ratio (fallback).
+    // Actually, vehicleDataArray now has OFFSET. ideally it should be populated.
+    // But verifyLinearCollision doesn't set OFFSET explicitly unless we changed it?
+    // We haven't updated verifyLinearCollision to SET offset.
+    // So for straight edges, we rely on Ratio * Length.
     
+    // Check if OFFSET is populated (non-zero or we trust ratio more?)
+    // Reliable way for now: Ratio * Length (Universal)
+    // Actually, for generic logic, Ratio * Length is safest for now if we didn't refactor population.
+    const compRatio = data[compPtr + MovementData.EDGE_RATIO];
+    const compOffset = compRatio * compEdgeLen;
+
+    if (compOffset < compThreshold) continue;
+
     const hitZone = checkSensorCollision(myVehId, compVehId);
     
     if (hitZone > maxHitZone) {
@@ -54,7 +79,8 @@ function checkAgainstCompetitors(
   edgeIdx: number, 
   edge: Edge, 
   data: Float32Array, 
-  ptr: number
+  ptr: number,
+  dangerZoneLen: number
 ) {
   if (!edge.prevEdgeIndices) return;
 
@@ -66,8 +92,27 @@ function checkAgainstCompetitors(
     const compQueue = edgeVehicleQueue.getData(compEdgeIdx);
     if (!compQueue || compQueue[0] === 0) continue;
 
+    // Retrieve Competitor Edge to check type/length
+    const compEdge = useEdgeStore.getState().getEdgeByIndex(compEdgeIdx);
+    if (!compEdge) continue; // Should not happen
+
+    // [Competitor Filter Logic]
+    // If Competitor is Curve (Short): Check ALL (threshold = 0)
+    // If Competitor is Straight (Long): Check Danger Zone Only
+    let compThreshold = 0;
+    if (!compEdge.curveType) {
+      compThreshold = compEdge.distance - dangerZoneLen;
+    }
+
     // Check against relevant vehicles on competitor edge.
-    mostCriticalHitZone = checkCompetitorVehicles(vehId, compQueue, mostCriticalHitZone);
+    mostCriticalHitZone = checkCompetitorVehicles(
+      vehId, 
+      compQueue, 
+      mostCriticalHitZone, 
+      data, 
+      compThreshold, 
+      compEdge.distance
+    );
   }
 
   // Apply Logic if collision detected
@@ -115,9 +160,16 @@ export function verifyMergeZoneCollision(
        currentOffset = ratio * edgeLen;
     }
 
-    // optimization: Only check vehicles in Danger Zone
-    if (currentOffset < dangerStartOffset) continue;
+    // [Current Edge Filter Logic]
+    // If Curve: Check ALL (StartOffset = 0 per user req)
+    // If Straight: Check Danger Zone Only
+    let effectiveStartOffset = dangerStartOffset;
+    if (edge.curveType) {
+        effectiveStartOffset = 0; // Check all on curve
+    }
 
-    checkAgainstCompetitors(vehId, edgeIdx, edge, data, ptr);
+    if (currentOffset < effectiveStartOffset) continue;
+
+    checkAgainstCompetitors(vehId, edgeIdx, edge, data, ptr, dangerZoneLen);
   }
 }

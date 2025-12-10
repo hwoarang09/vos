@@ -3,18 +3,17 @@
 import { useRef, useMemo } from "react";
 import { useFrame } from "@react-three/fiber";
 import * as THREE from "three";
-import { sensorPointArray, SensorPoint, SENSOR_DATA_SIZE, SENSOR_POINT_SIZE, SENSOR_ZONE_COUNT } from "@/store/vehicle/arrayMode/sensorPointArray";
+import { sensorPointArray, SensorPoint, SENSOR_DATA_SIZE, SENSOR_POINT_SIZE } from "@/store/vehicle/arrayMode/sensorPointArray";
 
 interface SensorDebugRendererProps {
-  numVehicles: number;
-  color?: string; // legacy outer color
+  readonly numVehicles: number;
 }
 
 /**
  * Render sensor wireframes for debugging
  * Shows 3-zone sensor quads (outer/approach, middle/brake, inner/stop) and body quad
  */
-export function SensorDebugRenderer({ numVehicles, color = "#ffff00" }: SensorDebugRendererProps) {
+export function SensorDebugRenderer({ numVehicles }: SensorDebugRendererProps) {
   const outerLinesRef = useRef<THREE.LineSegments>(null);
   const middleLinesRef = useRef<THREE.LineSegments>(null);
   const innerLinesRef = useRef<THREE.LineSegments>(null);

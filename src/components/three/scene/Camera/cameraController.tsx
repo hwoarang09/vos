@@ -180,13 +180,13 @@ const CameraController: React.FC = () => {
       animationId = requestAnimationFrame(animate);
     };
 
-    window.addEventListener('keydown', handleKeyDown);
-    window.addEventListener('keyup', handleKeyUp);
+    globalThis.addEventListener('keydown', handleKeyDown);
+    globalThis.addEventListener('keyup', handleKeyUp);
     animate();
 
     return () => {
-      window.removeEventListener('keydown', handleKeyDown);
-      window.removeEventListener('keyup', handleKeyUp);
+      globalThis.removeEventListener('keydown', handleKeyDown);
+      globalThis.removeEventListener('keyup', handleKeyUp);
       cancelAnimationFrame(animationId);
     };
   }, [activeMainMenu, activeSubMenu, camera, controls]);
@@ -252,8 +252,8 @@ const CameraController: React.FC = () => {
     if (isBayBuilderMode) return;
 
     // Get vehicle position from vehicleDataArray
-    // @ts-ignore - accessing global window object
-    const vehicleData = window.vehicleDataArray?.get(followingVehicleId);
+    // @ts-ignore - accessing global globalThis object
+    const vehicleData = globalThis.vehicleDataArray?.get(followingVehicleId);
 
     if (vehicleData && vehicleData.status.status !== 0) {
       const vehX = vehicleData.movement.x;

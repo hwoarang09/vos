@@ -1,15 +1,14 @@
-import { VEHICLE_DATA_SIZE, MovementData, SensorData } from "@/store/vehicle/arrayMode/vehicleDataArray";
-import { MovingStatus } from "@/store/vehicle/arrayMode/vehicleDataArray";
+import { VEHICLE_DATA_SIZE, MovementData, SensorData,MovingStatus } from "@/store/vehicle/arrayMode/vehicleDataArray";
 import { VehicleArrayStore } from "@/store/vehicle/arrayMode/vehicleStore";
 import { VehicleLoop } from "@/utils/vehicle/loopMaker";
 import { Edge } from "@/types/edge";
 
 // Logic modules
-import { calculateNextSpeed } from "./movementLogic/speedCalculator";
-import { handleEdgeTransition } from "./movementLogic/edgeTransition";
-import { interpolatePosition } from "./movementLogic/positionInterpolator";
-import { updateSensorPoints } from "./helpers/sensorPoints";
-import { logSensorSummary } from "./helpers/sensorDebug";
+import { calculateNextSpeed } from "../movementLogic/speedCalculator";
+import { handleEdgeTransition } from "../movementLogic/edgeTransition";
+import { interpolatePosition } from "../movementLogic/positionInterpolator";
+import { updateSensorPoints } from "../helpers/sensorPoints";
+import { logSensorSummary } from "../helpers/sensorDebug";
 import { getCurveAcceleration } from "@/config/movementConfig";
 
 interface MovementUpdateParams {

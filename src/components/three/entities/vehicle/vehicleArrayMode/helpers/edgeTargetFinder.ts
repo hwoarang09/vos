@@ -1,5 +1,4 @@
 import { Edge } from "@/types/edge";
-import { VehicleLoop, getNextEdgeInLoop } from "@/utils/vehicle/loopMaker";
 
 /**
  * Find target edge index for a lead vehicle

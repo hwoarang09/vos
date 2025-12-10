@@ -5,7 +5,6 @@ import { SENSOR_PRESETS, getSensorZone } from "@/store/vehicle/arrayMode/sensorP
 
 const HALF_L = 0.6;
 const HALF_W = 0.3;
-// const WIDTH_SCALES = [1.0, 0.65, 0.35]; // Removed: all zones now use full width
 const DEG2RAD = Math.PI / 180;
 
 export function updateSensorPoints(vehIdx: number, x: number, y: number, rot: number, presetIdx: number): void {
@@ -23,8 +22,7 @@ export function updateSensorPoints(vehIdx: number, x: number, y: number, rot: nu
   // 3 zones: approach(outer, yellow), brake(middle, orange), stop(inner, red)
   ["approach", "brake", "stop"].forEach((zoneKey, zoneIndex) => {
     const zone = getSensorZone(preset, zoneKey as any);
-    // const widthScale = WIDTH_SCALES[zoneIndex] ?? 1.0; // Removed scaling
-    const widthScale = 1.0; 
+    const widthScale = 1; 
     const wx = HALF_W * widthScale * sin;
     const wy = HALF_W * widthScale * cos;
 
