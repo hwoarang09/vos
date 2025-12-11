@@ -1,10 +1,9 @@
-import React, { useEffect, useRef } from "react";
+import React, {useRef } from "react";
 import * as THREE from "three";
 import { useFrame } from "@react-three/fiber";
 import { RENDER_ORDER_TEXT } from "@/utils/renderOrder";
 import { CHAR_COUNT } from "./useDigitMaterials";
 import {
-  SlotData,
   HIDE_MATRIX,
   buildSlotData,
   applyHighAltitudeCulling,
