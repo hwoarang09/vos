@@ -39,15 +39,15 @@ export default function InstancedText({
 }: Props) {
   const LOD_DIST_SQ = lodDistance * lodDistance;
 
-  const dataRef = useRef<SlotData | null>(null);
-  const instRefs = useRef<(THREE.InstancedMesh | null)[]>(new Array(CHAR_COUNT).fill(null));
-
-  useEffect(() => {
-    dataRef.current = buildSlotData(groups);
+  // Render Phase에서 데이터 계산 (Buffer Overflow 방지)
+  const slotData = React.useMemo(() => {
+    return buildSlotData(groups);
   }, [groups]);
 
+  const instRefs = useRef<(THREE.InstancedMesh | null)[]>(new Array(CHAR_COUNT).fill(null));
+
   useFrame(({ camera }) => {
-    const D = dataRef.current;
+    const D = slotData;
     if (!D || groups.length === 0) return;
 
     const { slotDigit, slotIndex, slotGroup, slotPosition, totalCharacters } = D;
@@ -114,7 +114,7 @@ export default function InstancedText({
 
   return (
     <BaseInstancedText
-      data={dataRef.current}
+      data={slotData}
       instRefs={instRefs}
       color={color}
       bgColor={bgColor}

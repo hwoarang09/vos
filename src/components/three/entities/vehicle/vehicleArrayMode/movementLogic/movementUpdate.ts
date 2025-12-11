@@ -5,9 +5,9 @@ import { VehicleLoop } from "@/utils/vehicle/loopMaker";
 import { Edge } from "@/types/edge";
 
 // Logic modules
-import { calculateNextSpeed } from "../movementLogic/speedCalculator";
-import { handleEdgeTransition } from "../movementLogic/edgeTransition";
-import { interpolatePosition } from "../movementLogic/positionInterpolator";
+import { calculateNextSpeed } from "./speedCalculator";
+import { handleEdgeTransition } from "./edgeTransition";
+import { interpolatePosition } from "./positionInterpolator";
 import { updateSensorPoints } from "../helpers/sensorPoints";
 import { logSensorSummary } from "../helpers/sensorDebug";
 import { getCurveAcceleration } from "@/config/movementConfig";

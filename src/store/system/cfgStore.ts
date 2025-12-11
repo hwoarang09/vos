@@ -143,6 +143,11 @@ const parseEdgesCFG = (content: string): Edge[] => {
         }
       }
 
+      // axis 파싱
+      const axisIndex = headers.indexOf("axis");
+      const axisRaw = (axisIndex >= 0 && parts[axisIndex]) ? parts[axisIndex].trim().toLowerCase() : undefined;
+      const axis = (axisRaw === 'x' || axisRaw === 'y') ? axisRaw : undefined;
+
       // rendering points 계산
       let renderingPoints: THREE.Vector3[] = [];
       try {
@@ -174,6 +179,7 @@ const parseEdgesCFG = (content: string): Edge[] => {
         distance: distance,
         radius: radius || (railType.startsWith("C") ? 0.5 : undefined),
         rotation: rotation || 0,
+        axis: axis,
         color: getEdgeColor(railType), // VOS rail type에 따른 색상 적용
         opacity: 1.0,
         readonly: true,

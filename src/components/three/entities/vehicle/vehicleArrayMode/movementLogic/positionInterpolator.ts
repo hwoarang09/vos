@@ -31,9 +31,11 @@ export function interpolatePosition(edge: Edge, ratio: number) {
     const y = pStart.y + (pEnd.y - pStart.y) * ratio;
     const z = 3.8;
 
-    // axis: 이미 결정된 진행 방향 값 사용 (0: 위, 90: 왼쪽, 180: 아래, 270: 오른쪽)
-    // Edge 타입에 axis가 없어서 TS 에러가 날 수 있으므로 any 캐스팅 처리
-    const rotation = (edge as any).axis ?? 0;
+    // axis: Determine rotation angle from axis string (x | y)
+    const axis = edge.axis;
+    let rotation = 0;
+    if (axis === 'y') rotation = 90;
+    // if axis === 'x', rotation = 0 (default)
     
     return { x, y, z, rotation };
   }

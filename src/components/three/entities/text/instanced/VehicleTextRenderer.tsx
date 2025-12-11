@@ -28,17 +28,16 @@ const VehicleTextRenderer: React.FC<Props> = ({
   color = "#ffffff",
   zOffset = 1,
 }) => {
-  const dataRef = useRef<SlotData | null>(null);
-  const instRefs = useRef<(THREE.InstancedMesh | null)[]>(new Array(CHAR_COUNT).fill(null));
-
-  // 슬롯 데이터 초기화
-  useEffect(() => {
-    dataRef.current = buildVehicleSlotData(numVehicles, LABEL_LENGTH);
+  // 슬롯 데이터 계산 (Render Phase)
+  const slotData = React.useMemo(() => {
+    return buildVehicleSlotData(numVehicles, LABEL_LENGTH);
   }, [numVehicles]);
+
+  const instRefs = useRef<(THREE.InstancedMesh | null)[]>(new Array(CHAR_COUNT).fill(null));
 
   // 렌더링 루프
   useFrame(({ camera }) => {
-    const D = dataRef.current;
+    const D = slotData;
     if (!D || numVehicles === 0) return;
 
     const vehicleData = vehicleDataArray.getData();
@@ -75,7 +74,7 @@ const VehicleTextRenderer: React.FC<Props> = ({
 
   return (
     <BaseInstancedText
-      data={dataRef.current}
+      data={slotData}
       instRefs={instRefs}
       color={color}
     />

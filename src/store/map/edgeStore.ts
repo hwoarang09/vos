@@ -2,37 +2,6 @@ import { create } from "zustand";
 import { Edge } from "@/types/edge"; // 분리된 타입 경로
 import { useNodeStore } from "./nodeStore";
 
-/**
- * Calculate edge axis direction from start to end point
- * - 0°: X-axis right (East)
- * - 90°: Y-axis up (North)
- * - 180°: X-axis left (West)
- * - 270°: Y-axis down (South)
- */
-function calculateEdgeAxis(fromNodeName: string, toNodeName: string): number {
-  const nodeStore = useNodeStore.getState();
-  const fromNode = nodeStore.getNodeByName(fromNodeName);
-  const toNode = nodeStore.getNodeByName(toNodeName);
-
-  if (!fromNode || !toNode) {
-    console.warn(`Cannot calculate axis: nodes not found (${fromNodeName} -> ${toNodeName})`);
-    return 0;
-  }
-
-  const dx = toNode.editor_x - fromNode.editor_x;
-  const dy = toNode.editor_y - fromNode.editor_y;
-
-  // atan2(dy, dx) returns angle in radians from -π to π
-  // Standard math: 0° = right (East), 90° = up (North), 180° = left (West), 270° = down (South)
-  let angleRad = Math.atan2(dy, dx);
-  let angleDeg = angleRad * (180 / Math.PI);
-
-  // Normalize to 0-360 range
-  if (angleDeg < 0) angleDeg += 360;
-
-  return angleDeg;
-}
-
 interface EdgeState {
   edges: Edge[];
   edgeNameToIndex: Map<string, number>; // O(1) Lookup
@@ -80,11 +49,6 @@ export const useEdgeStore = create<EdgeState>((set, get) => ({
       const incomingToEnd = nodeIncoming.get(edge.to_node) || [];
       const outgoingFromEnd = nodeOutgoing.get(edge.to_node) || [];
 
-      // Calculate axis direction
-      const angle = calculateEdgeAxis(edge.from_node, edge.to_node);
-      const isHorizontal = Math.abs(Math.cos(angle * Math.PI / 180)) > 0.5;
-      const axis: "x" | "y" = isHorizontal ? "x" : "y";
-      
       return {
         ...edge,
         // [Topology Flags] - 4-Way State
@@ -98,8 +62,7 @@ export const useEdgeStore = create<EdgeState>((set, get) => ({
         prevEdgeIndices: incomingToEnd,   // 나와 합류 경쟁하는 엣지들
 
         // [Geometry]
-        axis: axis, 
-        start_direction: angle, // Store the actual angle in start_direction if needed
+        // axis: Already included in ...edge from config
       };
     });
 

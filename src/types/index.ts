@@ -45,7 +45,7 @@ export interface Edge {
   distance: number; // 거리
   radius?: number; // 곡선 반지름 (m 단위, 기본값 0.5m)
   rotation?: number; // 회전각 (도 단위, C90=90도, C180=180도 등)
-
+  axis?: "x" | "y" | "z"; // 좌표축 (x, y, z)
   // 렌더링/UI용 옵셔널 데이터
   color?: string; // 엣지 색상
   opacity?: number; // 투명도

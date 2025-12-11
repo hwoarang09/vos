@@ -31,8 +31,11 @@ export const BaseInstancedText = React.memo(({
       const char = ALL_CHARS[d]; // Use character for key
       return (
         <instancedMesh
-          key={`base-digit-${char}`}
-          ref={(el) => (instRefs.current[d] = el)}
+          key={`base-digit-${d}`}
+          ref={(el) => {
+  instRefs.current[d] = el;
+  return () => { instRefs.current[d] = null; };
+}}
           args={[quad, mat, cnt]}
           frustumCulled={false}
           renderOrder={renderOrder}

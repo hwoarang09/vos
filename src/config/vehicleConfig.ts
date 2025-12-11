@@ -36,7 +36,7 @@ const loadVehicleConfig = async (): Promise<VehicleConfig> => {
       MAX_VEHICLES: 20000,
       VEHICLE_COLOR: "#4ecdc4",
       EDGE_MARGIN: 0.5,
-      VEHICLE_SPACING: 0.3,
+      VEHICLE_SPACING: 0.6,
       CROSS_EDGE_SAFE_DISTANCE: 1.0,
       BODY: {
         LENGTH: 1.2,
@@ -64,7 +64,7 @@ let vehicleConfig: VehicleConfig = {
   MAX_VEHICLES: 20000,
   VEHICLE_COLOR: "#4ecdc4",
   EDGE_MARGIN: 0.5,
-  VEHICLE_SPACING: 0.3,
+  VEHICLE_SPACING: 0.6,
   CROSS_EDGE_SAFE_DISTANCE: 1.0,
   BODY: {
     LENGTH: 1.2,
