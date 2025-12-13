@@ -1,8 +1,8 @@
 import { useEffect, useRef } from "react";
 import { useFrame } from "@react-three/fiber";
-import { vehicleSharedMovement } from "../../../../store/vehicle/sharedMode/vehicleMovement";
-import { useEdgeStore } from "../../../../store/map/edgeStore";
-import { useVehicleTestStore } from "../../../../store/vehicle/vehicleTestStore";
+import { vehicleSharedMovement } from "@/store/vehicle/sharedMode/vehicleMovement";
+import { useEdgeStore } from "@/store/map/edgeStore";
+import { useVehicleTestStore } from "@/store/vehicle/vehicleTestStore";
 
 /**
  * VehicleSharedMemoryMode

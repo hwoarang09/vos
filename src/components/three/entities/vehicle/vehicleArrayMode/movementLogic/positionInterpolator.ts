@@ -26,17 +26,23 @@ export function interpolatePosition(edge: Edge, ratio: number) {
     const pEnd = points.at(-1)!;
 
     // Position Interpolation (Lerp)
-    // 직선은 중간 점 무시하고 시작/끝 점만으로 보간
     const x = pStart.x + (pEnd.x - pStart.x) * ratio;
     const y = pStart.y + (pEnd.y - pStart.y) * ratio;
     const z = 3.8;
 
-    // axis: Determine rotation angle from axis string (x | y)
-    const axis = edge.axis;
-    let rotation = 0;
-    if (axis === 'y') rotation = 90;
-    // if axis === 'x', rotation = 0 (default)
-    
+    // Calculate rotation from vector (Support all 4 directions)
+    const dx = pEnd.x - pStart.x;
+    const dy = pEnd.y - pStart.y;
+    // axis-aligned only (degrees)
+    let rotation: number;
+
+    if (Math.abs(dx) >= Math.abs(dy)) {
+      // X axis
+      rotation = dx >= 0 ? 0 : 180;
+    } else {
+      // Y axis
+      rotation = dy >= 0 ? 90 : -90;
+    }
     return { x, y, z, rotation };
   }
 
